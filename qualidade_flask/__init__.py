@@ -41,3 +41,4 @@ def create_app():
         print(f"--> Banco de dados conectado em: {db_path}")
 
     return app
+#d63c0b752307dc531f2941255d0779d0
