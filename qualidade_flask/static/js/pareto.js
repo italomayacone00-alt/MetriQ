@@ -167,6 +167,7 @@ async function salvarNoBanco() {
     
     if(dados.length === 0) { alert("A tabela está vazia."); return; }
 
+    // Recalcula dados
     dados.sort((a, b) => b.value - a.value);
     const total = dados.reduce((sum, item) => sum + item.value, 0);
     let acumulado = 0;
@@ -180,7 +181,7 @@ async function salvarNoBanco() {
         };
     });
 
-    // 1. CAPTURA A IMAGEM DO GRÁFICO (Canvas to Base64)
+    // 1. CAPTURA A IMAGEM DO GRÁFICO (Essencial para o relatório)
     const canvas = document.getElementById('paretoChart');
     const imagemBase64 = canvas.toDataURL();
 
@@ -192,14 +193,21 @@ async function salvarNoBanco() {
             meta: { tipo: 'pareto_v2' },
             config: { eixoEsq: labelEsq, eixoDir: labelDir },
             itens: dadosParaSalvar,
-            grafico: imagemBase64 // <--- AQUI ESTÁ A CORREÇÃO
+            grafico: imagemBase64 
         }
     };
+
+    // --- SEGURANÇA CSRF (NOVO) ---
+    // 3. Pega o token de segurança do HTML
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     try {
         const response = await fetch('/salvar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // <--- 4. Envia o token no cabeçalho
+            },
             body: JSON.stringify(payload)
         });
         

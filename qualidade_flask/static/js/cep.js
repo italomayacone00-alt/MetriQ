@@ -294,10 +294,17 @@ async function salvarNoBanco() {
         }
     };
 
+    // --- SEGURANÇA CSRF (NOVO) ---
+    // Pega o token do HTML
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     try {
         const response = await fetch('/salvar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // <--- Envia o token no cabeçalho
+            },
             body: JSON.stringify(payload)
         });
 

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetriQ - Inteligência em Qualidade</title>
     
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,7 +37,7 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
                         <a class="nav-link active" href="/">
                             <i class="bi bi-house-fill me-1"></i> Dashboard
@@ -50,12 +52,27 @@
                             <li><a class="dropdown-item" href="/ferramenta/pareto"><i class="bi bi-bar-chart-fill me-2 text-warning"></i>Pareto (80/20)</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/ishikawa"><i class="bi bi-diagram-3 me-2 text-primary"></i>Ishikawa (6M)</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/5w2h"><i class="bi bi-clipboard-check me-2 text-success"></i>Plano 5W2H</a></li>
+                            
+                            <li><a class="dropdown-item" href="/ferramenta/folha_verificacao"><i class="bi bi-check2-square me-2 text-success"></i>Folha de Verificação</a></li>
+                            
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/ferramenta/cep"><i class="bi bi-activity me-2 text-danger"></i>Gráfico CEP</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/histograma"><i class="bi bi-bar-chart-steps me-2 text-info"></i>Histograma</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/dispersao"><i class="bi bi-graph-up me-2 text-secondary"></i>Dispersão</a></li>
                         </ul>
                     </li>
+
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item ms-lg-3 border-start border-secondary ps-lg-3 mt-2 mt-lg-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-light small">Olá, <strong>{{ current_user.username }}</strong></span>
+                                <a href="/logout" class="btn btn-sm btn-outline-danger" title="Sair">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </a>
+                            </div>
+                        </li>
+                    {% endif %}
+
                 </ul>
             </div>
         </div>
@@ -63,6 +80,18 @@
 
     <main class="flex-grow-1">
         <div class="container mt-4">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
             {% block content %}{% endblock %}
         </div>
     </main>
@@ -78,7 +107,7 @@
                     <small class="text-muted" style="font-size: 0.8rem;">Inteligência em Qualidade & Dados</small>
                 </div>
                 <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
-                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versão 1.0</span>
+                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versão 2.0</span>
                 </div>
             </div>
         </div>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - MetriQ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .card-login { border: none; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .btn-brand { background-color: #0f172a; color: white; }
+        .btn-brand:hover { background-color: #1e293b; color: white; }
+        .brand-logo { color: #0f172a; font-weight: 800; font-size: 2rem; letter-spacing: -1px; text-decoration: none; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100">
+
+    <div class="card card-login p-4" style="width: 100%; max-width: 400px;">
+        <div class="card-body">
+            
+            <div class="text-center mb-4">
+                <div class="brand-logo">
+                    <i class="bi bi-bullseye text-info"></i> Metri<span class="text-info">Q</span>
+                </div>
+                <p class="text-muted small">Inteligência em Qualidade</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show text-center small" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="/login">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Usuário</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                        <input type="text" name="username" class="form-control border-start-0 ps-0 bg-light" placeholder="Seu usuário" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted">Senha</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" class="form-control border-start-0 ps-0 bg-light" placeholder="Sua senha" required>
+                    </div>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-brand fw-bold py-2">
+                        ENTRAR
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center border-top pt-3">
+                <small class="text-muted">Não tem uma conta?</small><br>
+                <a href="/registro" class="text-decoration-none fw-bold text-info">Criar conta grátis</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

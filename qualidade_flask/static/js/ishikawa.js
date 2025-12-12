@@ -344,18 +344,25 @@ window.salvarNoBanco = async function() {
         grafico: imgBase64 // Salva imagem dentro do JSON
     };
 
-    // 2. Monta o payload para o Backend (JSON, não FormData)
+    // 2. Monta o payload para o Backend
     const payload = {
         tipo: 'ishikawa',
         titulo: titulo || problema || "Análise Ishikawa",
         dados: dadosParaSalvar
     };
 
+    // --- SEGURANÇA CSRF (NOVO) ---
+    // 3. Pega o token de segurança do HTML
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     try {
-        // 3. Envia como JSON para a rota /salvar
+        // 4. Envia como JSON com o Token no Header
         const response = await fetch('/salvar', { 
             method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // <--- Envia o token aqui
+            },
             body: JSON.stringify(payload)
         });
 

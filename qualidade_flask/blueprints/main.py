@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime
+from flask_login import login_required, current_user
 from .. import db
 from ..models import Analise
 
@@ -9,26 +10,31 @@ main = Blueprint('main', __name__)
 # ROTA DA PÁGINA INICIAL (DASHBOARD)
 # ============================================
 @main.route('/')
+@login_required
 def index():
-    # Carrega as análises salvas para mostrar na lista
-    # Ordena da mais recente para a mais antiga
-    analises_salvas = Analise.query.order_by(Analise.data_criacao.desc()).all()
+    # Carrega apenas as análises do usuário logado
+    analises_salvas = Analise.query.filter_by(user_id=current_user.id).order_by(Analise.data_criacao.desc()).all()
     
     ferramentas = [
         {
             'slug': 'pareto', 'nome': 'Diagrama de Pareto',
             'desc': 'Priorize problemas focando nas causas vitais (80/20).',
-            'icon': 'bi-bar-chart-fill', 'cor': 'primary'
+            'icon': 'bi-bar-chart-fill', 'cor': 'warning'
         },
         {
             'slug': 'ishikawa', 'nome': 'Diagrama de Ishikawa',
             'desc': 'Mapeie causas e efeitos (6M) para encontrar a raiz.',
-            'icon': 'bi-diagram-3', 'cor': 'success'
+            'icon': 'bi-diagram-3', 'cor': 'primary'
         },
         {
             'slug': '5w2h', 'nome': 'Plano de Ação 5W2H',
-            'desc': 'Organize a execução: O que, Quem, Quando, Onde, Quanto.',
-            'icon': 'bi-clipboard-check', 'cor': 'warning'
+            'desc': 'Organize a execução: O que, Quem, Quando, Onde.',
+            'icon': 'bi-clipboard-check', 'cor': 'success'
+        },
+        {
+            'slug': 'folha_verificacao', 'nome': 'Folha de Verificação',
+            'desc': 'Colete dados e conte frequências em tempo real.',
+            'icon': 'bi-check2-square', 'cor': 'success'
         },
         {
             'slug': 'cep', 'nome': 'Gráfico de Controle (CEP)',
@@ -46,65 +52,44 @@ def index():
             'icon': 'bi-graph-up', 'cor': 'secondary'
         }
     ]
-    return render_template('index.html', ferramentas=ferramentas, analises=analises_salvas)
+    
+    return render_template('index.html', ferramentas=ferramentas, analises=analises_salvas, user=current_user)
 
 # ============================================
-# ROTAS DAS FERRAMENTAS (FALTAVA ISSO)
+# ROTA DE SALVAR (API)
 # ============================================
-
-@main.route('/ferramentas/pareto')
-def pareto():
-    return render_template('pareto.html')
-
-@main.route('/ferramentas/ishikawa')
-def ishikawa():
-    return render_template('ishikawa.html')
-
-@main.route('/ferramentas/5w2h')
-def cinco_w2h():
-    return render_template('5w2h.html')
-
-@main.route('/ferramentas/cep')
-def cep():
-    return render_template('controle.html') # Confirme se o nome do arquivo é controle.html ou cep.html
-
-@main.route('/ferramentas/histograma')
-def histograma():
-    return render_template('histograma.html')
-
-@main.route('/ferramentas/dispersao')
-def dispersao():
-    return render_template('dispersao.html')
-
-# ============================================
-# ROTAS DE API (SALVAR E EXCLUIR)
-# ============================================
-
 @main.route('/salvar', methods=['POST'])
+@login_required
 def salvar():
     conteudo = request.json
     
-    # Validação simples
     if not conteudo or 'tipo' not in conteudo:
         return jsonify({'erro': 'Dados inválidos'}), 400
 
-    nova_analise = Analise(
-        tipo=conteudo['tipo'],
-        titulo=conteudo.get('titulo', 'Sem Título'),
-        dados=conteudo['dados'] # Certifique-se que no models.py 'dados' é do tipo JSON
-    )
-    
     try:
+        nova_analise = Analise(
+            tipo=conteudo['tipo'],
+            titulo=conteudo.get('titulo', 'Sem Título'),
+            dados=conteudo.get('dados'),
+            user_id=current_user.id
+        )
+        
         db.session.add(nova_analise)
         db.session.commit()
+        
         return jsonify({'mensagem': 'Salvo com sucesso!', 'id': nova_analise.id})
     except Exception as e:
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
+# ============================================
+# ROTA DE EXCLUIR (API)
+# ============================================
 @main.route('/excluir/<int:id>', methods=['DELETE'])
+@login_required
 def excluir(id):
-    item = Analise.query.get_or_404(id)
+    item = Analise.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    
     try:
         db.session.delete(item)
         db.session.commit()
@@ -113,37 +98,40 @@ def excluir(id):
         return jsonify({'erro': str(e)}), 500
 
 # ============================================
-# ROTA DE VISUALIZAÇÃO/EDIÇÃO (OPCIONAL)
+# ROTA DE VISUALIZAÇÃO/EDIÇÃO
 # ============================================
 @main.route('/visualizar/<int:id>')
+@login_required
 def visualizar(id):
-    analise = Analise.query.get_or_404(id)
+    analise = Analise.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     
-    # Redireciona para o template correto baseado no tipo e passa os dados salvos
-    if analise.tipo == 'ishikawa':
-        return render_template('ishikawa.html', dados=analise.dados, analise_id=analise.id)
-    elif analise.tipo == 'pareto':
-        return render_template('pareto.html', dados=analise.dados, analise_id=analise.id)
-    # Adicione os outros tipos conforme necessário
+    # Mapeamento para saber qual HTML abrir
+    template_map = {
+        'pareto': 'pareto.html', 
+        'ishikawa': 'ishikawa.html', 
+        '5w2h': '5w2h.html',
+        'folha_verificacao': 'folha_verificacao.html', # <--- NOVO
+        'cep': 'controle.html', 
+        'histograma': 'histograma.html', 
+        'dispersao': 'dispersao.html'
+    }
     
-    return render_template('index.html') # Fallback
+    template_name = template_map.get(analise.tipo, 'index.html')
+    
+    return render_template(template_name, dados=analise.dados, analise_id=analise.id)
 
 # ============================================
 # ROTA DO RELATÓRIO
 # ============================================
 @main.route('/relatorio', methods=['POST'])
+@login_required
 def relatorio():
-    # Pega os IDs selecionados no checkbox
     ids = request.form.getlist('analise_id')
     
     if not ids:
         return "Nenhuma análise selecionada", 400
 
-    # Busca os objetos no banco
-    itens_db = Analise.query.filter(Analise.id.in_(ids)).all()
+    # Busca filtrando pelo usuário para segurança
+    itens_db = Analise.query.filter(Analise.id.in_(ids), Analise.user_id == current_user.id).all()
     
-    # Converte a lista de Objetos para lista de Dicionários (se o model tiver to_dict)
-    # Caso contrário, passe os objetos diretamente se o template suportar
-    itens_selecionados = [item for item in itens_db] 
-    
-    return render_template('relatorio.html', itens=itens_selecionados, hoje=datetime.now())
+    return render_template('relatorio.html', itens=itens_db, hoje=datetime.now(), user=current_user)

@@ -277,19 +277,21 @@ function renderizarGrafico(linhaTendencia) {
 // 6. SALVAR NO BANCO
 // ==========================================
 async function salvarNoBanco() {
+    // Pega o título ou define um padrão
     const titulo = document.getElementById('tituloProjeto').value || "Análise de Dispersão";
 
     if (dados.length === 0) { alert("Adicione dados antes de salvar."); return; }
 
     const stats = calcularRegressao();
     
-    // 1. CAPTURA A IMAGEM
+    // 1. CAPTURA A IMAGEM DO GRÁFICO (Para o relatório)
     const canvas = document.getElementById('scatterChart');
     const imagemBase64 = canvas.toDataURL();
 
+    // Pega configuração dos eixos (com valor padrão se estiver vazio)
     const config = {
-        labelX: document.getElementById('labelX').value,
-        labelY: document.getElementById('labelY').value
+        labelX: document.getElementById('labelX').value || "Variável X",
+        labelY: document.getElementById('labelY').value || "Variável Y"
     };
 
     const payload = {
@@ -299,18 +301,29 @@ async function salvarNoBanco() {
             pontos: dados,
             stats: stats ? { r: stats.r, a: stats.a, b: stats.b } : null,
             config: config,
-            grafico: imagemBase64 // <--- SALVA A FOTO DO GRÁFICO
+            grafico: imagemBase64 
         }
     };
+
+    // --- SEGURANÇA CSRF (NOVO) ---
+    // 2. Busca o token de segurança no HTML
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     try {
         const response = await fetch('/salvar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // <--- 3. Envia o token no cabeçalho
+            },
             body: JSON.stringify(payload)
         });
-        if(response.ok) alert("Salvo com sucesso!");
-        else alert("Erro ao salvar.");
+        
+        if(response.ok) {
+            alert("Salvo com sucesso!");
+        } else {
+            alert("Erro ao salvar.");
+        }
     } catch (e) {
         console.error(e);
         alert("Erro de conexão.");

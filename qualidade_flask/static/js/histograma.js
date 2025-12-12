@@ -268,18 +268,29 @@ async function salvarNoBanco() {
             dados_brutos: dadosRaw,
             histograma: dadosProc.classes,
             config: config,
-            grafico: imagemBase64 // <--- SALVA A FOTO DO GRÁFICO
+            grafico: imagemBase64 // Salva a foto do gráfico
         }
     };
+
+    // --- SEGURANÇA CSRF (NOVO) ---
+    // Pega o token da meta tag que colocamos no base.html
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     try {
         const response = await fetch('/salvar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // <--- ENVIA O TOKEN DE SEGURANÇA
+            },
             body: JSON.stringify(payload)
         });
-        if(response.ok) alert("Salvo com sucesso!");
-        else alert("Erro ao salvar.");
+        
+        if(response.ok) { 
+            alert("Salvo com sucesso!"); 
+        } else { 
+            alert("Erro ao salvar."); 
+        }
     } catch (e) {
         console.error(e);
         alert("Erro de conexão.");

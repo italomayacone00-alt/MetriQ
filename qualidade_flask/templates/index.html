@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- HEADER SECTION -->
 <div class="row mb-5">
     <div class="col-12">
         <div class="card border-0 shadow-sm bg-white border-start border-5 border-primary">
@@ -18,7 +17,6 @@
 </div>
 
 <div class="row g-4">
-    <!-- COLUNA DIREITA: FERRAMENTAS -->
     <div class="col-lg-8 order-lg-1">
         <h5 class="text-muted mb-4 fw-bold text-uppercase">
             <i class="bi bi-tools me-2"></i> Ferramentas Disponíveis
@@ -44,13 +42,12 @@
         </div>
     </div>
 
-    <!-- COLUNA ESQUERDA: ANÁLISES SALVAS -->
     <div class="col-lg-4 order-lg-2">
         <h5 class="text-muted mb-4 fw-bold text-uppercase">
             <i class="bi bi-database me-2"></i> Análises Salvas
         </h5>
         
-        <div class="card shadow-lg border-0 h-100">
+        <div class="card shadow-lg border-0 ">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <span class="fw-bold">
                     <i class="bi bi-bookmark-fill me-2"></i> Projetos Salvos
@@ -60,7 +57,8 @@
             
             <div class="card-body p-0">
                 <form action="/relatorio" method="POST" target="_blank" id="formRelatorio">
-                    <!-- LISTA DE ANÁLISES -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
                     <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
                         {% if analises %}
                             {% for item in analises %}
@@ -95,7 +93,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- BOTÃO DE AÇÃO -->
                     <div class="p-3 border-top bg-light">
                         <button type="submit" class="btn btn-primary w-100 fw-bold" 
                                 {% if not analises %}disabled{% endif %}>
@@ -108,7 +105,6 @@
     </div>
 </div>
 
-<!-- SCRIPT -->
 <script>
 async function deletarAnalise(botao, event) {
     event.preventDefault();
@@ -117,12 +113,23 @@ async function deletarAnalise(botao, event) {
     const id = botao.getAttribute('data-id');
     
     if(confirm('Deseja excluir permanentemente esta análise?')) {
+        // Busca token de segurança (funciona porque está no base.html)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
         try {
-            const response = await fetch(`/excluir/${id}`, { method: 'DELETE' });
+            const response = await fetch(`/excluir/${id}`, { 
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
             if(response.ok) {
                 window.location.reload();
             } else {
-                alert("Erro ao excluir a análise.");
+                const erro = await response.json();
+                alert("Erro ao excluir: " + (erro.erro || "Desconhecido"));
             }
         } catch (e) {
             console.error(e);
@@ -131,7 +138,6 @@ async function deletarAnalise(botao, event) {
     }
 }
 
-// Validar seleção antes de enviar relatório
 document.getElementById('formRelatorio').addEventListener('submit', function(e) {
     const checkboxes = document.querySelectorAll('input[name="analise_id"]:checked');
     if(checkboxes.length === 0) {
