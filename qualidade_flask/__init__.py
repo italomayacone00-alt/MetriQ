@@ -27,10 +27,23 @@ def create_app():
         # Força HTTPS
         Talisman(app, content_security_policy=None)
 
-    # Configuração do Banco de Dados SQLite
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(base_dir, 'qualidade.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    # ==================================================
+    # ALTERAÇÃO AQUI: Lógica Inteligente de Banco de Dados
+    # ==================================================
+    database_url = os.environ.get('DATABASE_URL')
+
+    if database_url:
+        # Se estiver no Render, usa o PostgreSQL
+        # Correção necessária: O Render entrega "postgres://", mas o SQLAlchemy pede "postgresql://"
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        # Se estiver no seu PC, usa o SQLite local (como era antes)
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        db_path = os.path.join(base_dir, 'qualidade.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ==================================================
@@ -76,4 +89,3 @@ def create_app():
         db.create_all()
 
     return app
-#36f852241dca82a3e9ff61ed31d62323
