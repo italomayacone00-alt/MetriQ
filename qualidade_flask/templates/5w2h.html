@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="d-print-none mb-4">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-        <li class="breadcrumb-item active">Plano de Ação 5W2H</li>
-    </ol>
-</nav>
+<div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Plano de Ação 5W2H</li>
+        </ol>
+    </nav>
+    
+    <button class="btn btn-success text-white fw-bold rounded-pill shadow-sm px-4" 
+            data-bs-toggle="modal" data-bs-target="#modal5w2hHelp"
+            style="transition: all 0.2s;">
+        <i class="bi bi-lightbulb-fill me-2"></i> Como Planejar?
+    </button>
+</div>
 
 <div class="row g-4">
     <div class="col-lg-3 d-print-none">
@@ -76,21 +84,7 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 border-start border-4 border-success mt-3">
-            <div class="card-body small text-muted p-3">
-                <h6 class="fw-bold text-success mb-1"><i class="bi bi-lightbulb-fill me-1"></i> Checklist de Execução</h6>
-                Garanta que não restem dúvidas sobre o plano:
-                <ul class="mb-0 ps-3 mt-1">
-                    <li><strong>What:</strong> O que será feito?</li>
-                    <li><strong>Why:</strong> Por que será feito?</li>
-                    <li><strong>Who:</strong> Quem fará?</li>
-                    <li><strong>When:</strong> Quando? (Prazo)</li>
-                    <li><strong>Where:</strong> Onde?</li>
-                    <li><strong>How:</strong> Como será feito?</li>
-                    <li><strong>How Much:</strong> Quanto custará?</li>
-                </ul>
-            </div>
-        </div>
+        
 
     </div>
 
@@ -142,6 +136,115 @@
                         <h5 class="fw-bold text-warning mb-0" id="prazoMaximo">-</h5>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal5w2hHelp" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            
+            <div class="modal-header bg-white border-bottom p-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 text-success rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-clipboard-check-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Como criar um Plano de Ação?</h5>
+                        <p class="text-muted small mb-0">Metodologia 5W2H</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body bg-light p-4">
+                <div class="row g-4">
+                    
+                    <div class="col-md-7">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                
+                                <div class="mb-4 border-bottom pb-3">
+                                    <h6 class="fw-bold text-dark mb-2">📌 Para que serve?</h6>
+                                    <p class="text-muted small mb-0 text-justify">
+                                        O 5W2H é um checklist administrativo. Ele serve para garantir que uma tarefa seja executada sem dúvidas, definindo claramente responsabilidades, prazos e custos.
+                                    </p>
+                                </div>
+
+                                <h6 class="fw-bold text-uppercase text-muted small mb-3">As 7 Perguntas Chave</h6>
+
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">What (O que)</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Why (Por que)</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Who (Quem)</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">When (Quando)</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Where (Onde)</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success">How (Como)</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success">How Much (Quanto)</span>
+                                </div>
+
+                                <div class="alert alert-success border-0 d-flex align-items-center p-2 rounded-3 mt-2 mb-0">
+                                    <i class="bi bi-shield-check text-success me-2 fs-5"></i>
+                                    <div class="small text-dark fw-semibold">
+                                        Dica: Se um campo ficar em branco, o plano pode falhar na execução.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="d-flex flex-column h-100 gap-3">
+                            
+                            <div class="card border-0 shadow-sm flex-grow-1">
+                                <div class="card-body p-3 text-center d-flex flex-column justify-content-center align-items-center">
+                                    <h6 class="text-muted small fw-bold mb-2">Estrutura Visual</h6>
+                                    
+                                    <svg width="100%" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" class="img-fluid">
+                                        <rect x="50" y="10" width="100" height="130" rx="5" fill="#f8f9fa" stroke="#6c757d" stroke-width="2"/>
+                                        <rect x="70" y="5" width="60" height="15" rx="2" fill="#6c757d"/>
+                                        
+                                        <rect x="60" y="35" width="10" height="10" rx="2" fill="#198754"/>
+                                        <path d="M 62 40 L 65 43 L 68 37" stroke="white" stroke-width="2" fill="none"/>
+                                        <line x1="75" y1="40" x2="140" y2="40" stroke="#adb5bd" stroke-width="2"/>
+                                        
+                                        <rect x="60" y="55" width="10" height="10" rx="2" fill="#198754"/>
+                                        <path d="M 62 60 L 65 63 L 68 57" stroke="white" stroke-width="2" fill="none"/>
+                                        <line x1="75" y1="60" x2="140" y2="60" stroke="#adb5bd" stroke-width="2"/>
+
+                                        <rect x="60" y="75" width="10" height="10" rx="2" fill="#198754"/>
+                                        <path d="M 62 80 L 65 83 L 68 77" stroke="white" stroke-width="2" fill="none"/>
+                                        <line x1="75" y1="80" x2="140" y2="80" stroke="#adb5bd" stroke-width="2"/>
+
+                                        <rect x="85" y="100" width="60" height="25" rx="2" fill="none" stroke="#dc3545" stroke-width="2" transform="rotate(-10 115 112.5)"/>
+                                        <text x="115" y="117" font-family="Arial" font-size="10" fill="#dc3545" font-weight="bold" text-anchor="middle" transform="rotate(-10 115 117)">PLAN OK</text>
+                                    </svg>
+                                    
+                                    <small class="text-muted d-block mt-2 fst-italic" style="font-size: 0.7rem;">Planejar evita desperdícios</small>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm bg-success text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold small mb-2"><i class="bi bi-play-circle me-1"></i> Como preencher:</h6>
+                                    <ol class="mb-0 ps-3 small" style="opacity: 0.95;">
+                                        <li>Preencha os campos à esquerda.</li>
+                                        <li>Use datas reais no <strong>When</strong>.</li>
+                                        <li>Clique em <strong>Adicionar Ação</strong>.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-white border-top-0 p-3 justify-content-center">
+                <button type="button" class="btn btn-dark px-5 rounded-pill fw-bold shadow-sm" data-bs-dismiss="modal">
+                    Entendi, vamos executar!
+                </button>
             </div>
         </div>
     </div>

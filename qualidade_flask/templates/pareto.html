@@ -1,72 +1,72 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- BREADCRUMB -->
-<nav aria-label="breadcrumb" class="d-print-none mb-4">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-        <li class="breadcrumb-item active">Diagrama de Pareto</li>
-    </ol>
-</nav>
+<div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Diagrama de Pareto</li>
+        </ol>
+    </nav>
+    
+    <button class="btn btn-warning text-dark fw-bold rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalParetoHelp">
+        <i class="bi bi-lightbulb-fill me-1"></i> Como analisar?
+    </button>
+</div>
 
 <div class="row g-4">
-    <!-- COLUNA ESQUERDA: PAINEL DE CONTROLE -->
     <div class="col-lg-4 d-print-none">
         
-        <!-- CARD: TÍTULO DO PROJETO -->
         <div class="card shadow-sm border-0 mb-3 bg-warning bg-opacity-10 border-start border-4 border-warning">
             <div class="card-body p-3">
                 <label class="form-label small fw-bold text-dark mb-2">
-                    <i class="bi bi-pencil-square me-1"></i> Nome do Projeto / Análise
+                    <i class="bi bi-pencil-square me-1"></i> Nome do Projeto
                 </label>
                 <div class="input-group">
                     <input type="text" id="tituloGrafico" class="form-control fw-bold" value="Análise de Pareto" oninput="atualizarVisual()">
-                    <button onclick="salvarNoBanco()" class="btn btn-warning fw-bold text-dark" title="Salvar no Dashboard">
+                    <button onclick="salvarNoBanco()" class="btn btn-warning fw-bold text-dark" title="Salvar">
                         <i class="bi bi-cloud-upload me-1"></i> Salvar
                     </button>
                 </div>
-                <small class="text-muted d-block mt-2">O título será usado no relatório profissional.</small>
             </div>
         </div>
 
-        <!-- CARD: CONFIGURAR EIXOS -->
         <div class="card shadow-sm border-0 mb-3">
-            <div class="card-header bg-secondary text-white fw-bold">
-                <i class="bi bi-sliders me-2"></i> Configurar Eixos
+            <div class="card-header bg-secondary text-white fw-bold py-2">
+                <i class="bi bi-sliders me-2"></i> Eixos do Gráfico
             </div>
-            <div class="card-body bg-light">
+            <div class="card-body bg-light p-3">
                 <div class="row g-2">
                     <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">Eixo Esquerdo (Barras)</label>
+                        <label class="form-label small fw-bold text-muted">Eixo Barras</label>
                         <input type="text" id="labelEsq" class="form-control form-control-sm" value="Frequência" oninput="atualizarVisual()">
                     </div>
                     <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">Eixo Direito (Linha)</label>
-                        <input type="text" id="labelDir" class="form-control form-control-sm" value="Acumulado (%)" oninput="atualizarVisual()">
+                        <label class="form-label small fw-bold text-muted">Eixo Linha (%)</label>
+                        <input type="text" id="labelDir" class="form-control form-control-sm" value="Acumulado" oninput="atualizarVisual()">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CARD: ADICIONAR DADOS -->
         <div class="card shadow-sm border-0 mb-3">
             <div class="card-header bg-primary text-white fw-bold">
-                <i class="bi bi-plus-circle me-2"></i> Adicionar Dados
+                <i class="bi bi-plus-circle me-2"></i> Inserir Dados
             </div>
             <div class="card-body">
                 <form id="paretoForm">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase text-muted">Item / Causa</label>
-                        <input type="text" id="categoria" class="form-control" placeholder="Ex: Atraso na Entrega" required>
+                        <label class="form-label small fw-bold text-uppercase text-muted">Causa / Problema</label>
+                        <input type="text" id="categoria" class="form-control" placeholder="Ex: Peça Riscada" required>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-uppercase text-muted">Valor / Frequência</label>
-                        <input type="number" id="valor" class="form-control" placeholder="Ex: 50" required min="1" step="0.01">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Quantidade (Frequência)</label>
+                        <input type="number" id="valor" class="form-control" placeholder="Ex: 45" required min="1">
                     </div>
                     
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary fw-bold shadow-sm">
-                            <i class="bi bi-plus-lg me-1"></i> Adicionar Item
+                            <i class="bi bi-plus-lg me-1"></i> Adicionar
                         </button>
                         <button type="button" onclick="limparTudo()" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-trash me-1"></i> Limpar Tudo
@@ -75,23 +75,13 @@
                 </form>
             </div>
         </div>
-
-        <!-- CARD: INFORMAÇÃO -->
-        <div class="card shadow-sm border-0 border-start border-4 border-info">
-            <div class="card-body small text-muted p-3">
-                <i class="bi bi-lightbulb text-info me-2 fw-bold"></i>
-                <strong>Princípio de Pareto (80/20):</strong> 80% dos problemas vêm de 20% das causas. Foque nas barras maiores à esquerda.
-            </div>
-        </div>
     </div>
 
-    <!-- COLUNA DIREITA: GRÁFICO E TABELA -->
     <div class="col-lg-8">
-        <!-- CARD: GRÁFICO -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-bottom py-3">
                 <span class="fw-bold text-dark">
-                    <i class="bi bi-graph-up me-2"></i> Diagrama de Pareto
+                    <i class="bi bi-graph-up me-2"></i> Visualização Gráfica
                 </span>
             </div>
             <div class="card-body">
@@ -101,11 +91,10 @@
             </div>
         </div>
 
-        <!-- CARD: TABELA DE DADOS -->
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom">
                 <span class="fw-bold text-dark">
-                    <i class="bi bi-table me-2"></i> Dados Detalhados
+                    <i class="bi bi-table me-2"></i> Tabela de Dados
                 </span>
                 <div class="d-print-none gap-2 d-flex">
                     <button onclick="window.print()" class="btn btn-dark btn-sm shadow-sm">
@@ -120,15 +109,135 @@
                 <table class="table table-striped table-hover mb-0 align-middle text-center" id="tabelaDados">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-start ps-4">Item / Causa</th>
-                            <th>Valor</th>
+                            <th class="text-start ps-4">Causa</th>
+                            <th>Frequência</th>
                             <th>% Acumulada</th>
-                            <th class="d-print-none text-end pe-4">Ações</th>
+                            <th class="d-print-none text-end pe-4">Opções</th>
                         </tr>
                     </thead>
                     <tbody>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalParetoHelp" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            
+            <div class="modal-header bg-white border-bottom p-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="bi bi-bar-chart-line-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Como interpretar o Pareto?</h5>
+                        <p class="text-muted small mb-0">Guia da Regra 80/20</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body bg-light p-4">
+                <div class="row g-4">
+                    
+                    <div class="col-md-7">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                
+                                <div class="mb-4 border-bottom pb-3">
+                                    <h6 class="fw-bold text-dark mb-2">📌 O que é o Diagrama de Pareto?</h6>
+                                    <p class="text-muted small mb-0 text-justify">
+                                        É uma ferramenta de priorização baseada na regra <strong>80/20</strong>. Ela mostra que <strong>80% dos problemas</strong> geralmente vêm de apenas <strong>20% das causas</strong>. O objetivo é ajudar você a ignorar o que é trivial e focar apenas no que realmente traz resultado.
+                                    </p>
+                                </div>
+
+                                <h6 class="fw-bold text-uppercase text-muted small mb-3">Elementos do Gráfico</h6>
+
+                                <div class="d-flex mb-3">
+                                    <div class="me-3 mt-1">
+                                        <i class="bi bi-bar-chart-fill text-primary fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="d-block text-dark small">Barras Azuis (Frequência)</strong>
+                                        <span class="text-muted small">Mostram o tamanho de cada problema individualmente.</span>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mb-3">
+                                    <div class="me-3 mt-1">
+                                        <i class="bi bi-graph-up-arrow text-danger fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="d-block text-dark small">Linha Vermelha (Acumulado)</strong>
+                                        <p class="text-muted small mb-0 text-justify" style="line-height: 1.4;">
+                                            É uma soma acumulada. Quando ela cruza a marca de <strong>80%</strong>, ela define o limite das suas "Causas Vitais".
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning border-0 d-flex align-items-center p-2 rounded-3 mt-2 mb-0">
+                                    <i class="bi bi-star-fill text-warning me-2"></i>
+                                    <div class="small text-dark fw-semibold">
+                                        Foque em resolver tudo o que está à ESQUERDA do corte de 80%.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="d-flex flex-column h-100 gap-3">
+                            
+                            <div class="card border-0 shadow-sm flex-grow-1">
+                                <div class="card-body p-3 text-center d-flex flex-column justify-content-center align-items-center">
+                                    <h6 class="text-muted small fw-bold mb-2">Exemplo Visual</h6>
+                                    
+                                    <svg width="100%" height="160" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" class="img-fluid">
+                                        <line x1="30" y1="180" x2="280" y2="180" stroke="#eee" stroke-width="2"/>
+                                        <line x1="30" y1="20" x2="30" y2="180" stroke="#eee" stroke-width="2"/>
+                                        <line x1="280" y1="20" x2="280" y2="180" stroke="#eee" stroke-width="2"/>
+
+                                        <text x="282" y="62" font-family="Arial" font-size="10" fill="#dc3545" font-weight="bold">80%</text>
+                                        <line x1="30" y1="58" x2="280" y2="58" stroke="#dc3545" stroke-width="1" stroke-dasharray="4"/>
+
+                                        <rect x="45" y="60" width="40" height="120" fill="#0d6efd" opacity="0.9" rx="2"/>
+                                        <rect x="95" y="100" width="40" height="80" fill="#0d6efd" opacity="0.7" rx="2"/>
+                                        <rect x="145" y="150" width="40" height="30" fill="#0d6efd" opacity="0.4" rx="2"/>
+                                        <rect x="195" y="170" width="40" height="10" fill="#0d6efd" opacity="0.2" rx="2"/>
+
+                                        <polyline points="65,60 115,38 165,28 215,24" fill="none" stroke="#dc3545" stroke-width="3" stroke-linecap="round"/>
+                                        <circle cx="65" cy="60" r="4" fill="#fff" stroke="#dc3545" stroke-width="2"/>
+                                        <circle cx="115" cy="38" r="4" fill="#fff" stroke="#dc3545" stroke-width="2"/>
+
+                                        <text x="90" y="195" font-family="Arial" font-size="9" fill="#212529" font-weight="bold" text-anchor="middle">FOCO AQUI</text>
+                                        <path d="M 65 170 L 65 180" stroke="#212529" stroke-width="1"/>
+                                        <path d="M 115 170 L 115 180" stroke="#212529" stroke-width="1"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm bg-primary text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold small mb-2"><i class="bi bi-play-circle me-1"></i> Como preencher:</h6>
+                                    <ol class="mb-0 ps-3 small" style="opacity: 0.9;">
+                                        <li>Digite o <strong>Nome da Causa</strong>.</li>
+                                        <li>Digite a <strong>Quantidade</strong>.</li>
+                                        <li>Clique em <strong>Adicionar</strong>.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-white border-top-0 p-3 justify-content-center">
+                <button type="button" class="btn btn-dark px-5 rounded-pill fw-bold shadow-sm" data-bs-dismiss="modal">
+                    Entendi, vamos analisar!
+                </button>
             </div>
         </div>
     </div>
