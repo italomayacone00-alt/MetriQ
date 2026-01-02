@@ -31,6 +31,13 @@ def index():
             'desc': 'Organize a execução: O que, Quem, Quando, Onde.',
             'icon': 'bi-clipboard-check', 'cor': 'success'
         },
+        # --- [NOVO] ADICIONADO AQUI ---
+        {
+            'slug': 'fluxograma', 'nome': 'Fluxograma',
+            'desc': 'Mapeie sequências, decisões e padronize fluxos.',
+            'icon': 'bi-diagram-2-fill', 'cor': 'info'
+        },
+        # ------------------------------
         {
             'slug': 'folha_verificacao', 'nome': 'Folha de Verificação',
             'desc': 'Colete dados e conte frequências em tempo real.',
@@ -54,6 +61,18 @@ def index():
     ]
     
     return render_template('index.html', ferramentas=ferramentas, analises=analises_salvas, user=current_user)
+
+# ============================================
+# ROTAS DE FERRAMENTAS INDIVIDUAIS
+# ============================================
+
+# [Se houver rotas para pareto, ishikawa, etc, elas estariam aqui]
+# Vou adicionar apenas a do Fluxograma que faltava:
+
+@main.route('/fluxograma')
+@login_required
+def fluxograma():
+    return render_template('fluxograma.html')
 
 # ============================================
 # ROTA DE SALVAR (API)
@@ -110,10 +129,13 @@ def visualizar(id):
         'pareto': 'pareto.html', 
         'ishikawa': 'ishikawa.html', 
         '5w2h': '5w2h.html',
-        'folha_verificacao': 'folha_verificacao.html', # <--- NOVO
+        'folha_verificacao': 'folha_verificacao.html',
         'cep': 'controle.html', 
         'histograma': 'histograma.html', 
-        'dispersao': 'dispersao.html'
+        'dispersao': 'dispersao.html',
+        # --- [NOVO] ADICIONADO AQUI ---
+        'fluxograma': 'fluxograma.html'
+        # ------------------------------
     }
     
     template_name = template_map.get(analise.tipo, 'index.html')

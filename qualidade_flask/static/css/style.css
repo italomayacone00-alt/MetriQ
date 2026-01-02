@@ -761,3 +761,32 @@ canvas {
     box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     color: white;
 }
+
+/* =========================================
+   FERRAMENTA: FLUXOGRAMA (TEMA INDIGO)
+   ========================================= */
+
+/* Cores */
+.border-indigo { border-color: #6610f2 !important; }
+.text-indigo { color: #6610f2 !important; }
+.bg-indigo-subtle { background-color: #e0cffc !important; }
+
+/* Área de Desenho (Performance Otimizada) */
+.chart-bg {
+    background-color: #f8f9fa;
+    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-size: 20px 20px;
+    
+    /* SEGURANÇA CONTRA TRAVAMENTO */
+    contain: content; /* Isola o desenho do resto da página */
+    overflow: auto;   /* Permite rolagem se ficar gigante */
+    will-change: transform; /* Avisa ao navegador que vai mudar */
+}
+
+/* Container do SVG */
+#diagramaContainer {
+    max-width: 100%;
+    /* Centraliza */
+    display: flex;
+    justify-content: center;
+}

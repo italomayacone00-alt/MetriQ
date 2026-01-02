@@ -43,3 +43,8 @@ def dispersao():
 @login_required
 def folha_verificacao():
     return render_template('folha_verificacao.html')
+
+@tools.route('/ferramenta/fluxograma')
+@login_required
+def fluxograma():
+    return render_template('fluxograma.html')
