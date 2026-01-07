@@ -56,13 +56,13 @@ PROMPTS_FERRAMENTAS = {
 }
 
 # ==================================================
-# 2. PROMPT PARA ANÁLISE GERAL (TEXTO BRANCO / FUNDO ESCURO)
+# 2. PROMPT PARA ANÁLISE GERAL (TEXTO BRANCO)
 # ==================================================
 PROMPT_ANALISE_GERAL = """
 ATUAR COMO: Consultor Master Black Belt em Excelência Organizacional.
 
 Sua tarefa é elaborar um RELATÓRIO EXECUTIVO CONSOLIDADO.
-IMPORTANTE: O design final terá fundo escuro. Use cores claras (text-white, text-light) para o texto.
+IMPORTANTE: O design final terá fundo escuro. Use cores claras para o texto.
 
 ESTRUTURA OBRIGATÓRIA (HTML com Bootstrap):
 
@@ -103,7 +103,7 @@ ESTRUTURA OBRIGATÓRIA (HTML com Bootstrap):
 REGRAS:
 1. Não repita o óbvio das análises individuais. Foque na CONEXÃO entre elas.
 2. Seja direto, executivo e estratégico.
-3. Use apenas HTML puro. NÃO use blocos de código markdown.
+3. Use apenas HTML. NÃO use ```html no inicio.
 """
 
 # ============================================
@@ -133,9 +133,7 @@ def limpar_dados_para_ia(dados_json):
 def limpar_resposta_ia(texto):
     """Remove artefatos de markdown que a IA as vezes coloca."""
     if not texto: return ""
-    # Remove ```html e ``` do início e fim
-    limpo = texto.replace('```html', '').replace('```', '')
-    return limpo.strip()
+    return texto.replace('```html', '').replace('```', '')
 
 # ============================================
 # CÉREBRO 1: GERAÇÃO DE ANÁLISE INDIVIDUAL
@@ -198,8 +196,7 @@ def gerar_analise_ia(tipo_ferramenta, dados_json):
             temperature=0.3, 
             max_tokens=2000
         )
-        
-        # LIMPEZA FORÇADA AQUI
+        # --- LIMPEZA DE MARKDOWN AQUI ---
         return limpar_resposta_ia(chat.choices[0].message.content)
 
     except Exception as e:
@@ -219,7 +216,6 @@ def gerar_conclusao_geral(itens_db):
             resumo_global += f"=== {item.tipo.upper()} ({item.titulo}) ===\n"
             resumo_global += f"DADOS: {limpar_dados_para_ia(item.dados)}\n"
             if item.dados.get('analise_ia') and "ERRO" not in item.dados.get('analise_ia'):
-                # Remove tags HTML simples para economizar tokens na leitura
                 analise_limpa = item.dados['analise_ia'].replace('<div>', '').replace('</div>', '')
                 resumo_global += f"DIAGNÓSTICO PRÉVIO: {analise_limpa[:600]}...\n\n"
 
@@ -232,8 +228,7 @@ def gerar_conclusao_geral(itens_db):
             temperature=0.4, 
             max_tokens=3000
         )
-        
-        # LIMPEZA FORÇADA AQUI
+        # --- LIMPEZA DE MARKDOWN AQUI ---
         return limpar_resposta_ia(chat.choices[0].message.content)
 
     except Exception as e:
@@ -322,7 +317,7 @@ def relatorio():
     precisa_salvar = False
     for item in itens_db:
         texto = item.dados.get('analise_ia', '')
-        # Regera se: vazio, erro, modelo antigo, ou SE TIVER O LIXO ```html
+        # Regera se: vazio, erro, ou modelo antigo, ou SE TIVER O LIXO ```html
         if not texto or "ERRO" in texto or "consultoria-report" not in texto or "```" in texto:
             print(f"-> Corrigindo IA para ID {item.id}...")
             nova_ia = gerar_analise_ia(item.tipo, item.dados)

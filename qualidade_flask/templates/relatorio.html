@@ -4,26 +4,26 @@
     <meta charset="UTF-8">
     <title>Relatório Técnico de Qualidade</title>
 
-    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-    <link href="[https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap](https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap)" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
-    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css)" rel="stylesheet">
-    <link href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #0f172a; /* Azul Executivo Profundo */
-            --accent: #2563eb;  /* Azul Real para destaques */
+            --primary: #0f172a; /* Azul Executivo */
+            --accent: #2563eb;  /* Azul Real */
             --text-body: #334155;
             --border-color: #cbd5e1;
         }
 
-        /* --- CONFIGURAÇÃO DE PAPEL A4 --- */
+        /* CONFIGURAÇÃO DE IMPRESSÃO A4 */
         @page { size: A4; margin: 0; }
 
         body {
-            background: #525659; /* Fundo cinza na visualização web */
-            font-family: 'Merriweather', serif; /* Fonte serifada para leitura confortável */
+            background: #525659;
+            font-family: 'Merriweather', serif;
             color: var(--text-body);
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -37,97 +37,71 @@
             padding: 20mm;
             position: relative;
             box-shadow: 0 0 18px rgba(0,0,0,0.25);
-            page-break-after: always; /* Garante nova página para cada item */
+            page-break-after: always;
         }
 
-        /* ================= CAPA PROFISSIONAL ================= */
+        /* --- CAPA --- */
         .cover-page {
             background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
             color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
-        
         .cover-page::before {
             content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 12mm;
             background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
         }
-
-        .cover-logo { font-family: 'Roboto', sans-serif; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; margin-left: 20px; }
+        .cover-logo { font-family: 'Roboto', sans-serif; font-size: 2.2rem; font-weight: 900; margin-left: 20px; }
         .cover-title { font-family: 'Roboto', sans-serif; font-size: 3.5rem; font-weight: 700; line-height: 1.1; margin-left: 20px; }
         .cover-footer { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 25px; font-family: 'Roboto', sans-serif; margin-left: 20px; }
 
-        /* ================= CABEÇALHO DAS PÁGINAS ================= */
+        /* --- CABEÇALHOS --- */
         .page-header {
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 12px;
-            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 30px;
             display: flex; justify-content: space-between; align-items: flex-end;
         }
         .header-title { font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 1.6rem; color: var(--primary); margin: 0; }
         .header-meta { font-family: 'Roboto', sans-serif; font-size: 0.85rem; color: #64748b; text-align: right; }
 
-        /* ================= TÍTULOS DE SEÇÃO ================= */
+        /* --- TÍTULOS E GRÁFICOS --- */
         .section-title {
             font-family: 'Roboto', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--primary);
             text-transform: uppercase; letter-spacing: 1.2px; margin-top: 40px; margin-bottom: 15px;
             border-left: 5px solid var(--accent); padding-left: 15px;
         }
-
-        /* ================= ÁREA DOS GRÁFICOS ================= */
         .chart-container {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
             padding: 15px; text-align: center; page-break-inside: avoid;
         }
-        .chart-img {
-            max-width: 100%; max-height: 380px; object-fit: contain;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        }
+        .chart-img { max-width: 100%; max-height: 380px; object-fit: contain; }
 
-        /* ================= ESTILO DO CONSULTOR IA ================= */
-        .consultoria-report {
-            font-family: 'Roboto', sans-serif;
-            background-color: transparent;
-            padding: 5px;
-        }
-        .consultoria-report h5 { font-size: 1.1rem; margin-top: 10px; margin-bottom: 10px; }
-        .consultoria-report p { font-size: 0.9rem; line-height: 1.5; text-align: justify; }
-        .consultoria-report li { font-size: 0.85rem; margin-bottom: 4px; }
-        
-        /* Box da análise individual (Fundo Branco) */
+        /* --- ESTILO DO RELATÓRIO DA IA --- */
         .ai-wrapper {
             border: 1px solid #e2e8f0; border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             padding: 25px; margin-top: 25px; background: white;
             page-break-inside: avoid;
         }
-        .ai-wrapper .consultoria-report p { color: #475569; }
+        .consultoria-report {
+            font-family: 'Roboto', sans-serif;
+            background-color: transparent; /* Importante para funcionar no fundo escuro */
+        }
+        .consultoria-report h5 { font-size: 1.1rem; margin-top: 15px; margin-bottom: 10px; }
+        .consultoria-report p, .consultoria-report li { font-size: 0.9rem; line-height: 1.6; }
 
-        /* ================= TABELAS DE DADOS BRUTOS ================= */
-        .table-custom {
-            width: 100%; font-size: 0.8rem; font-family: 'Roboto', sans-serif;
-            border-collapse: collapse; margin-bottom: 20px;
-        }
-        .table-custom th {
-            background: var(--primary); color: white; padding: 10px;
-            text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px;
-        }
-        .table-custom td {
-            padding: 8px 10px; border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
+        /* --- TABELAS --- */
+        .table-custom { width: 100%; font-size: 0.8rem; font-family: 'Roboto'; border-collapse: collapse; margin-bottom: 20px; }
+        .table-custom th { background: var(--primary); color: white; padding: 10px; text-transform: uppercase; font-size: 0.7rem; }
+        .table-custom td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
         .table-custom tr:nth-child(even) { background-color: #f1f5f9; }
-        
-        /* Classes utilitárias para impressão */
+
+        /* --- MODO DE IMPRESSÃO --- */
         @media print {
             body { background: none; }
-            .a4-page { margin: 0; box-shadow: none; border: none; width: 100%; height: auto; }
+            .a4-page { margin: 0; box-shadow: none; width: 100%; height: auto; }
             .no-print { display: none !important; }
             .a4-page::after {
-                content: "MetriQ Pro - Página " counter(page);
-                position: absolute; bottom: 10mm; right: 20mm;
-                font-size: 0.7rem; color: #94a3b8; font-family: 'Roboto', sans-serif;
+                content: "Página " counter(page); position: absolute; bottom: 10mm; right: 20mm;
+                font-size: 0.7rem; color: #94a3b8; font-family: 'Roboto';
             }
             @page :first { margin: 0; }
         }
@@ -144,83 +118,47 @@
 
 <div class="a4-page cover-page">
     <div style="margin-left: 20px;">
-        <div class="cover-logo">
-            <i class="fa-solid fa-bullseye me-2 text-info"></i> MetriQ Pro
-        </div>
+        <div class="cover-logo"><i class="fa-solid fa-bullseye me-2 text-info"></i> MetriQ Pro</div>
     </div>
-
     <div class="text-start" style="margin-left: 20px;">
-        <h1 class="cover-title">
-            Relatório Técnico<br>
-            <span style="font-weight: 300; opacity: 0.9;">Integrado</span>
-        </h1>
+        <h1 class="cover-title">Relatório Técnico<br><span style="font-weight: 300; opacity: 0.9;">Integrado</span></h1>
         <p class="mt-4 fs-5 opacity-75" style="max-width: 600px; line-height: 1.6;">
-            Diagnóstico estratégico de qualidade, identificação de causas raízes,
-            evidências estatísticas e consolidação executiva.
+            Diagnóstico estratégico de qualidade, identificação de causas raízes e consolidação executiva.
         </p>
     </div>
-
     <div class="cover-footer">
         <div class="row">
-            <div class="col-6">
-                <small class="text-white-50 d-block mb-1" style="letter-spacing: 1px;">RESPONSÁVEL TÉCNICO</small>
-                <strong class="fs-5">{{ user.username.upper() }}</strong>
-            </div>
-            <div class="col-6 text-end">
-                <small class="text-white-50 d-block mb-1" style="letter-spacing: 1px;">DATA DE EMISSÃO</small>
-                <strong class="fs-5">{{ hoje.strftime('%d/%m/%Y às %H:%M') }}</strong>
-            </div>
+            <div class="col-6"><small class="text-white-50 d-block mb-1">RESPONSÁVEL</small><strong class="fs-5">{{ user.username.upper() }}</strong></div>
+            <div class="col-6 text-end"><small class="text-white-50 d-block mb-1">EMISSÃO</small><strong class="fs-5">{{ hoje.strftime('%d/%m/%Y às %H:%M') }}</strong></div>
         </div>
     </div>
 </div>
 
 {% for item in itens %}
 <div class="a4-page">
-
     <header class="page-header">
         <div>
             <h2 class="header-title">{{ item.titulo }}</h2>
-            <span class="badge bg-secondary text-uppercase mt-1 shadow-sm">
-                FERRAMENTA: {{ item.tipo|replace('_', ' ')|upper }}
-            </span>
+            <span class="badge bg-secondary text-uppercase mt-1 shadow-sm">FERRAMENTA: {{ item.tipo|replace('_', ' ')|upper }}</span>
         </div>
-        <div class="header-meta">
-            <strong>ID REGISTRO: #{{ item.id }}</strong><br>
-            DATA BASE: {{ item.data_criacao.strftime('%d/%m/%Y') }}
-        </div>
+        <div class="header-meta"><strong>ID: #{{ item.id }}</strong><br>DATA: {{ item.data_criacao.strftime('%d/%m/%Y') }}</div>
     </header>
 
     <div class="section-title"><i class="fa-solid fa-chart-pie me-2"></i> Evidência Visual</div>
     <div class="chart-container">
-        {% if item.dados.get('grafico') %}
-            <img src="{{ item.dados.get('grafico') }}" class="chart-img" alt="Gráfico">
-        {% elif item.dados.get('imgBase64') %}
-            <img src="{{ item.dados.get('imgBase64') }}" class="chart-img" alt="Gráfico">
-        {% elif item.dados.get('imagem') %}
-            <img src="{{ item.dados.get('imagem') }}" class="chart-img" alt="Gráfico">
-        {% elif item.dados.dados and item.dados.dados.get('grafico') %}
-            <img src="{{ item.dados.dados.get('grafico') }}" class="chart-img" alt="Gráfico">
-        {% else %}
-            <div class="py-5 text-muted fst-italic">
-                <i class="fa-regular fa-image-slash fa-2x mb-2"></i><br>
-                Visualização gráfica indisponível.
-            </div>
-        {% endif %}
-        <p class="text-muted small mt-2 mb-0 fst-italic">Figura {{ loop.index }}: Representação gráfica dos dados.</p>
+        {% if item.dados.get('grafico') %}<img src="{{ item.dados.get('grafico') }}" class="chart-img">
+        {% elif item.dados.get('imgBase64') %}<img src="{{ item.dados.get('imgBase64') }}" class="chart-img">
+        {% elif item.dados.dados and item.dados.dados.get('grafico') %}<img src="{{ item.dados.dados.get('grafico') }}" class="chart-img">
+        {% else %}<div class="py-5 text-muted fst-italic">Gráfico indisponível.</div>{% endif %}
     </div>
 
     {% if item.dados.get('analise_ia') %}
     <div class="ai-wrapper">
         <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-            <div class="bg-primary text-white rounded p-2 me-3">
-                <i class="fa-solid fa-user-tie fa-lg"></i>
-            </div>
-            <div>
-                <h5 class="m-0 fw-bold text-primary">Análise Técnica Individual</h5>
-                <small class="text-muted">Metodologia Lean Six Sigma</small>
-            </div>
+            <div class="bg-primary text-white rounded p-2 me-3"><i class="fa-solid fa-user-tie fa-lg"></i></div>
+            <div><h5 class="m-0 fw-bold text-primary">Análise Técnica Individual</h5></div>
         </div>
-        <div class="consultoria-report">
+        <div class="consultoria-report text-secondary">
             {{ item.dados.get('analise_ia') | safe }}
         </div>
     </div>
@@ -230,18 +168,10 @@
 
     {% if item.tipo == 'pareto' %}
         <table class="table-custom">
-            <thead>
-                <tr><th>Categoria / Causa</th><th class="text-center">Frequência</th><th class="text-center">% Acumulado</th></tr>
-            </thead>
+            <thead><tr><th>Causa</th><th class="text-center">Frequência</th><th class="text-center">%</th></tr></thead>
             <tbody>
                 {% set lista = item.dados.itens if item.dados.itens else item.dados.dados %}
-                {% for dado in lista %}
-                <tr>
-                    <td>{{ dado.label if dado.label else dado.item }}</td>
-                    <td class="text-center fw-bold">{{ dado.value if dado.value else dado.valor }}</td>
-                    <td class="text-center">{{ dado.perc if dado.perc else '-' }}</td>
-                </tr>
-                {% endfor %}
+                {% for d in lista %}<tr><td>{{ d.label or d.item }}</td><td class="text-center fw-bold">{{ d.value or d.valor }}</td><td class="text-center">{{ d.perc }}</td></tr>{% endfor %}
             </tbody>
         </table>
 
@@ -250,16 +180,10 @@
             <div class="col-12"><span class="badge bg-light text-dark border p-2">Total de Amostras: {{ item.dados.dados|length if item.dados.dados is sequence else '-' }}</span></div>
         </div>
         <table class="table-custom w-75 mx-auto">
-            <thead>
-                <tr>
-                    <th>Intervalo de Classe</th>
-                    <th class="text-center">Frequência</th>
-                    <th class="text-center">Porcentagem</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Intervalo de Classe</th><th class="text-center">Frequência</th><th class="text-center">%</th></tr></thead>
             <tbody>
-                {% set hist_data = item.dados.histograma if item.dados.histograma else item.dados.itens %}
-                {% for h in hist_data %}
+                {% set hist = item.dados.histograma if item.dados.histograma else item.dados.itens %}
+                {% for h in hist %}
                 <tr>
                     <td>{{ h.label }}</td>
                     <td class="text-center fw-bold">{{ h.freq }}</td>
@@ -270,73 +194,29 @@
         </table>
 
     {% elif item.tipo == 'cep' %}
-        <div class="row mb-3 justify-content-center text-center">
-            <div class="col-auto"><span class="badge bg-light text-dark border px-3">Média: {{ "%.2f"|format(item.dados.estatisticas.media) if item.dados.estatisticas else '-' }}</span></div>
-            <div class="col-auto"><span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3">LSE: {{ "%.2f"|format(item.dados.estatisticas.lse) if item.dados.estatisticas else '-' }}</span></div>
-            <div class="col-auto"><span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3">LIE: {{ "%.2f"|format(item.dados.estatisticas.lie) if item.dados.estatisticas else '-' }}</span></div>
-        </div>
         <table class="table-custom w-75 mx-auto">
-            <thead><tr><th class="text-center">Amostra #</th><th class="text-center">Valor</th><th class="text-center">Status</th></tr></thead>
+            <thead><tr><th class="text-center">Amostra</th><th class="text-center">Valor</th><th class="text-center">Status</th></tr></thead>
             <tbody>
                 {% set lista = item.dados.itens if item.dados.itens else item.dados.medicoes %}
-                {% for p in lista %}
-                <tr>
-                    <td class="text-center">{{ p.label if p.label else loop.index }}</td>
-                    <td class="text-center">{{ p.value if p.value else p.valor }}</td>
-                    <td class="text-center"><span class="badge bg-success">OK</span></td>
-                </tr>
-                {% endfor %}
+                {% for p in lista %}<tr><td class="text-center">{{ p.label or loop.index }}</td><td class="text-center">{{ p.value or p.valor }}</td><td class="text-center"><span class="badge bg-success">OK</span></td></tr>{% endfor %}
             </tbody>
         </table>
 
     {% elif item.tipo == '5w2h' %}
         <table class="table-custom">
             <thead><tr><th>O Que</th><th>Por Que</th><th>Quem</th><th>Quando</th><th>Custo</th></tr></thead>
-            <tbody>
-                {% for acao in item.dados.itens %}
-                <tr>
-                    <td><strong>{{ acao.what }}</strong></td>
-                    <td>{{ acao.why }}</td>
-                    <td>{{ acao.who }}</td>
-                    <td>{{ acao.when }}</td>
-                    <td>R$ {{ "%.2f"|format(acao.how_much|float) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="fw-bold bg-light"><td colspan="4" class="text-end">Custo Total:</td><td>{{ item.dados.resumo.total_custo if item.dados.resumo else '-' }}</td></tr>
-            </tfoot>
+            <tbody>{% for a in item.dados.itens %}<tr><td><strong>{{ a.what }}</strong></td><td>{{ a.why }}</td><td>{{ a.who }}</td><td>{{ a.when }}</td><td>R$ {{ a.how_much }}</td></tr>{% endfor %}</tbody>
         </table>
 
     {% elif item.tipo == 'ishikawa' %}
         <div class="row g-4">
-            {% for key, val in item.dados.diagrama.items() %}
-                {% if val|length > 0 %}
-                <div class="col-6">
-                    <div class="h-100 p-3 border rounded bg-light">
-                        <strong class="text-primary text-uppercase border-bottom pb-1 d-block mb-2">{{ key|replace('_',' ') }}</strong>
-                        <ul class="mb-0 ps-3 small text-secondary">
-                            {% for causa in val %}<li>{{ causa.texto if causa.texto else causa }}</li>{% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                {% endif %}
+            {% for k, v in item.dados.diagrama.items() %}
+                {% if v %}<div class="col-6"><div class="p-3 border rounded bg-light"><strong class="text-primary text-uppercase border-bottom d-block mb-2">{{ k|replace('_',' ') }}</strong><ul class="mb-0 ps-3 small text-secondary">{% for c in v %}<li>{{ c.texto or c }}</li>{% endfor %}</ul></div></div>{% endif %}
             {% endfor %}
         </div>
-
     {% else %}
-        <div class="alert alert-light border small">
-            <strong>Dados disponíveis:</strong>
-            <ul class="mt-2 mb-0">
-            {% for k, v in item.dados.items() %}
-                {% if k not in ['grafico', 'analise_ia', 'imgBase64', 'imagem'] %}
-                    <li><strong>{{ k|upper }}:</strong> {{ v }}</li>
-                {% endif %}
-            {% endfor %}
-            </ul>
-        </div>
+        <div class="alert alert-light border small">Dados brutos: {{ item.dados }}</div>
     {% endif %}
-
 </div>
 {% endfor %}
 
