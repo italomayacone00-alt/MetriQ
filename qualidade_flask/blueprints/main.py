@@ -9,6 +9,16 @@ from groq import Groq
 
 main = Blueprint('main', __name__)
 
+def get_client_groq():
+    # O Python vai buscar a chave direto na memória do computador/servidor
+    api_key = os.environ.get("GROQ_API_KEY")
+    
+    if not api_key:
+        print("ERRO: Chave não encontrada no sistema!")
+        return None
+        
+    return Groq(api_key=api_key)
+
 # ==================================================
 # 1. PROMPTS ESPECIALIZADOS POR FERRAMENTA
 # ==================================================
