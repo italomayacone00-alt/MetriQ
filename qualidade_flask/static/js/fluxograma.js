@@ -192,7 +192,7 @@ function atualizarTabela() {
         }
 
         // Formata a Origem (Conexão Anterior)
-        let origemTexto = '<span class="text-muted fst-italic small">- Início -</span>';
+        let origemTexto = '<span class="text-muted">-</span>';
         if (item.paiId) {
             const pai = fluxo.find(f => f.id === item.paiId);
             if (pai) {
@@ -355,7 +355,7 @@ window.salvarFluxo = async function() {
     }
 
     // Botão Carregando
-    const btn = document.querySelector('button[title="Salvar"]');
+    const btn = document.querySelector('button[title="Salvar"], button[title="Salvar no Projeto"]');
     const htmlOriginal = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     btn.disabled = true;
@@ -380,8 +380,22 @@ window.salvarFluxo = async function() {
         // 3. Pega Token CSRF (Segurança)
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-        // 4. Envia
-        const response = await fetch('/salvar', {
+        // 4. Detecta se está em modo projeto e escolhe a URL correta
+        const urlParams = new URLSearchParams(window.location.search);
+        const projetoId = urlParams.get('projeto_id');
+        const isModoProjeto = window.location.pathname.includes('/projeto/');
+        
+        let url = '/salvar';
+        if (isModoProjeto && projetoId) {
+            // Se tiver função salvarNoProjeto, usa ela
+            if (typeof window.salvarNoProjeto === 'function') {
+                window.salvarNoProjeto('fluxograma');
+                return;
+            }
+        }
+
+        // 5. Envia
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -408,6 +422,17 @@ window.salvarFluxo = async function() {
 // ==========================================
 // FUNÇÕES AUXILIARES
 // ==========================================
+window.adicionarEtapaManual = function(texto, tipo, paiId, setaTexto, idOriginal) {
+    fluxo.push({
+        id: idOriginal || `id${contadorId++}`,  
+        texto: texto,
+        tipo: tipo,
+        paiId: paiId || '',
+        setaTexto: setaTexto || ''
+    });
+    // Não chama atualizarTudo() aqui para não interferir no carregamento em lote
+};
+
 window.removerBloco = function(index) {
     if(confirm('Tem certeza que deseja remover esta etapa?')) {
         const id = fluxo[index].id;

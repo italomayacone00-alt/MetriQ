@@ -75,6 +75,10 @@ def create_app():
     from .blueprints.auth import auth as auth_bp
     app.register_blueprint(auth_bp)
 
+    # D. Módulo de Projetos
+    from .blueprints.projects import projects as projects_bp
+    app.register_blueprint(projects_bp)
+
     # ==================================================
     # 4. CARREGAMENTO DO USUÁRIO
     # ==================================================

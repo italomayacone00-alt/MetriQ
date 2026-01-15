@@ -85,6 +85,16 @@ document.getElementById('arquivoExcel').addEventListener('change', function(e) {
     reader.readAsArrayBuffer(file);
 });
 
+// Função para adicionar ponto manualmente (usada no modo_projeto)
+window.adicionarPontoManual = function(amostra, valor) {
+    const val = parseFloat(valor);
+    if(!isNaN(val)) {
+        let nome = amostra || "A" + (dados.length + 1);
+        dados.push({ label: nome, value: val });
+        atualizarFerramenta();
+    }
+};
+
 // ==========================================
 // 3. CÁLCULOS ESTATÍSTICOS
 // ==========================================

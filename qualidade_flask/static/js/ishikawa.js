@@ -26,6 +26,14 @@ const espinhas = {
     meio_ambiente: { xBase: 580, yBase: 250, xTip: 530, yTip: 420, lado: 'bottom' }
 };
 
+// Função para adicionar causa manualmente (usada no modo_projeto)
+window.adicionarCausaManual = function(categoria, texto) {
+    if (texto && texto.trim()) {
+        diagrama[categoria].push(texto.trim());
+        atualizarTudo();
+    }
+};
+
 // ==========================================
 // 2. EVENTOS E INICIALIZAÇÃO
 // ==========================================
@@ -230,17 +238,48 @@ window.desenharDiagrama = function() {
 
         itens.forEach(function(item, i) {
             const direction = coords.lado === 'top' ? 1 : -1;
-            const startY = coords.yTip + (32 * direction); 
-            const spacing = 24;
+            const startY = coords.yTip + (45 * direction); 
+            const spacing = 35; // Aumentado para dar mais espaço vertical
             const lineY = startY + (i * spacing * direction);
-            const progress = (i + 1) * 0.18; 
+            const progress = (i + 1) * 0.25; // Ajustado para distribuir melhor ao longo da espinha
             const lineX = coords.xTip + (progress * (coords.xBase - coords.xTip));
 
-            ctx.beginPath(); ctx.moveTo(lineX, lineY); ctx.lineTo(lineX - 55, lineY);
-            ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1; ctx.stroke();
+            // Desenha a linha horizontal da causa (mais longa para suportar texto)
+            ctx.beginPath(); 
+            ctx.moveTo(lineX, lineY); 
+            ctx.lineTo(lineX - 100, lineY); // Aumentado de 70 para 100
+            ctx.strokeStyle = "#cbd5e1"; 
+            ctx.lineWidth = 1; 
+            ctx.stroke();
 
-            ctx.fillStyle = "#0f172a";
-            ctx.fillText(item, lineX - 60, lineY);
+            // Configuração do texto
+            ctx.fillStyle = "#1e293b";
+            ctx.font = "10px 'Inter', sans-serif";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "bottom";
+            
+            // Função simples para quebrar texto se for muito longo
+            const maxWidth = 110;
+            let words = item.split(' ');
+            let line = '';
+            let lines = [];
+            
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n] + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line);
+
+            // Desenha as linhas de texto (máximo 2 para não poluir)
+            lines.slice(0, 2).forEach((l, index) => {
+                ctx.fillText(l.trim(), lineX - 5, lineY - 2 - (index === 1 ? 0 : (lines.length > 1 ? 10 : 0)));
+            });
         });
     }
 }

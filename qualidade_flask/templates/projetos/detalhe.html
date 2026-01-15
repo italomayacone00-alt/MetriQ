@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header do Projeto -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.lista_projetos') }}">Projetos</a></li>
+            <li class="breadcrumb-item active">{{ projeto.nome }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Coluna Esquerda: Info e IA -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h2 class="fw-bold mb-3">{{ projeto.nome }}</h2>
+                    <div class="bg-light p-3 rounded-3 mb-4">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-2">Objetivo do Projeto</h6>
+                        <p class="mb-0">{{ projeto.objetivo }}</p>
+                    </div>
+
+                    <div class="ai-suggestion-box p-4 rounded-4 border border-info border-opacity-25 bg-info bg-opacity-10">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info text-white rounded-circle p-2 me-3">
+                                <i class="bi bi-robot fs-4"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0">Análise da IA MetriQ</h5>
+                        </div>
+                        <p class="lead-sm mb-4">{{ sugestao.analise }}</p>
+                        
+                        <div class="d-flex flex-wrap gap-3">
+                            {% if sugestao.dados_preenchidos %}
+                                <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=sugestao.ferramenta_sugerida) }}" class="btn btn-success text-white px-4 py-2 fw-bold">
+                                    <i class="bi bi-magic me-2"></i>Gerar: {{ sugestao.nome_ferramenta }}
+                                    <small class="ms-2 opacity-75">(com dados preenchidos)</small>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=sugestao.ferramenta_sugerida) }}" class="btn btn-info text-white px-4 py-2 fw-bold">
+                                    <i class="bi bi-play-fill me-2"></i>Começar: {{ sugestao.nome_ferramenta }}
+                                </a>
+                            {% endif %}
+                            
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle px-4 py-2" type="button" data-bs-toggle="dropdown">
+                                    Outras Ferramentas
+                                </button>
+                                <ul class="dropdown-menu shadow border-0">
+                                    <li><a class="dropdown-item" href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='pareto') }}">Pareto</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='ishikawa') }}">Ishikawa</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='5w2h') }}">5W2H</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='fluxograma') }}">Fluxograma</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='folha_verificacao') }}">Folha de Verificação</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linha do Tempo / Ferramentas Preenchidas -->
+            <h4 class="fw-bold mb-3 mt-5">Progresso do Projeto</h4>
+            <div class="timeline">
+                {% if projeto.ferramentas %}
+                    {% for f in projeto.ferramentas %}
+                    <div class="timeline-item pb-4 ps-4 border-start border-2 position-relative">
+                        <div class="timeline-dot position-absolute start-0 top-0 translate-middle-x bg-primary rounded-circle" style="width: 15px; height: 15px; margin-left: -1px;"></div>
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-capitalize">{{ f.tipo.replace('_', ' ') }}</h6>
+                                    <small class="text-muted">Preenchido em {{ f.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=f.tipo) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil-square me-1"></i>Editar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted italic">Nenhuma ferramenta preenchida ainda. Siga a recomendação da IA acima!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Ações e Resumo -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-dark text-white fw-bold py-3">
+                    Ações do Projeto
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('projects.relatorio_projeto', id=projeto.id) }}" class="btn btn-success py-2">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Gerar Relatório Completo
+                        </a>
+                        <button class="btn btn-outline-secondary py-2" onclick="window.print()">
+                            <i class="bi bi-printer me-2"></i>Imprimir Dashboard
+                        </button>
+                        <hr>
+                        <form action="{{ url_for('projects.excluir_projeto', id=projeto.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este projeto?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                                <i class="bi bi-trash me-2"></i>Excluir Projeto
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Resumo de Atividade</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Ferramentas:</span>
+                            <span class="fw-bold">{{ projeto.ferramentas|length }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Iniciado em:</span>
+                            <span class="fw-bold">{{ projeto.data_criacao.strftime('%d/%m/%Y') }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ai-suggestion-box {
+        transition: all 0.3s ease;
+    }
+    .ai-suggestion-box:hover {
+        border-opacity: 0.5;
+        background-opacity: 0.15;
+    }
+    .timeline-item:last-child {
+        border-left: 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function excluirFerramenta(ferramentaId) {
+        if (confirm('Tem certeza que deseja excluir esta ferramenta do projeto?')) {
+            fetch(`/projeto/{{ projeto.id }}/ferramenta/${ferramentaId}/excluir`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir ferramenta.');
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

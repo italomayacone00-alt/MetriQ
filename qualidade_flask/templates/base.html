@@ -39,8 +39,14 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'main.index' }}" href="/">
                             <i class="bi bi-house-fill me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'projects.lista_projetos' }}" href="/projetos">
+                            <i class="bi bi-folder-fill me-1"></i> Projetos
                         </a>
                     </li>
                     
@@ -53,7 +59,7 @@
                             <li><a class="dropdown-item" href="/ferramenta/ishikawa"><i class="bi bi-diagram-3 me-2 text-primary"></i>Ishikawa (6M)</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/5w2h"><i class="bi bi-clipboard-check me-2 text-success"></i>Plano 5W2H</a></li>
                             
-                            <li><a class="dropdown-item" href="/fluxograma"><i class="bi bi-diagram-2-fill me-2 text-info"></i>Fluxograma</a></li>
+                            <li><a class="dropdown-item" href="/ferramenta/fluxograma"><i class="bi bi-diagram-2-fill me-2 text-info"></i>Fluxograma</a></li>
                             
                             <li><a class="dropdown-item" href="/ferramenta/folha_verificacao"><i class="bi bi-check2-square me-2 text-success"></i>Folha de Verificação</a></li>
                             
@@ -109,7 +115,7 @@
                     <small class="text-muted" style="font-size: 0.8rem;">Inteligência em Qualidade & Dados</small>
                 </div>
                 <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
-                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versão 4.5</span>
+                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versão 5.5</span>
                 </div>
             </div>
         </div>

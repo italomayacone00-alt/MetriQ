@@ -52,12 +52,11 @@ function removerItem(index) {
     }
 }
 
-function limparTudo() {
-    if(confirm("Deseja zerar toda a contagem?")) {
-        itens = [];
-        atualizarTela();
-    }
-}
+// Função para adicionar item manualmente (usada no modo_projeto)
+window.adicionarItemManual = function(nome, contagem) {
+    itens.push({ label: nome, valor: contagem || 0 });
+    atualizarTela();
+}; // adicionado ponto e vírgula aqui
 
 // ============================================
 // 3. ATUALIZAÇÃO VISUAL
@@ -107,9 +106,48 @@ function renderizarTabela() {
 }
 
 function renderizarGrafico() {
-    const ctx = document.getElementById('checkChart').getContext('2d');
+    const canvas = document.getElementById('checkChart');
+    if (!canvas) {
+        console.error('Canvas do gráfico não encontrado');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
     
     if (grafico) grafico.destroy();
+
+    // Se não há itens, cria um gráfico vazio
+    if (itens.length === 0) {
+        grafico = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Frequência',
+                    data: [],
+                    backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                    borderColor: '#198754',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, grace: '5%' }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+        return;
+    }
 
     const labels = itens.map(i => i.label);
     const data = itens.map(i => i.valor);
@@ -121,7 +159,7 @@ function renderizarGrafico() {
             datasets: [{
                 label: 'Frequência',
                 data: data,
-                backgroundColor: 'rgba(25, 135, 84, 0.7)', // Verde Success
+                backgroundColor: 'rgba(25, 135, 84, 0.7)',
                 borderColor: '#198754',
                 borderWidth: 1,
                 borderRadius: 4
@@ -133,8 +171,10 @@ function renderizarGrafico() {
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'end', align: 'top',
-                    color: '#333', font: { weight: 'bold' },
+                    anchor: 'end', 
+                    align: 'top',
+                    color: '#333', 
+                    font: { weight: 'bold' },
                     formatter: (value) => value > 0 ? value : ''
                 }
             },

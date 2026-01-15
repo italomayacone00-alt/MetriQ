@@ -24,10 +24,23 @@
                 </label>
                 <div class="input-group">
                     <input type="text" id="tituloGrafico" class="form-control fw-bold" value="Análise de Pareto" oninput="atualizarVisual()">
-                    <button onclick="salvarNoBanco()" class="btn btn-warning fw-bold text-dark" title="Salvar">
-                        <i class="bi bi-cloud-upload me-1"></i> Salvar
-                    </button>
+                    {% if modo_projeto %}
+                        <button onclick="salvarNoProjeto('pareto')" class="btn btn-primary fw-bold" title="Salvar no Projeto">
+                            <i class="bi bi-save me-1"></i> Salvar
+                        </button>
+                    {% else %}
+                        <button onclick="salvarNoBanco()" class="btn btn-warning fw-bold text-dark" title="Salvar">
+                            <i class="bi bi-cloud-upload me-1"></i> Salvar
+                        </button>
+                    {% endif %}
                 </div>
+                {% if modo_projeto %}
+                <div class="mt-2">
+                    <a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar ao Projeto
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -246,4 +259,86 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/pareto.js') }}"></script>
+{% if modo_projeto %}
+<script>
+    // Carregar dados se existirem
+    const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        if (dadosIniciais) {
+            console.log("Carregando dados iniciais do projeto:", dadosIniciais);
+            // Preencher o título
+            if (dadosIniciais.titulo) {
+                document.getElementById('tituloGrafico').value = dadosIniciais.titulo;
+            }
+            // Preencher a tabela e o gráfico
+            if (dadosIniciais.itens && Array.isArray(dadosIniciais.itens)) {
+                // Limpar dados atuais se houver
+                dados = [];
+                dadosIniciais.itens.forEach(item => {
+                    dados.push({
+                        label: item.label || item.categoria,
+                        value: parseFloat(item.value || item.valor)
+                    });
+                });
+                atualizarFerramenta();
+            }
+        }
+    });
+
+    function salvarNoProjeto(tipo) {
+        const canvas = document.getElementById('paretoChart');
+        const graficoImg = canvas.toDataURL('image/png');
+        
+        // Coletar dados da ferramenta
+        const dadosParaSalvar = {
+            titulo: document.getElementById('tituloGrafico').value,
+            labelEsq: document.getElementById('labelEsq').value,
+            labelDir: document.getElementById('labelDir').value,
+            itens: dados,
+            grafico: graficoImg
+        };
+        
+        const autoGenerate = confirm("Deseja que a IA preencha automaticamente a próxima ferramenta sugerida com base nestes dados?");
+        
+        // Mostrar um loading ou desabilitar botão
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+        btn.disabled = true;
+
+        fetch("{{ url_for('projects.salvar_ferramenta_projeto', id=projeto.id) }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                tipo: tipo,
+                dados: dadosParaSalvar,
+                auto_generate: autoGenerate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                let msg = 'Salvo com sucesso!';
+                if (data.proxima_gerada) {
+                    msg += '\n\nA IA também gerou e salvou automaticamente a ferramenta: ' + data.proxima_gerada.nome;
+                }
+                alert(msg);
+                window.location.href = "{{ url_for('projects.detalhe_projeto', id=projeto.id) }}";
+            } else {
+                alert('Erro ao salvar: ' + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao salvar.');
+        });
+    }
+</script>
+{% endif %}
 {% endblock %}

@@ -20,6 +20,9 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            {% if modo_projeto %}
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}">{{ projeto.nome }}</a></li>
+            {% endif %}
             <li class="breadcrumb-item active">Fluxograma de Processo</li>
         </ol>
     </nav>
@@ -53,10 +56,23 @@
                 </label>
                 <div class="input-group">
                     <input type="text" id="tituloFluxo" class="form-control fw-bold" value="Novo Processo" style="color: #6610f2; border-color: #6610f2;">
+                    {% if modo_projeto %}
+                    <button onclick="salvarNoProjeto('fluxograma')" class="btn text-white fw-bold shadow-sm" style="background-color: #6610f2;" title="Salvar no Projeto">
+                        <i class="bi bi-save me-1"></i> Salvar
+                    </button>
+                    {% else %}
                     <button onclick="salvarFluxo()" class="btn text-white fw-bold shadow-sm" style="background-color: #6610f2;" title="Salvar">
                         <i class="bi bi-cloud-upload me-1"></i> Salvar
                     </button>
+                    {% endif %}
                 </div>
+                {% if modo_projeto %}
+                <div class="mt-2">
+                    <a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar ao Projeto
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -355,4 +371,108 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/fluxograma.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% if modo_projeto %}
+<script>
+    const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        console.log('Dados iniciais recebidos:', dadosIniciais);
+        
+        if (dadosIniciais) {
+            // 1. Carregar título primeiro
+            if (dadosIniciais.titulo) {
+                document.getElementById('tituloFluxo').value = dadosIniciais.titulo;
+                console.log('Título carregado:', dadosIniciais.titulo);
+            }
+            
+            // 2. Carregar etapas (nós principais)
+            if (dadosIniciais.etapas && Array.isArray(dadosIniciais.etapas)) {
+                console.log('Etapas a carregar:', dadosIniciais.etapas);
+                dadosIniciais.etapas.forEach(etapa => {
+                    console.log('Adicionando etapa:', etapa);
+                    adicionarEtapaManual(etapa.texto, etapa.tipo, etapa.paiId, etapa.setaTexto, etapa.id);
+                });
+            }
+            
+            // 3. Carregar conexões extras após as etapas
+            if (dadosIniciais.conexoes && Array.isArray(dadosIniciais.conexoes)) {
+                console.log('Conexões a carregar:', dadosIniciais.conexoes);
+                dadosIniciais.conexoes.forEach(conexao => {
+                    // Verificar se os nós ainda existem antes de adicionar a conexão
+                    if (fluxo.some(f => f.id === conexao.origem) && fluxo.some(f => f.id === conexao.destino)) {
+                        console.log('Adicionando conexão:', conexao);
+                        linksExtras.push(conexao);
+                    } else {
+                        console.log('Conexão inválida (nós não encontrados):', conexao);
+                    }
+                });
+            }
+            
+            // 4. Atualizar tudo no final
+            setTimeout(() => {
+                console.log('Fluxo final:', fluxo);
+                console.log('Conexões finais:', linksExtras);
+                atualizarTudo();
+            }, 100);
+        }
+    });
+
+    function salvarNoProjeto(tipo) {
+        const diagramaContainer = document.getElementById('diagramaContainer');
+        
+        // Capturar a imagem do diagrama
+        html2canvas(diagramaContainer).then(canvas => {
+            const graficoImg = canvas.toDataURL('image/png');
+            
+            const dadosParaSalvar = {
+                titulo: document.getElementById('tituloFluxo').value,
+                etapas: fluxo,
+                conexoes: linksExtras,
+                grafico: graficoImg
+            };
+            
+            const autoGenerate = confirm("Deseja que a IA preencha automaticamente a próxima ferramenta sugerida com base nestes dados?");
+            
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+            btn.disabled = true;
+
+            fetch("{{ url_for('projects.salvar_ferramenta_projeto', id=projeto.id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    tipo: tipo,
+                    dados: dadosParaSalvar,
+                    auto_generate: autoGenerate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let msg = 'Salvo com sucesso!';
+                    if (data.proxima_gerada) {
+                        msg += '\n\nA IA também gerou e salvou automaticamente a ferramenta: ' + data.proxima_gerada.nome;
+                    }
+                    alert(msg);
+                    window.location.href = "{{ url_for('projects.detalhe_projeto', id=projeto.id) }}";
+                } else {
+                    alert('Erro ao salvar: ' + data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro de conexão ao salvar.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        });
+    }
+</script>
+{% endif %}
 {% endblock %}

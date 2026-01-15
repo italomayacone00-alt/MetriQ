@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-folder2-open text-info me-2"></i>Meus Projetos</h2>
+            <p class="text-muted">Gerencie seus projetos de melhoria contínua</p>
+        </div>
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#novoProjetoModal">
+            <i class="bi bi-plus-lg me-2"></i>Novo Projeto
+        </button>
+    </div>
+
+    <div class="row g-4">
+        {% if projetos %}
+            {% for projeto in projetos %}
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">
+                                <i class="bi bi-calendar3 me-1"></i> {{ projeto.data_criacao.strftime('%d/%m/%Y') }}
+                            </span>
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form action="{{ url_for('projects.excluir_projeto', id=projeto.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este projeto?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash me-2"></i>Excluir
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">{{ projeto.nome }}</h5>
+                        <p class="card-text text-muted small mb-4 line-clamp-3">
+                            {{ projeto.objetivo }}
+                        </p>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <small class="text-muted">Ferramentas:</small>
+                            <div class="d-flex gap-1">
+                                {% for f in projeto.ferramentas %}
+                                    <span class="badge bg-secondary rounded-circle p-1" title="{{ f.tipo }}">
+                                        <i class="bi bi-check2"></i>
+                                    </span>
+                                {% endfor %}
+                                {% if not projeto.ferramentas %}
+                                    <span class="text-muted small italic">Nenhuma ainda</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+                        <a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}" class="btn btn-outline-primary w-100">
+                            Abrir Projeto <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="bg-light rounded-4 p-5">
+                    <i class="bi bi-folder-x display-1 text-muted mb-3"></i>
+                    <h4>Nenhum projeto encontrado</h4>
+                    <p class="text-muted">Comece criando seu primeiro projeto de qualidade!</p>
+                    <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#novoProjetoModal">
+                        Criar Projeto Agora
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Novo Projeto -->
+<div class="modal fade" id="novoProjetoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">Novo Projeto de Qualidade</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('projects.novo_projeto') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome do Projeto</label>
+                        <input type="text" name="nome" class="form-control" placeholder="Ex: Redução de Desperdício na Linha A" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Objetivo do Projeto</label>
+                        <textarea name="objetivo" class="form-control" rows="4" placeholder="Descreva o que você pretende alcançar com este projeto..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Criar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .transition {
+        transition: all 0.3s ease;
+    }
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+</style>
+{% endblock %}

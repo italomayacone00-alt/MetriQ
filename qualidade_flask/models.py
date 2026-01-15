@@ -17,9 +17,6 @@ class Analise(db.Model):
     titulo = db.Column(db.String(100))
     dados = db.Column(db.JSON)        # Salva o JSON completo (com gráfico e tudo)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
-    
-    # --- A MUDANÇA IMPORTANTE ESTÁ AQUI ---
-    # Coluna que guarda o ID de quem criou
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_dict(self):
@@ -30,3 +27,20 @@ class Analise(db.Model):
             'dados': self.dados,
             'data_criacao': self.data_criacao.strftime('%d/%m/%Y %H:%M') if self.data_criacao else ""
         }
+
+class Projeto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    objetivo = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    ferramentas = db.relationship('ProjetoFerramenta', backref='projeto', lazy=True, cascade="all, delete-orphan")
+
+class ProjetoFerramenta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'), nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)
+    dados = db.Column(db.JSON)
+    analise_ia = db.Column(db.Text)
+    data_criacao = db.Column(db.DateTime, default=datetime.now)
