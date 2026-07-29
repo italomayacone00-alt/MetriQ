@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-globe text-info me-2"></i>Normas ISO</h2>
+            <p class="text-muted">Consulta e autoavaliação de maturidade de Normas ISO Internacionais</p>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form action="{{ url_for('iso.lista_isos') }}" method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Buscar ISO</label>
+                    <input type="text" name="busca" class="form-control" 
+                           placeholder="Número, título ou descrição..." 
+                           value="{{ busca }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Setor</label>
+                    <select name="setor" class="form-select">
+                        <option value="">Todos os setores</option>
+                        {% for setor in setores %}
+                            <option value="{{ setor }}" {% if setor == setor_filtro %}selected{% endif %}>
+                                {{ setor }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de ISOs -->
+    <div class="row g-4">
+        {% if normas %}
+            {% for norma in normas %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-bold">
+                                {{ norma.numero }}
+                            </span>
+                            <span class="badge bg-secondary">{{ norma.setor }}</span>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2">{{ norma.titulo }}</h5>
+                        <p class="card-text text-muted small mb-4 line-clamp-3">
+                            {{ norma.descricao }}
+                        </p>
+                        <a href="{{ url_for('iso.detalhe_iso', id=norma.id) }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Acessar {{ norma.numero }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="bg-light rounded-4 p-5">
+                    <i class="bi bi-globe display-1 text-muted mb-3"></i>
+                    <h4>Nenhuma ISO encontrada</h4>
+                    <p class="text-muted">
+                        {% if busca or setor_filtro %}
+                            Tente ajustar os filtros de busca.
+                        {% else %}
+                            Nenhuma norma ISO cadastrada no sistema.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .transition {
+        transition: all 0.3s ease;
+    }
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+</style>
+{% endblock %}

@@ -258,6 +258,89 @@ main {
     box-shadow: var(--shadow-lg);
 }
 
+/* ============================================
+   CHECKLISTS DE NR
+   ============================================ */
+
+.checklist-card {
+    border: 1px solid rgba(18, 52, 86, 0.08);
+    background: #fafbfd;
+    transition: var(--transition);
+}
+
+.checklist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgba(20, 46, 90, 0.08);
+}
+
+.checklist-step-number {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    box-shadow: 0 14px 30px rgba(13, 110, 253, 0.18);
+}
+
+.btn-choice {
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    min-width: 130px;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-check:checked + .btn,
+.btn-check:checked + .btn-choice,
+.btn-choice.active {
+    color: white !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 8px 18px rgba(13, 110, 253, 0.18);
+}
+
+.btn-check:checked + .btn-outline-success,
+.btn-check:checked + .btn-outline-success.btn-choice {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: white !important;
+}
+
+.btn-check:checked + .btn-outline-danger,
+.btn-check:checked + .btn-outline-danger.btn-choice {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.btn-check:checked + .btn-outline-secondary,
+.btn-check:checked + .btn-outline-secondary.btn-choice {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+}
+
+.btn-check:checked + .btn-outline-success:hover,
+.btn-check:checked + .btn-outline-danger:hover,
+.btn-check:checked + .btn-outline-secondary:hover,
+.btn-check:checked + .btn-choice:hover {
+    filter: brightness(1.08);
+}
+
+@media (max-width: 767px) {
+    .checklist-card {
+        padding: 1rem !important;
+    }
+    .btn-group .btn-choice {
+        min-width: 100px;
+        font-size: 0.85rem;
+    }
+}
+
 .btn-outline-danger {
     color: #dc3545;
     border: 2px solid #dc3545;
@@ -789,4 +872,74 @@ canvas {
     /* Centraliza */
     display: flex;
     justify-content: center;
+}
+
+/* ============================================
+   MATURIDADE ISO - NÍVEIS DE EVOLUÇÃO
+   ============================================ */
+
+.maturity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.maturity-badge.level-5 {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #198754;
+}
+
+.maturity-badge.level-3 {
+    background: #cfe2ff;
+    color: #084298;
+    border: 1px solid #0d6efd;
+}
+
+.maturity-badge.level-1 {
+    background: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffc107;
+}
+
+.maturity-badge.level-0 {
+    background: #f8d7da;
+    color: #842029;
+    border: 1px solid #dc3545;
+}
+
+.maturity-badge.level-na {
+    background: #e9ecef;
+    color: #495057;
+    border: 1px solid #6c757d;
+}
+
+/* Score card for maturity sections */
+.score-card {
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+    transition: all 0.3s ease;
+}
+
+.score-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Progress bar for maturity */
+.progress-maturity {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-maturity .progress-bar {
+    border-radius: 4px;
+    transition: width 1s ease;
 }

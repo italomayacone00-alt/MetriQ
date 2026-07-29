@@ -79,6 +79,22 @@ def create_app():
     from .blueprints.projects import projects as projects_bp
     app.register_blueprint(projects_bp)
 
+    # E. Módulo de Normas Regulamentadoras (NRs)
+    from .blueprints.nr import nr as nr_bp
+    app.register_blueprint(nr_bp)
+
+# F. Módulo de Normas ISO
+    from .blueprints.iso import iso as iso_bp
+    app.register_blueprint(iso_bp)
+
+# G. Módulo de Planta Baixa
+    from .blueprints.planta_baixa import planta_baixa as planta_baixa_bp
+    app.register_blueprint(planta_baixa_bp)
+
+# H. Módulo de Gestão da Empresa
+    from .blueprints.empresa import empresa as empresa_bp
+    app.register_blueprint(empresa_bp)
+
     # ==================================================
     # 4. CARREGAMENTO DO USUÁRIO
     # ==================================================

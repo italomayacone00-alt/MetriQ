@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('iso.lista_isos') }}">ISOs</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('iso.detalhe_iso', id=norma.id) }}">{{ norma.numero }}</a></li>
+            <li class="breadcrumb-item active">Análise de Maturidade</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ norma.numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ norma.titulo }}</h2>
+                    <p class="text-muted mb-1">Análise de Maturidade</p>
+                    <p class="small text-secondary">Autoavaliação finalizada em {{ checklist.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+                <div class="text-end mt-3 mt-md-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <div class="display-4 fw-bold text-primary">{{ dados.maturidade_geral }}</div>
+                            <p class="text-muted mb-0">de 5.0 — Maturidade</p>
+                        </div>
+                        <div class="border-start ps-3">
+                            <div class="display-5 fw-bold text-{{ 'success' if dados.maturidade_percentual >= 70 else 'warning' if dados.maturidade_percentual >= 40 else 'danger' }}">
+                                {{ dados.maturidade_percentual }}%
+                            </div>
+                            <p class="text-muted mb-0">Percentual</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartões de Pontuação por Seção -->
+    <div class="row mb-4 g-3">
+        {% if dados.secoes %}
+            {% for secao, info in dados.secoes.items() %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-3">
+                        <h6 class="text-muted mb-2 small text-uppercase fw-bold">{{ secao }}</h6>
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                            <div class="display-5 fw-bold text-primary">{{ info.media }}</div>
+                            <div class="text-muted align-self-end mb-2">/ 5</div>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-{{ 'success' if info.percentual >= 70 else 'warning' if info.percentual >= 40 else 'danger' }}" 
+                                 role="progressbar" style="width: {{ info.percentual }}%" 
+                                 aria-valuenow="{{ info.percentual }}" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-1">{{ info.percentual }}% · {{ info.respondidas }}/{{ info.total }} respondidas</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">Nenhuma seção encontrada para análise.</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <!-- Gráfico Radar -->
+        <div class="col-md-7 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-diagram-3 me-2"></i>Radar de Maturidade por Seção
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="chartRadar"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Barras - Pontuação por Seção -->
+        <div class="col-md-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-bar-chart me-2"></i>Pontuação por Seção
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="chartSecoes"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribuição das Respostas -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-pie-chart me-2"></i>Distribuição das Respostas
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="chartRespostas"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-info-circle me-2"></i>Níveis de Maturidade
+                </div>
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2">✅ Nível 5</span></td>
+                                <td class="fw-bold">Implementado</td>
+                                <td class="text-muted">Processo estabelecido e em operação</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">🔄 Nível 3</span></td>
+                                <td class="fw-bold">Em Andamento</td>
+                                <td class="text-muted">Processo em desenvolvimento</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2">📝 Nível 1</span></td>
+                                <td class="fw-bold">Planejado</td>
+                                <td class="text-muted">Processo planejado mas não iniciado</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">❌ Nível 0</span></td>
+                                <td class="fw-bold">Não Implementado</td>
+                                <td class="text-muted">Nenhuma ação realizada</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2">➖ N/A</span></td>
+                                <td class="fw-bold">Não Aplicável</td>
+                                <td class="text-muted">Não se aplica à organização</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise Detalhada com Recomendações -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <i class="bi bi-lightbulb me-2"></i>Análise Detalhada e Recomendações de Melhoria
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Pergunta</th>
+                            <th>Nível</th>
+                            <th>Recomendação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pergunta in norma.perguntas %}
+                        {% set pergunta_id = pergunta.id|string %}
+                        {% set resposta = dados.respostas.get(pergunta_id) %}
+                        {% set observacao = dados.observacoes.get(pergunta_id, '') if dados.observacoes else '' %}
+                        <tr>
+                            <td class="fw-bold">{{ pergunta.item }}</td>
+                            <td>
+                                <div class="fw-bold small">{{ pergunta.secao }}</div>
+                                <div class="small text-muted">{{ pergunta.texto }}</div>
+                            </td>
+                            <td>
+                                {% if resposta == 'implementado' %}
+                                    <span class="badge bg-success">✅ Nível 5</span>
+                                {% elif resposta == 'em_andamento' %}
+                                    <span class="badge bg-primary">🔄 Nível 3</span>
+                                {% elif resposta == 'planejado' %}
+                                    <span class="badge bg-warning text-dark">📝 Nível 1</span>
+                                {% elif resposta == 'nao_implementado' %}
+                                    <span class="badge bg-danger">❌ Nível 0</span>
+                                {% elif resposta == 'nao_aplicavel' %}
+                                    <span class="badge bg-secondary">➖ N/A</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">Não Respondido</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resposta == 'nao_implementado' or resposta == 'planejado' or resposta == 'em_andamento' %}
+                                    <div class="small">
+                                        {% if pergunta.secao %}
+                                            {% set secao_lower = pergunta.secao.lower() %}
+                                            {% if 'contexto' in secao_lower or 'organização' in secao_lower or 'organizacao' in secao_lower %}
+                                                Analise o contexto interno e externo da organização. Identifique partes interessadas, requisitos aplicáveis e defina o escopo do sistema de gestão.
+                                            {% elif 'liderança' in secao_lower or 'lideranca' in secao_lower %}
+                                                Fortaleça o comprometimento da alta direção. Estabeleça política de qualidade, defina papéis e responsabilidades, e promova a comunicação eficaz.
+                                            {% elif 'planejamento' in secao_lower %}
+                                                Identifique riscos e oportunidades. Defina objetivos mensuráveis e planos de ação para alcançá-los, considerando ações para tratar riscos.
+                                            {% elif 'suporte' in secao_lower %}
+                                                Garanta recursos adequados, competências técnicas, conscientização, comunicação eficiente e informação documentada controlada.
+                                            {% elif 'operação' in secao_lower or 'operacao' in secao_lower %}
+                                                Planeje, implemente e controle os processos operacionais. Gerencie mudanças e avalie produtos/serviços de fornecedores externos.
+                                            {% elif 'avaliação' in secao_lower or 'avaliacao' in secao_lower or 'desempenho' in secao_lower %}
+                                                Monitore e meça o desempenho com indicadores. Realize auditorias internas periódicas e promova a revisão pela direção.
+                                            {% elif 'melhoria' in secao_lower %}
+                                                Trate não conformidades com ações corretivas. Busque a melhoria contínua do sistema de gestão da qualidade.
+                                            {% else %}
+                                                Avance no nível de maturidade deste requisito. Identifique lacunas, crie plano de ação, implemente melhorias e monitore os resultados.
+                                            {% endif %}
+                                        {% else %}
+                                            Avance no nível de maturidade deste requisito. Documente o processo, implemente controles e monitore os resultados continuamente.
+                                        {% endif %}
+                                    </div>
+                                    {% if observacao %}
+                                    <div class="mt-2 small text-muted">
+                                        <strong>Observação:</strong> {{ observacao }}
+                                    </div>
+                                    {% endif %}
+                                {% elif resposta == 'implementado' %}
+                                    <div class="small text-success">
+                                        <i class="bi bi-check-circle me-1"></i>Maturidade adequada. Mantenha e monitore continuamente.
+                                    </div>
+                                    {% if observacao %}
+                                    <div class="mt-1 small text-muted">
+                                        <strong>Observação:</strong> {{ observacao }}
+                                    </div>
+                                    {% endif %}
+                                {% elif resposta == 'nao_aplicavel' %}
+                                    <div class="small text-muted">—</div>
+                                {% else %}
+                                    <div class="small text-muted">Aguardando resposta</div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('iso.checklist_iso', id=norma.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Editar Autoavaliação
+        </a>
+        <a href="{{ url_for('iso.detalhe_iso', id=norma.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+        <button class="btn btn-outline-dark" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // === DADOS ===
+    const implementado = {{ dados.respostas_count.implementado|default(0) }};
+    const emAndamento = {{ dados.respostas_count.em_andamento|default(0) }};
+    const planejado = {{ dados.respostas_count.planejado|default(0) }};
+    const naoImplementado = {{ dados.respostas_count.nao_implementado|default(0) }};
+    const naoAplicavel = {{ dados.respostas_count.nao_aplicavel|default(0) }};
+
+    // === DADOS DAS SEÇÕES ===
+    const secoes = {{ dados.secoes|tojson|default('{}') }};
+    const secaoLabels = Object.keys(secoes) || [];
+    const secaoMedias = secaoLabels.map(s => secoes[s].media || 0);
+    const secaoPercentuais = secaoLabels.map(s => secoes[s].percentual || 0);
+
+    // === 1. GRÁFICO RADAR DE MATURIDADE ===
+    try {
+        const ctxRadar = document.getElementById('chartRadar');
+        if (ctxRadar && secaoLabels.length > 0) {
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: secaoLabels,
+                    datasets: [{
+                        label: 'Maturidade {{ norma.numero }}',
+                        data: secaoMedias,
+                        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: secaoMedias.map(v => 
+                            v >= 4 ? '#198754' : v >= 2.5 ? '#ffc107' : '#dc3545'
+                        ),
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }, {
+                        label: 'Referência (Nível 5)',
+                        data: secaoLabels.map(() => 5),
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        pointHoverRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1,
+                                font: { size: 11 }
+                            },
+                            pointLabels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label.includes('Referência')) {
+                                        return 'Máximo: 5.0';
+                                    }
+                                    const idx = context.dataIndex;
+                                    return context.dataset.label + ': ' + context.raw + '/5 (' + secaoPercentuais[idx] + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Erro ao criar gráfico radar:', e);
+    }
+
+    // === 2. GRÁFICO DE BARRAS - PONTUAÇÃO POR SEÇÃO ===
+    try {
+        const ctxSecoes = document.getElementById('chartSecoes');
+        if (ctxSecoes && secaoLabels.length > 0) {
+            new Chart(ctxSecoes, {
+                type: 'bar',
+                data: {
+                    labels: secaoLabels,
+                    datasets: [{
+                        label: 'Pontuação',
+                        data: secaoMedias,
+                        backgroundColor: secaoMedias.map(v => 
+                            v >= 4 ? 'rgba(25, 135, 84, 0.7)' : 
+                            v >= 2.5 ? 'rgba(255, 193, 7, 0.7)' : 
+                            'rgba(220, 53, 69, 0.7)'
+                        ),
+                        borderColor: secaoMedias.map(v => 
+                            v >= 4 ? '#198754' : 
+                            v >= 2.5 ? '#ffc107' : 
+                            '#dc3545'
+                        ),
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    return context.raw + '/5 (' + secaoPercentuais[idx] + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Erro ao criar gráfico de barras:', e);
+    }
+
+    // === 3. GRÁFICO DE ROSCA - DISTRIBUIÇÃO DAS RESPOSTAS ===
+    try {
+        const ctxRespostas = document.getElementById('chartRespostas');
+        if (ctxRespostas) {
+            new Chart(ctxRespostas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['✅ Implementado', '🔄 Em Andamento', '📝 Planejado', '❌ Não Implementado', '➖ Não Aplicável'],
+                    datasets: [{
+                        data: [implementado, emAndamento, planejado, naoImplementado, naoAplicavel],
+                        backgroundColor: ['#198754', '#0d6efd', '#ffc107', '#dc3545', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Erro ao criar gráfico de rosca:', e);
+    }
+</script>
+{% endblock %}

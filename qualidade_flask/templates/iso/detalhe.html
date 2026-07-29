@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('iso.lista_isos') }}">ISOs</a></li>
+            <li class="breadcrumb-item active">{{ norma.numero }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header da ISO -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ norma.numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ norma.titulo }}</h2>
+                    <span class="badge bg-secondary">{{ norma.setor }}</span>
+                </div>
+                {% if norma.link_oficial %}
+                    <a href="{{ norma.link_oficial }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Link Oficial
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <h6 class="fw-bold text-uppercase small text-muted mb-2">Descrição</h6>
+                <p class="mb-0">{{ norma.descricao }}</p>
+            </div>
+
+            <div class="row g-3">
+                {% if norma.data_vigencia %}
+                <div class="col-md-6">
+                    <small class="text-muted">Data de Vigência:</small>
+                    <p class="fw-bold mb-0">{{ norma.data_vigencia }}</p>
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <small class="text-muted">Última Atualização:</small>
+                    <p class="fw-bold mb-0">{{ norma.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Completo -->
+    {% if norma.conteudo %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <i class="bi bi-file-text me-2"></i>Conteúdo Completo
+        </div>
+        <div class="card-body p-4">
+            <div class="content-iso" style="white-space: pre-wrap; line-height: 1.8;">
+                {{ norma.conteudo }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Palavras-Chave -->
+    {% if norma.palavras_chave %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3">Palavras-Chave</h6>
+            <div class="d-flex flex-wrap gap-2">
+                {% for palavra in norma.palavras_chave %}
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                        {{ palavra }}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Checklist do Usuário -->
+    {% if norma.perguntas %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-bar-chart-steps me-2"></i>Minha Autoavaliação de Maturidade</span>
+            {% if checklist_usuario %}
+                <span class="badge bg-{{ 'success' if checklist_usuario.calcular_maturidade_percentual() >= 70 else 'warning' if checklist_usuario.calcular_maturidade_percentual() >= 40 else 'danger' }}">
+                    {{ checklist_usuario.calcular_maturidade_geral() }}/5 — Maturidade
+                </span>
+            {% endif %}
+        </div>
+        <div class="card-body p-4">
+            {% if checklist_usuario %}
+                <div class="alert alert-{{ 'success' if checklist_usuario.calcular_maturidade_percentual() >= 70 else 'warning' if checklist_usuario.calcular_maturidade_percentual() >= 40 else 'danger' }}">
+                    <div class="d-flex justify-content-between align-items-center flex-column flex-md-row">
+                        <div>
+                            <strong>Autoavaliação respondida em {{ checklist_usuario.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</strong>
+                            <p class="mb-0 small text-muted">
+                                {{ checklist_usuario.respostas|length }} de {{ norma.perguntas|length }} perguntas respondidas
+                            </p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mt-2 mt-md-0">
+                            <div class="text-center">
+                                <div class="display-5 fw-bold">{{ checklist_usuario.calcular_maturidade_geral() }}</div>
+                                <small class="text-muted">de 5.0</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="display-5 fw-bold">{{ checklist_usuario.calcular_maturidade_percentual() }}%</div>
+                                <small class="text-muted">Maturidade</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('iso.checklist_iso', id=norma.id) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Editar Autoavaliação
+                    </a>
+                    <a href="{{ url_for('iso.analise_iso', id=norma.id) }}" class="btn btn-success">
+                        <i class="bi bi-graph-up me-1"></i>Ver Análise de Maturidade
+                    </a>
+                    <form action="{{ url_for('iso.excluir_checklist', id=norma.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta autoavaliação?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i>Excluir
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Você ainda não realizou a autoavaliação de maturidade desta ISO.
+                </div>
+                <a href="{{ url_for('iso.checklist_iso', id=norma.id) }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-bar-chart-steps me-2"></i>Iniciar Autoavaliação
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ações -->
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('iso.lista_isos') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar para Lista
+        </a>
+        <button class="btn btn-outline-dark" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+<style>
+    .content-iso {
+        font-size: 0.95rem;
+        color: #2c3e50;
+    }
+</style>
+{% endblock %}

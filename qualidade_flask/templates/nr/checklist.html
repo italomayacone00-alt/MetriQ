@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('nr.lista_nrs') }}">NRs</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('nr.detalhe_nr', id=norma.id) }}">{{ norma.numero }}</a></li>
+            <li class="breadcrumb-item active">Checklist</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start gap-4 mb-3 flex-column flex-md-row">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ norma.numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ norma.titulo }}</h2>
+                    <p class="text-muted mb-2">Checklist de Conformidade</p>
+                    <p class="small text-secondary mb-0">Responda cada pergunta com base na evidência documentada e registre observações quando necessário.</p>
+                </div>
+                {% if glossario %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light fw-bold py-3 text-dark">Glossário de Siglas e Termos</div>
+                    <div class="card-body p-4">
+                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                            {% for item in glossario %}
+                            <div>
+                                <strong>{{ item.sigla }}</strong>: {{ item.significado }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="text-end">
+                    <div class="d-inline-flex align-items-center gap-3 p-3 rounded-4 bg-light shadow-sm">
+                        <div>
+                            <div class="text-muted small">Progresso</div>
+                            <div class="fw-bold">{{ norma.perguntas|length }} perguntas</div>
+                        </div>
+                        {% if checklist %}
+                        <div class="text-end">
+                            <div class="small text-muted">Conformidade</div>
+                            <div class="display-6 fw-bold text-{{ 'success' if checklist.calcular_conformidade() >= 70 else 'warning' if checklist.calcular_conformidade() >= 50 else 'danger' }}">
+                                {{ checklist.calcular_conformidade() }}%
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-end">
+                            <div class="small text-muted">Estado</div>
+                            <div class="display-6 fw-bold text-secondary">Aguardando</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário do Checklist -->
+    <form action="{{ url_for('nr.checklist_nr', id=norma.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white fw-bold py-3">
+                <i class="bi bi-clipboard-check me-2"></i>Perguntas de Conformidade
+            </div>
+            <div class="card-body p-4">
+                {% if norma.perguntas %}
+                    {% set has_sections = norma.perguntas|selectattr('secao')|list|length > 0 %}
+                    {% set previous_section = None %}
+                    {% for pergunta in norma.perguntas %}
+                        {% if has_sections and pergunta.get('secao') and (loop.first or pergunta.get('secao') != previous_section) %}
+                        <div class="section-header mb-4 pt-3">
+                            <h5 class="fw-bold text-primary mb-2 section-title">{{ pergunta.get('secao') }}</h5>
+                            <hr class="mt-1 mb-3" />
+                        </div>
+                        {% endif %}
+                        {% set previous_section = pergunta.get('secao') %}
+                    <div class="checklist-card p-4 mb-4 rounded-4">
+                        <div class="d-flex align-items-start flex-column flex-md-row gap-3">
+                            <div class="checklist-step-number flex-shrink-0">
+                                {{ pergunta.get('item', loop.index) }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-3">{{ pergunta.get('texto', '') }}</h6>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" id="conforme_{{ pergunta.get('id', '') }}" 
+                                           value="conforme" {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'conforme' %}checked{% endif %}>
+                                    <label class="btn btn-outline-success btn-choice" for="conforme_{{ pergunta.get('id', '') }}">
+                                        <i class="bi bi-check-circle me-1"></i>Conforme
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" id="nao_conforme_{{ pergunta.get('id', '') }}" 
+                                           value="nao_conforme" {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'nao_conforme' %}checked{% endif %}>
+                                    <label class="btn btn-outline-danger btn-choice" for="nao_conforme_{{ pergunta.get('id', '') }}">
+                                        <i class="bi bi-x-circle me-1"></i>Não Conforme
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" id="nao_aplicavel_{{ pergunta.get('id', '') }}" 
+                                           value="nao_aplicavel" {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'nao_aplicavel' %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary btn-choice" for="nao_aplicavel_{{ pergunta.get('id', '') }}">
+                                        <i class="bi bi-dash-circle me-1"></i>Não Aplicável
+                                    </label>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label class="form-label small text-muted">Observações / Evidências:</label>
+                                    <textarea class="form-control" name="observacao_{{ pergunta.get('id', '') }}" rows="3" 
+                                              placeholder="Registre evidências, documentos ou ações corretivas necessárias...">{% if checklist and checklist.observacoes.get(pergunta.get('id', '')|string) %}{{ checklist.observacoes.get(pergunta.get('id', '')|string) }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Esta NR ainda não possui perguntas de checklist configuradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg px-4">
+                <i class="bi bi-save me-2"></i>Salvar Checklist
+            </button>
+            <a href="{{ url_for('nr.detalhe_nr', id=norma.id) }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .btn-check:checked + .btn {
+        background-color: currentColor !important;
+        border-color: currentColor !important;
+        color: white !important;
+    }
+
+    .section-header h5 {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    .section-title {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+</style>
+{% endblock %}

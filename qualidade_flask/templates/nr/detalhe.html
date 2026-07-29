@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('nr.lista_nrs') }}">NRs</a></li>
+            <li class="breadcrumb-item active">{{ norma.numero }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header da NR -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ norma.numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ norma.titulo }}</h2>
+                    <span class="badge bg-secondary">{{ norma.setor }}</span>
+                </div>
+                {% if norma.link_oficial %}
+                    <a href="{{ norma.link_oficial }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Link Oficial
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <h6 class="fw-bold text-uppercase small text-muted mb-2">Descrição</h6>
+                <p class="mb-0">{{ norma.descricao }}</p>
+            </div>
+
+            <div class="row g-3">
+                {% if norma.data_vigencia %}
+                <div class="col-md-6">
+                    <small class="text-muted">Data de Vigência:</small>
+                    <p class="fw-bold mb-0">{{ norma.data_vigencia }}</p>
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <small class="text-muted">Última Atualização:</small>
+                    <p class="fw-bold mb-0">{{ norma.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Completo -->
+    {% if norma.conteudo %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <i class="bi bi-file-text me-2"></i>Conteúdo Completo
+        </div>
+        <div class="card-body p-4">
+            <div class="content-nr" style="white-space: pre-wrap; line-height: 1.8;">
+                {{ norma.conteudo }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Palavras-Chave -->
+    {% if norma.palavras_chave %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3">Palavras-Chave</h6>
+            <div class="d-flex flex-wrap gap-2">
+                {% for palavra in norma.palavras_chave %}
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info">
+                        {{ palavra }}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Checklist do Usuário -->
+    {% if norma.perguntas %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clipboard-check me-2"></i>Meu Checklist</span>
+            {% if checklist_usuario %}
+                <span class="badge bg-{{ 'success' if checklist_usuario.calcular_conformidade() >= 70 else 'warning' if checklist_usuario.calcular_conformidade() >= 50 else 'danger' }}">
+                    {{ checklist_usuario.calcular_conformidade() }}% Conforme
+                </span>
+            {% endif %}
+        </div>
+        <div class="card-body p-4">
+            {% if checklist_usuario %}
+                <div class="alert alert-{{ 'success' if checklist_usuario.calcular_conformidade() >= 70 else 'warning' if checklist_usuario.calcular_conformidade() >= 50 else 'danger' }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Checklist respondido em {{ checklist_usuario.data_atualizacao.strftime('%d/%m/%Y %H:%M') }}</strong>
+                            <p class="mb-0 small text-muted">
+                                {{ checklist_usuario.respostas|length }} de {{ norma.perguntas|length }} perguntas respondidas
+                            </p>
+                        </div>
+                        <div class="display-4 fw-bold">{{ checklist_usuario.calcular_conformidade() }}%</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('nr.checklist_nr', id=norma.id) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-1"></i>Editar Checklist
+                    </a>
+                    <form action="{{ url_for('nr.gerar_analise_nr', id=norma.id) }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-graph-up me-1"></i>Gerar Análise
+                        </button>
+                    </form>
+                    <form action="{{ url_for('nr.excluir_checklist', id=norma.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este checklist?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i>Excluir
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Você ainda não respondeu ao checklist desta NR.
+                </div>
+                <a href="{{ url_for('nr.checklist_nr', id=norma.id) }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-clipboard-check me-2"></i>Responder Checklist
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ações -->
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('nr.lista_nrs') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar para Lista
+        </a>
+        <button class="btn btn-outline-dark" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+<style>
+    .content-nr {
+        font-size: 0.95rem;
+        color: #2c3e50;
+    }
+</style>
+{% endblock %}

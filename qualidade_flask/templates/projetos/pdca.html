@@ -1,0 +1,699 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.tool-card { border: 2px solid #e9ecef; border-radius: 12px; padding: 14px; transition: all 0.25s ease; height: 100%; }
+.tool-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.tool-card.completed { border-color: #198754; background: #f0fdf4; }
+.tool-card .tool-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.fase-nav { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 14px; background: white; border-radius: 14px; }
+.fase-nav .step { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; transition: all 0.3s; }
+.fase-nav .step.active { background: #0d6efd; color: white; transform: scale(1.1); }
+.fase-nav .step.completed { background: #198754; color: white; }
+.fase-nav .step.pending { background: #f1f3f5; color: #868e96; }
+.fase-nav .line { flex: 1; max-width: 36px; height: 3px; border-radius: 3px; }
+.fase-nav .line.done { background: #198754; }
+.fase-nav .line.waiting { background: #dee2e6; }
+.cycle-card { border: none; border-radius: 18px; overflow: hidden; }
+.cycle-card .card-header { padding: 18px 22px; border-bottom: none; }
+.cycle-card .card-body { padding: 20px; }
+.progress-ring { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; flex-shrink: 0; }
+.check-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 0.8rem; background: #fff3bf; color: #e67700; }
+.suggestion-box { border-radius: 14px; border: 1px solid #d0ebff; background: linear-gradient(135deg, #e7f5ff, #d0ebff); padding: 18px; }
+.requisito-item { font-size: 0.85rem; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; }
+.requisito-item.ok { background: #d3f9d8; color: #2b8a3e; }
+.requisito-item.pendente { background: #fff3bf; color: #e67700; }
+.animate-spin { animation: spin 10s linear infinite; display: inline-block; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.badge-dot { flex-shrink: 0; }
+</style>
+
+<div class="container py-4">
+{% set fkeys = ['plan','do','check','act'] %}
+{% set fconf = {'plan':{'l':'PLAN','n':'Planejar','c':'primary','i':'bi-clipboard-data'},'do':{'l':'DO','n':'Executar','c':'warning','i':'bi-play-circle'},'check':{'l':'CHECK','n':'Verificar','c':'success','i':'bi-search-heart'},'act':{'l':'ACT','n':'Agir','c':'danger','i':'bi-gear-wide-connected'}} %}
+{% set fa = fconf[projeto.fase_atual] %}
+{% set fidx = namespace(v=0) %}
+{% for k in fkeys %}{% if k == projeto.fase_atual %}{% set fidx.v = loop.index0 %}{% endif %}{% endfor %}
+{% set pct = ((fidx.v / 3) * 100) | round %}
+
+<!-- BREADCRUMB -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('projects.lista_projetos') }}">Projetos</a></li>
+        <li class="breadcrumb-item active">PDCA: {{ projeto.nome }}</li>
+    </ol>
+</nav>
+
+<!-- HEADER -->
+<div class="cycle-card shadow-sm mb-4 bg-dark text-white">
+  <div class="card-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-light text-dark px-3 py-1"><i class="bi bi-arrow-repeat me-1"></i>PDCA · Ciclo #{{ projeto.ciclo_atual }}</span>
+          <span class="badge bg-{{ fa.c }}">{{ fa.l }}</span>
+        </div>
+        <h3 class="fw-bold mb-0">{{ projeto.nome }}</h3>
+        <p class="mb-0 mt-1 opacity-75 small">{{ projeto.objetivo[:200] }}{% if projeto.objetivo|length > 200 %}...{% endif %}</p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="progress-ring bg-{{ fa.c }} bg-opacity-25 text-{{ fa.c }}">{{ pct }}%</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body pt-0">
+    <div class="fase-nav">
+      {% for k in fkeys %}
+      {% set atv = k == projeto.fase_atual %}
+      {% set cmp = fkeys.index(k) < fidx.v %}
+      {% if not loop.first %}<div class="line {% if cmp or atv %}done{% else %}waiting{% endif %}"></div>{% endif %}
+      <div class="step {% if atv %}active{% elif cmp %}completed{% else %}pending{% endif %}" title="{{ fconf[k].l }}">
+        <i class="bi {{ fconf[k].i }}"></i>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- COLUNA PRINCIPAL -->
+  <div class="col-lg-8">
+
+    <!-- CARD FASE ATUAL -->
+    <div class="cycle-card shadow-sm mb-4 border border-{{ fa.c }} border-opacity-25">
+      <div class="card-header bg-{{ fa.c }} bg-opacity-10">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-{{ fa.c }} text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:40px;height:40px"><i class="bi {{ fa.i }} fs-5"></i></div>
+          <div class="flex-grow-1">
+<h5 class="fw-bold mb-0 text-dark">{{ fa.l }} — {{ fa.n }}
+          </div>
+          <span class="badge bg-{{ fa.c }} rounded-pill px-3 py-2">FASE ATUAL</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <h6 class="fw-bold mb-3 text-dark border-bottom border-2 border-{{ fa.c }} pb-2"><i class="bi bi-list-check me-2 text-{{ fa.c }}"></i>Etapas</h6>
+            {% set checklist = {'plan':['1. Problema definido','2. Dados coletados','3. Pareto','4. Ishikawa','5. 5W2H'],'do':['1. Ações executadas','2. Dados coletados','3. Observações'],'check':['1. Análise estatística','2. Comparação meta','3. Causas eliminadas?','4. Resultado OK?'],'act':['1. Padronização','2. Lições','3. Indicador']} %}
+            {% for item in checklist[projeto.fase_atual] %}
+            <div class="check-item"><i class="bi bi-circle"></i><span>{{ item }}</span></div>
+            {% endfor %}
+          </div>
+          <div class="col-md-7">
+            <h6 class="fw-bold mb-3 text-dark border-bottom border-2 border-{{ fa.c }} pb-2"><i class="bi bi-tools me-2 text-{{ fa.c }}"></i>Ferramentas</h6>
+            {% set ftools = {'plan':[{'t':'folha_verificacao','l':'Coleta de Dados','i':'bi-table'},{'t':'fluxograma','l':'Mapeamento','i':'bi-diagram-3'},{'t':'pareto','l':'Pareto','i':'bi-bar-chart'},{'t':'ishikawa','l':'Ishikawa','i':'bi-diagram-2'},{'t':'5w2h','l':'5W2H','i':'bi-card-checklist'}],'do':[{'t':'5w2h','l':'Executar Plano','i':'bi-check2-square'},{'t':'folha_verificacao','l':'Coletar Dados','i':'bi-table'}],'check':[{'t':'histograma','l':'Histograma','i':'bi-bar-chart-line'},{'t':'dispersao','l':'Dispersão','i':'bi-dot'},{'t':'cep','l':'CEP','i':'bi-graph-up'}],'act':[{'t':'relatorio_padronizacao','l':'Padronização','i':'bi-file-earmark-text'},{'t':'relatorio_projeto','l':'Relatório Final','i':'bi-clipboard-data'},{'t':'novo_ciclo','l':'Novo Ciclo','i':'bi-arrow-repeat'}]} %}
+            <div class="row g-2">
+              {% for ft in ftools[projeto.fase_atual] %}
+              {% set tem = namespace(v=false) %}
+              {% for f in projeto.ferramentas %}{% if f.tipo == ft.t %}{% set tem.v = true %}{% endif %}{% endfor %}
+              <div class="col-6">
+{% set is_act_special = ft.t in ['relatorio_padronizacao', 'relatorio_projeto', 'novo_ciclo'] %}
+                {% if is_act_special %}
+                <div class="tool-card d-flex flex-column">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="tool-icon bg-{{ fa.c }} bg-opacity-10 text-{{ fa.c }}"><i class="bi {{ ft.i }}"></i></div>
+                    <div class="fw-bold text-dark" style="font-size:0.85rem">{{ ft.l }}</div>
+                  </div>
+                  {% if ft.t == 'novo_ciclo' %}
+                  <form action="{{ url_for('projects.novo_ciclo_pdca', id=projeto.id) }}" method="POST" class="mt-2 w-100">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-{{ fa.c }} w-100" style="font-size:0.7rem">
+                      <i class="bi bi-arrow-repeat me-1"></i>Iniciar
+                    </button>
+                  </form>
+                  {% else %}
+                  <a href="{{ url_for('projects.' + ft.t, id=projeto.id) }}" class="btn btn-sm btn-outline-{{ fa.c }} mt-2 w-100" style="font-size:0.7rem">
+                    <i class="bi bi-plus-circle me-1"></i>Acessar
+                  </a>
+                  {% endif %}
+                </div>
+                {% else %}
+                <div class="tool-card {% if tem.v %}completed{% endif %} d-flex flex-column">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="tool-icon bg-{{ fa.c }} bg-opacity-10 text-{{ fa.c }}"><i class="bi {{ ft.i }}"></i></div>
+                    <div class="fw-bold text-dark" style="font-size:0.85rem">{{ ft.l }}</div>
+                  </div>
+                  {% if tem.v %}
+                  <div class="d-flex gap-1 mt-2">
+                    <span class="badge bg-success bg-opacity-10 text-success" style="font-size:0.65rem"><i class="bi bi-check-circle me-1"></i>Concluída</span>
+                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=ft.t) }}" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none" style="font-size:0.65rem"><i class="bi bi-pencil"></i></a>
+                  </div>
+                  {% else %}
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=ft.t) }}" class="btn btn-sm btn-outline-{{ fa.c }} mt-2 w-100" style="font-size:0.7rem">
+                    <i class="bi bi-plus-circle me-1"></i>Abrir
+                  </a>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+              {% if ftools[projeto.fase_atual]|length == 0 %}
+              <div class="col-12">
+                <div class="text-center py-3 bg-light rounded-3">
+                  <i class="bi bi-check2-circle fs-2 text-success mb-1 d-block"></i>
+                  <p class="mb-0 small">Ferramentas concluídas nesta fase.</p>
+                  <p class="small text-muted mb-0">Avançar para revisão e padronização.</p>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Verificação de requisitos -->
+        <hr class="my-3">
+        <div class="row g-2">
+          <div class="col-md-7">
+            <h6 class="fw-bold mb-2 text-dark border-bottom border-2 border-{{ fa.c }} pb-2"><i class="bi bi-clipboard-check me-1 text-{{ fa.c }}"></i>Requisitos para avançar</h6>
+            {% if projeto.fase_atual == 'plan' %}
+              {% set reqs = [{'nome':'📋 Coleta de Dados ou Mapeamento','ok':'folha_verificacao' in projeto.ferramentas|map(attribute='tipo')|list or 'fluxograma' in projeto.ferramentas|map(attribute='tipo')|list},{'nome':'📊 Pareto','ok':'pareto' in projeto.ferramentas|map(attribute='tipo')|list},{'nome':'🐟 Ishikawa','ok':'ishikawa' in projeto.ferramentas|map(attribute='tipo')|list},{'nome':'📝 5W2H','ok':'5w2h' in projeto.ferramentas|map(attribute='tipo')|list}] %}
+            {% elif projeto.fase_atual == 'do' %}
+              {% set reqs = [{'nome':'📋 Folha de Verificação (execução)','ok':'folha_verificacao' in projeto.ferramentas|map(attribute='tipo')|list}] %}
+            {% elif projeto.fase_atual == 'check' %}
+              {% set ft_list = projeto.ferramentas|map(attribute='tipo')|list %}
+              {% set reqs = [{'nome':'📈 Análise (Histograma, Dispersão ou CEP)','ok':'histograma' in ft_list or 'dispersao' in ft_list or 'cep' in ft_list}] %}
+            {% else %}
+              {% set reqs = [{'nome':'✅ Concluir ciclo atual','ok':True}] %}
+            {% endif %}
+            {% for r in reqs %}
+            <div class="requisito-item {% if r.ok %}ok{% else %}pendente{% endif %} d-flex align-items-center gap-2">
+              <i class="bi bi-{% if r.ok %}check-circle-fill{% else %}exclamation-circle-fill{% endif %}"></i>
+              <span>{{ r.nome }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="col-md-5 d-flex flex-column justify-content-center align-items-center">
+            {% if projeto.fase_atual != 'act' %}
+            <button onclick="avancarFase({{ 'true' if pode_avancar else 'false' }})" class="btn btn-{{ fa.c }} btn-lg rounded-pill px-4 fw-bold shadow-sm w-100">
+              <i class="bi bi-arrow-right-circle me-2"></i>Avançar para Próxima Fase
+            </button>
+            <small class="text-muted mt-2">
+              {% if pode_avancar %}
+              <i class="bi bi-check-circle text-success me-1"></i>Todos os requisitos cumpridos
+              {% else %}
+              <i class="bi bi-exclamation-triangle text-warning me-1"></i>Complete os requisitos ao lado
+              {% endif %}
+            </small>
+            {% else %}
+            <form action="{{ url_for('projects.novo_ciclo_pdca', id=projeto.id) }}" method="POST" class="w-100">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow-sm w-100">
+                <i class="bi bi-arrow-repeat me-2"></i>Iniciar Novo Ciclo
+              </button>
+            </form>
+            <small class="text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Snapshot do ciclo atual será salvo</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTEÚDO DETALHADO DA FASE -->
+    <div class="cycle-card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-journal-text me-2 text-{{ fa.c }}"></i>Conteúdo da Fase <span class="text-{{ fa.c }}">{{ fa.l }}</span></h5>
+      </div>
+      <div class="card-body">
+        {% if projeto.fase_atual == 'plan' %}
+        <div class="phase-section" id="section-plan">
+          <p class="mb-3">Identifique os problemas, as causas raiz e defina os objetivos e metas para este ciclo.</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-bar-chart-fill fs-1 text-warning mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Pareto</h6>
+                  <p class="small text-muted">Priorizar problemas mais frequentes</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='pareto') }}" class="btn btn-sm btn-outline-warning rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-diagram-3 fs-1 text-primary mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Ishikawa</h6>
+                  <p class="small text-muted">Análise de Causa Raiz (6M)</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='ishikawa') }}" class="btn btn-sm btn-outline-primary rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-clipboard-check fs-1 text-success mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">5W2H</h6>
+                  <p class="small text-muted">Plano de Ação detalhado</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='5w2h') }}" class="btn btn-sm btn-outline-success rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-diagram-2 fs-1 text-info mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Fluxograma</h6>
+                  <p class="small text-muted">Mapear processo atual</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='fluxograma') }}" class="btn btn-sm btn-outline-info rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-table fs-1 text-secondary mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Folha de Verificação</h6>
+                  <p class="small text-muted">Coleta de dados estruturada</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='folha_verificacao') }}" class="btn btn-sm btn-outline-secondary rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if projeto.fase_atual == 'do' %}
+        <div class="phase-section" id="section-do">
+          <p class="mb-3">Coloque o plano em ação e utilize ferramentas de coleta para monitorar o progresso.</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-check2-square fs-1 text-success mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Folha de Verificação</h6>
+                  <p class="small text-muted">Coleta de Dados em Tempo Real</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='folha_verificacao') }}" class="btn btn-sm btn-outline-success rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-card-checklist fs-1 text-warning mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">5W2H (Execução)</h6>
+                  <p class="small text-muted">Acompanhar ações do plano</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='5w2h') }}" class="btn btn-sm btn-outline-warning rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if projeto.fase_atual == 'check' %}
+        <div class="phase-section" id="section-check">
+          <p class="mb-3">Analise os resultados obtidos e compare com os objetivos estabelecidos no PLAN.</p>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-bar-chart-steps fs-1 text-info mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Histograma</h6>
+                  <p class="small text-muted">Análise de Distribuição</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='histograma') }}" class="btn btn-sm btn-outline-info rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-dot fs-1 text-primary mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">Dispersão</h6>
+                  <p class="small text-muted">Correlação entre variáveis</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='dispersao') }}" class="btn btn-sm btn-outline-primary rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                  <i class="bi bi-activity fs-1 text-danger mb-2 d-block"></i>
+                  <h6 class="fw-bold text-dark">CEP</h6>
+                  <p class="small text-muted">Controle Estatístico</p>
+                  <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='cep') }}" class="btn btn-sm btn-outline-danger rounded-pill">Acessar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if projeto.fase_atual == 'act' %}
+        <div class="phase-section" id="section-act">
+          <p class="mb-3">Padronize as soluções que funcionaram ou ajuste o plano para um novo ciclo.</p>
+
+          <!-- Card da Padronização -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+              <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-text me-2 text-danger"></i>Documento de Padronização</h6>
+              <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#modalPadronizacao">
+                <i class="bi bi-pencil me-1"></i>{% if projeto.documento_padronizacao %}Editar{% else %}Criar{% endif %}
+              </button>
+            </div>
+            <div class="card-body">
+              {% if projeto.documento_padronizacao %}
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Título</p>
+                  <p class="fw-bold">{{ projeto.documento_padronizacao.titulo or 'Procedimento Padrão' }}</p>
+                </div>
+                <div class="col-md-3">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Responsável</p>
+                  <p>{{ projeto.documento_padronizacao.responsavel or '—' }}</p>
+                </div>
+                <div class="col-md-3">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Vigência</p>
+                  <p>{{ projeto.documento_padronizacao.data_vigencia or '—' }}</p>
+                </div>
+                <div class="col-12">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Descrição</p>
+                  <p>{{ projeto.documento_padronizacao.o_que or 'Nenhuma descrição registrada.' }}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Resultados Alcançados</p>
+                  <p>{{ projeto.documento_padronizacao.resultados or '—' }}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted small text-uppercase fw-bold">Indicador de Monitoramento</p>
+                  <p>{{ projeto.documento_padronizacao.indicador or '—' }}</p>
+                </div>
+              </div>
+              <div class="mt-3">
+                <a href="{{ url_for('projects.relatorio_padronizacao', id=projeto.id) }}" class="btn btn-sm btn-outline-dark rounded-pill" target="_blank">
+                  <i class="bi bi-printer me-1"></i>Visualizar / Imprimir
+                </a>
+              </div>
+              {% else %}
+              <div class="text-center py-4">
+                <i class="bi bi-file-earmark-plus fs-1 text-muted mb-2 d-block"></i>
+                <p class="text-muted mb-2">Nenhum documento de padronização criado ainda.</p>
+                <button class="btn btn-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#modalPadronizacao">
+                  <i class="bi bi-plus-circle me-1"></i>Criar Documento de Padronização
+                </button>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Ações do Ciclo -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="bg-light rounded-4 p-4 text-center shadow-sm border h-100">
+                <i class="bi bi-file-earmark-pdf display-5 text-danger mb-3 d-block"></i>
+                <h6 class="fw-bold">Relatório do Ciclo #{{ projeto.ciclo_atual }}</h6>
+                <p class="small text-muted">Visualize o relatório completo com todas as ferramentas e análises deste ciclo.</p>
+                <a href="{{ url_for('projects.relatorio_ciclo_pdca', id=projeto.id) }}" class="btn btn-outline-danger rounded-pill px-4">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>Gerar Relatório
+                </a>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-light rounded-4 p-4 text-center shadow-sm border h-100">
+                <i class="bi bi-arrow-repeat display-5 text-primary animate-spin mb-3 d-block"></i>
+                <h6 class="fw-bold">Iniciar Novo Ciclo</h6>
+                <p class="small text-muted">Após a padronização, inicie um novo ciclo PDCA para melhoria contínua.</p>
+                <form action="{{ url_for('projects.novo_ciclo_pdca', id=projeto.id) }}" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-plus-circle me-1"></i>Iniciar Ciclo #{{ projeto.ciclo_atual + 1 }}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- HISTÓRICO DE FERRAMENTAS DO CICLO -->
+    <div class="cycle-card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-{{ fa.c }}"></i>Ferramentas deste Ciclo</h5>
+      </div>
+      <div class="card-body">
+        {% set ferr_ciclo = projeto.ferramentas | selectattr('ciclo', 'equalto', projeto.ciclo_atual) | list %}
+        {% if ferr_ciclo %}
+        <div class="list-group list-group-flush">
+          {% for f in ferr_ciclo | sort(attribute='data_criacao', reverse=True) %}
+          <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=f.tipo) }}" class="list-group-item list-group-item-action border-0 px-0 d-flex align-items-center gap-3">
+            <div class="bg-{{ fa.c }} bg-opacity-10 text-{{ fa.c }} rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:36px;height:36px">
+              <i class="bi {{ {'folha_verificacao':'bi-table','fluxograma':'bi-diagram-3','pareto':'bi-bar-chart','ishikawa':'bi-diagram-2','5w2h':'bi-card-checklist','histograma':'bi-bar-chart-line','dispersao':'bi-dot','cep':'bi-graph-up'}.get(f.tipo, 'bi-tools') }}"></i>
+            </div>
+            <div class="flex-grow-1">
+              <span class="d-block fw-bold text-capitalize">{{ f.tipo.replace('_', ' ') }}</span>
+              <small class="text-muted">{{ f.data_criacao.strftime('%d/%m/%Y %H:%M') if f.data_criacao else '' }}</small>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+          <p class="text-muted text-center py-3 mb-0">Nenhuma ferramenta registrada neste ciclo ainda.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CICLOS ANTERIORES -->
+    {% if ciclos_historicos %}
+    <div class="cycle-card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-archive me-2 text-secondary"></i>Histórico de Ciclos</h5>
+      </div>
+      <div class="card-body">
+        <div class="accordion" id="accordionCiclos">
+          {% for ch in ciclos_historicos %}
+          <div class="accordion-item border-0 mb-2">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed bg-light rounded-3 fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#ciclo{{ ch.id }}">
+                <i class="bi bi-arrow-repeat me-2 text-info"></i>Ciclo #{{ ch.ciclo }}
+                <span class="ms-2 badge bg-success rounded-pill">Concluído</span>
+                <small class="ms-3 text-muted">{{ ch.data_conclusao.strftime('%d/%m/%Y') if ch.data_conclusao else '' }}</small>
+              </button>
+            </h2>
+            <div id="ciclo{{ ch.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionCiclos">
+              <div class="accordion-body px-0">
+                {% if ch.ferramentas_snapshot %}
+                <h6 class="fw-bold mb-2">Ferramentas utilizadas:</h6>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  {% for ft in ch.ferramentas_snapshot %}
+                  <span class="badge bg-primary bg-opacity-10 text-primary">{{ ft.tipo.replace('_', ' ') }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                {% if ch.metricas_ciclo %}
+                <h6 class="fw-bold mb-2">Métricas:</h6>
+                <div class="row g-2">
+                  <div class="col-auto">
+                    <div class="bg-light rounded-3 p-2 text-center">
+                      <span class="fw-bold d-block fs-5">{{ ch.metricas_ciclo.get('total_ferramentas', 0) }}</span>
+                      <small class="text-muted">Ferramentas</small>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="col-lg-4">
+
+    <!-- CARD SUGESTÃO IA -->
+    <div class="cycle-card shadow-sm mb-4 bg-dark text-white">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-stars fs-4 text-warning"></i>
+          <h5 class="fw-bold mb-0 text-white">Insights do Ciclo</h5>
+        </div>
+        {% if sugestao %}
+        <p class="small opacity-75 mb-3">{{ sugestao.analise }}</p>
+        {% if sugestao.ferramenta_sugerida %}
+        <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=sugestao.ferramenta_sugerida) }}" class="btn btn-info rounded-pill fw-bold w-100">
+          <i class="bi bi-magic me-2"></i>{{ sugestao.nome_ferramenta or sugestao.ferramenta_sugerida }}
+        </a>
+        {% endif %}
+        {% else %}
+        <p class="small opacity-75">A IA está processando seu próximo passo...</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CARD LINHA DO TEMPO -->
+    <div class="cycle-card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-3 text-dark border-bottom border-2 border-{{ fa.c }} pb-2"><i class="bi bi-list-stars me-2 text-{{ fa.c }}"></i>Linha do Tempo (Ciclo {{ projeto.ciclo_atual }})</h5>
+        <div class="list-group list-group-flush small">
+          {% set ferr_ciclo = projeto.ferramentas | list %}
+          {% for f in ferr_ciclo | sort(attribute='data_criacao', reverse=True) %}
+          <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=f.tipo) }}" class="list-group-item list-group-item-action border-0 px-0 d-flex align-items-center gap-2">
+            <div class="badge-dot rounded-circle bg-{{ 'primary' if f.fase == 'plan' else 'warning' if f.fase == 'do' else 'success' if f.fase == 'check' else 'danger' }}" style="width:8px;height:8px;flex-shrink:0"></div>
+            <div class="flex-grow-1">
+              <span class="d-block fw-bold text-capitalize" style="font-size:0.85rem">{{ f.tipo.replace('_', ' ') }}</span>
+              <small class="text-muted text-uppercase" style="font-size:0.6rem">FASE: {{ f.fase or projeto.fase_atual }}</small>
+            </div>
+            <i class="bi bi-chevron-right text-muted" style="font-size:0.7rem"></i>
+          </a>
+          {% endfor %}
+          {% if not projeto.ferramentas %}
+          <p class="text-muted py-3 text-center mb-0">Aguardando primeira ferramenta...</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD AÇÕES -->
+    <div class="cycle-card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-3 text-dark border-bottom border-2 border-secondary pb-2"><i class="bi bi-gear me-2 text-secondary"></i>Ações</h5>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('projects.relatorio_projeto', id=projeto.id) }}" class="btn btn-outline-success rounded-pill">
+            <i class="bi bi-file-earmark-pdf me-2"></i>Relatório Completo
+          </a>
+          <a href="{{ url_for('projects.relatorio_ciclo_pdca', id=projeto.id) }}" class="btn btn-outline-info rounded-pill">
+            <i class="bi bi-arrow-repeat me-2"></i>Relatório do Ciclo #{{ projeto.ciclo_atual }}
+          </a>
+          <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-2"></i>Voltar aos Projetos
+          </a>
+          <hr class="my-2">
+          <form action="{{ url_for('projects.excluir_projeto', id=projeto.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este projeto PDCA? Todo o histórico será perdido.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger rounded-pill w-100">
+              <i class="bi bi-trash me-2"></i>Excluir Projeto
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSRF Token oculto para JavaScript -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<!-- MODAL: Documento de Padronização -->
+<div class="modal fade" id="modalPadronizacao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Documento de Padronização</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formPadronizacao" onsubmit="salvarPadronizacao(event)">
+        <div class="modal-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-bold small text-uppercase">Título do Procedimento</label>
+              <input type="text" class="form-control" name="titulo" value="{{ projeto.documento_padronizacao.titulo or '' }}" placeholder="Ex: POP - Operação de Máquina X" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Responsável</label>
+              <input type="text" class="form-control" name="responsavel" value="{{ projeto.documento_padronizacao.responsavel or current_user.username }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Data de Vigência</label>
+              <input type="date" class="form-control" name="data_vigencia" value="{{ projeto.documento_padronizacao.data_vigencia or '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold small text-uppercase">Descrição da Padronização</label>
+              <textarea class="form-control" name="o_que" rows="3" placeholder="Descreva o que foi padronizado..." required>{{ projeto.documento_padronizacao.o_que or '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Resultados Alcançados</label>
+              <textarea class="form-control" name="resultados" rows="3" placeholder="Quais resultados foram obtidos com esta padronização?">{{ projeto.documento_padronizacao.resultados or '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Indicador de Monitoramento</label>
+              <textarea class="form-control" name="indicador" rows="3" placeholder="Como será monitorado? Ex: % de conformidade semanal">{{ projeto.documento_padronizacao.indicador or '' }}</textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger px-4">
+            <i class="bi bi-check-circle me-1"></i>Salvar Documento
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function avancarFase(prontoIA) {
+    let msg = 'Deseja realmente avançar para a próxima fase do PDCA?';
+    if (!prontoIA) {
+        msg = '⚠️ A IA sugere que você ainda não completou todas as atividades recomendadas para esta fase.\n\nDeseja avançar mesmo assim?';
+    }
+    if (!confirm(msg)) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('[name=csrf_token]')?.value;
+
+    fetch('/projeto/{{ projeto.id }}/avancar_fase', {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (data.ai_review) {
+                alert('Feedback da IA: ' + data.ai_review);
+            }
+            location.reload();
+        } else {
+            alert(data.message || 'Erro ao avançar fase.');
+        }
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        alert('Erro ao comunicar com o servidor.');
+    });
+}
+
+function salvarPadronizacao(event) {
+    event.preventDefault();
+    const form = document.getElementById('formPadronizacao');
+    const formData = new FormData(form);
+    const dados = {};
+    formData.forEach((value, key) => { if (key !== 'csrf_token') dados[key] = value; });
+
+    dados.data_geracao = new Date().toISOString();
+    dados.ciclo = {{ projeto.ciclo_atual }};
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('[name=csrf_token]')?.value;
+
+    fetch('/projeto/{{ projeto.id }}/salvar_padronizacao', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('✅ Documento de padronização salvo com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.message || 'Falha ao salvar'));
+        }
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        alert('Erro ao salvar documento.');
+    });
+}
+</script>
+{% endblock %}
+

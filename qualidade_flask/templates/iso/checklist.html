@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('iso.lista_isos') }}">ISOs</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('iso.detalhe_iso', id=norma.id) }}">{{ norma.numero }}</a></li>
+            <li class="breadcrumb-item active">Checklist</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start gap-4 mb-3 flex-column flex-md-row">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ norma.numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ norma.titulo }}</h2>
+                    <p class="text-muted mb-2">Autoavaliação de Maturidade</p>
+                    <p class="small text-secondary mb-0">Avalie o nível de maturidade da sua organização em cada requisito. Quanto mais maduro, maior a pontuação (1 a 5). Registre evidências e observações quando necessário.</p>
+                </div>
+                {% if glossario %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light fw-bold py-3 text-dark">Glossário de Siglas e Termos</div>
+                    <div class="card-body p-4">
+                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                            {% for item in glossario %}
+                            <div>
+                                <strong>{{ item.sigla }}</strong>: {{ item.significado }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="text-end">
+                    <div class="d-inline-flex align-items-center gap-3 p-3 rounded-4 bg-light shadow-sm">
+                        <div>
+                            <div class="text-muted small">Progresso</div>
+                            <div class="fw-bold">{{ norma.perguntas|length }} perguntas</div>
+                        </div>
+                        {% if checklist %}
+                        <div class="text-end">
+                            <div class="small text-muted">Maturidade</div>
+                            <div class="display-6 fw-bold text-{{ 'success' if checklist.calcular_maturidade_percentual() >= 70 else 'warning' if checklist.calcular_maturidade_percentual() >= 40 else 'danger' }}">
+                                {{ checklist.calcular_maturidade_geral() }}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-end">
+                            <div class="small text-muted">Estado</div>
+                            <div class="display-6 fw-bold text-secondary">Aguardando</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário do Checklist -->
+    <form action="{{ url_for('iso.checklist_iso', id=norma.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white fw-bold py-3">
+                <i class="bi bi-bar-chart-steps me-2"></i>Perguntas de Autoavaliação de Maturidade
+            </div>
+            <div class="card-body p-4">
+                {% if norma.perguntas %}
+                    {% set has_sections = norma.perguntas|selectattr('secao')|list|length > 0 %}
+                    {% set previous_section = None %}
+                    {% for pergunta in norma.perguntas %}
+                        {% if has_sections and pergunta.get('secao') and (loop.first or pergunta.get('secao') != previous_section) %}
+                        <div class="section-header mb-4 pt-3">
+                            <h5 class="fw-bold text-primary mb-2 section-title">{{ pergunta.get('secao') }}</h5>
+                            <hr class="mt-1 mb-3" />
+                        </div>
+                        {% endif %}
+                        {% set previous_section = pergunta.get('secao') %}
+                    <div class="checklist-card p-4 mb-4 rounded-4">
+                        <div class="d-flex align-items-start flex-column flex-md-row gap-3">
+                            <div class="checklist-step-number flex-shrink-0">
+                                {{ pergunta.get('item', loop.index) }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-3">{{ pergunta.get('texto', '') }}</h6>
+                                
+                                <!-- Nível de Maturidade -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Nível de Maturidade:</label>
+                                    <div class="d-flex flex-wrap gap-2 maturity-options">
+                                        <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" 
+                                               id="implementado_{{ pergunta.get('id', '') }}" value="implementado"
+                                               {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'implementado' %}checked{% endif %}>
+                                        <label class="btn btn-outline-maturity maturity-5" for="implementado_{{ pergunta.get('id', '') }}">
+                                            <span class="maturity-icon">✅</span>
+                                            <span class="maturity-label">Implementado</span>
+                                            <span class="maturity-score">Nível 5</span>
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" 
+                                               id="em_andamento_{{ pergunta.get('id', '') }}" value="em_andamento"
+                                               {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'em_andamento' %}checked{% endif %}>
+                                        <label class="btn btn-outline-maturity maturity-3" for="em_andamento_{{ pergunta.get('id', '') }}">
+                                            <span class="maturity-icon">🔄</span>
+                                            <span class="maturity-label">Em Andamento</span>
+                                            <span class="maturity-score">Nível 3</span>
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" 
+                                               id="planejado_{{ pergunta.get('id', '') }}" value="planejado"
+                                               {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'planejado' %}checked{% endif %}>
+                                        <label class="btn btn-outline-maturity maturity-1" for="planejado_{{ pergunta.get('id', '') }}">
+                                            <span class="maturity-icon">📝</span>
+                                            <span class="maturity-label">Planejado</span>
+                                            <span class="maturity-score">Nível 1</span>
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" 
+                                               id="nao_implementado_{{ pergunta.get('id', '') }}" value="nao_implementado"
+                                               {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'nao_implementado' %}checked{% endif %}>
+                                        <label class="btn btn-outline-maturity maturity-0" for="nao_implementado_{{ pergunta.get('id', '') }}">
+                                            <span class="maturity-icon">❌</span>
+                                            <span class="maturity-label">Não Implementado</span>
+                                            <span class="maturity-score">Nível 0</span>
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="resposta_{{ pergunta.get('id', '') }}" 
+                                               id="nao_aplicavel_{{ pergunta.get('id', '') }}" value="nao_aplicavel"
+                                               {% if checklist and checklist.respostas.get(pergunta.get('id', '')|string) == 'nao_aplicavel' %}checked{% endif %}>
+                                        <label class="btn btn-outline-maturity maturity-na" for="nao_aplicavel_{{ pergunta.get('id', '') }}">
+                                            <span class="maturity-icon">➖</span>
+                                            <span class="maturity-label">Não Aplicável</span>
+                                            <span class="maturity-score">—</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label class="form-label small text-muted">Observações / Evidências:</label>
+                                    <textarea class="form-control" name="observacao_{{ pergunta.get('id', '') }}" rows="3" 
+                                              placeholder="Registre evidências, documentos ou ações corretivas necessárias...">{% if checklist and checklist.observacoes.get(pergunta.get('id', '')|string) %}{{ checklist.observacoes.get(pergunta.get('id', '')|string) }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Esta ISO ainda não possui perguntas de checklist configuradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg px-4">
+                <i class="bi bi-save me-2"></i>Salvar Autoavaliação
+            </button>
+            <a href="{{ url_for('iso.detalhe_iso', id=norma.id) }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* === Maturidade CSS === */
+    .maturity-options {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-outline-maturity {
+        border-radius: 12px;
+        padding: 0.6rem 0.8rem;
+        min-width: 120px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        border: 2px solid #dee2e6;
+        background: white;
+        cursor: pointer;
+        flex: 1 1 0;
+    }
+    
+    .btn-outline-maturity .maturity-icon { font-size: 1.3rem; line-height: 1; }
+    .btn-outline-maturity .maturity-label { font-size: 0.75rem; line-height: 1.2; }
+    .btn-outline-maturity .maturity-score { font-size: 0.6rem; opacity: 0.7; line-height: 1; }
+    
+    /* Nível 5 - Implementado (Verde) */
+    .maturity-5:hover, .btn-check:checked + .maturity-5 {
+        border-color: #198754 !important;
+        background: #d1e7dd !important;
+        color: #0f5132 !important;
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+    }
+    
+    /* Nível 3 - Em Andamento (Azul) */
+    .maturity-3:hover, .btn-check:checked + .maturity-3 {
+        border-color: #0d6efd !important;
+        background: #cfe2ff !important;
+        color: #084298 !important;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+    
+    /* Nível 1 - Planejado (Amarelo) */
+    .maturity-1:hover, .btn-check:checked + .maturity-1 {
+        border-color: #ffc107 !important;
+        background: #fff3cd !important;
+        color: #664d03 !important;
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+    }
+    
+    /* Nível 0 - Não Implementado (Vermelho) */
+    .maturity-0:hover, .btn-check:checked + .maturity-0 {
+        border-color: #dc3545 !important;
+        background: #f8d7da !important;
+        color: #842029 !important;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+    }
+    
+    /* Não Aplicável (Cinza) */
+    .maturity-na:hover, .btn-check:checked + .maturity-na {
+        border-color: #6c757d !important;
+        background: #e9ecef !important;
+        color: #495057 !important;
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+    }
+    
+    .btn-check:checked + .btn-outline-maturity {
+        transform: scale(1.02);
+    }
+    
+    .btn-check:checked + .maturity-5 .maturity-score,
+    .btn-check:checked + .maturity-3 .maturity-score,
+    .btn-check:checked + .maturity-1 .maturity-score,
+    .btn-check:checked + .maturity-0 .maturity-score,
+    .btn-check:checked + .maturity-na .maturity-score {
+        opacity: 1;
+        font-weight: 800;
+    }
+
+    .section-header h5 {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    .section-title {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    @media (max-width: 767px) {
+        .btn-outline-maturity {
+            min-width: 80px;
+            padding: 0.4rem 0.5rem;
+        }
+        .btn-outline-maturity .maturity-label { font-size: 0.65rem; }
+        .btn-outline-maturity .maturity-icon { font-size: 1rem; }
+    }
+</style>
+{% endblock %}

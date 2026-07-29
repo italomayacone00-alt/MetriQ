@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('empresa.lista') }}">Empresas</a></li>
+            <li class="breadcrumb-item active">{{ empresa.nome_fantasia or empresa.razao_social }}</li>
+        </ol>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- HEADER: DADOS CADASTRAIS -->
+    <!-- ============================================ -->
+    <div class="card border-0 shadow-sm mb-4 bg-gradient-primary">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <h3 class="fw-bold mb-0">{{ empresa.nome_fantasia or empresa.razao_social }}</h3>
+                        <span class="badge {% if empresa.grau_risco >= 3 %}bg-danger{% elif empresa.grau_risco == 2 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
+                            GR {{ empresa.grau_risco }}
+                        </span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 text-muted small">
+                        {% if empresa.cnpj %}<span><i class="bi bi-credit-card me-1"></i>{{ empresa.cnpj }}</span>{% endif %}
+                        {% if empresa.ramo_atividade %}<span><i class="bi bi-tag me-1"></i>{{ empresa.ramo_atividade }}</span>{% endif %}
+                        {% if empresa.num_funcionarios %}<span><i class="bi bi-people me-1"></i>{{ empresa.num_funcionarios }} funcionários</span>{% endif %}
+                        {% if empresa.cidade %}<span><i class="bi bi-geo-alt me-1"></i>{{ empresa.cidade }}/{{ empresa.estado }}</span>{% endif %}
+                        {% if empresa.responsavel_sst %}<span><i class="bi bi-shield me-1"></i>Resp. SST: {{ empresa.responsavel_sst }}</span>{% endif %}
+                        {% if empresa.cnae %}<span><i class="bi bi-upc-scan me-1"></i>CNAE: {{ empresa.cnae }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('empresa.editar', id=empresa.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Editar
+                    </a>
+                    <a href="{{ url_for('empresa.relatorio', id=empresa.id) }}" class="btn btn-outline-success btn-sm" target="_blank">
+                        <i class="bi bi-file-earmark-text me-1"></i>Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CARDS DE MÓDULOS (6 CARDS) -->
+    <!-- ============================================ -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-lg-2">
+            <a href="{{ url_for('planta_baixa.lista') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                    <div class="card-body">
+                        <div class="display-4 mb-2">🏗️</div>
+                        <h6 class="fw-bold mb-1">Planta Baixa</h6>
+                        <div class="text-muted small">{{ metricas.total_plantas }} planta(s)</div>
+                        {% if metricas.conformidade_planta_media > 0 %}
+                        <div class="mt-2">
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar {% if metricas.conformidade_planta_media >= 80 %}bg-success{% elif metricas.conformidade_planta_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ metricas.conformidade_planta_media }}%"></div>
+                            </div>
+                            <small class="{% if metricas.conformidade_planta_media >= 80 %}text-success{% elif metricas.conformidade_planta_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ metricas.conformidade_planta_media }}% conf.
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <a href="{{ url_for('nr.lista_nrs') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                    <div class="card-body">
+                        <div class="display-4 mb-2">📋</div>
+                        <h6 class="fw-bold mb-1">NRs</h6>
+                        <div class="text-muted small">{{ metricas.total_checklists_nr }} checklists</div>
+                        {% if metricas.conformidade_nr_media > 0 %}
+                        <div class="mt-2">
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar {% if metricas.conformidade_nr_media >= 80 %}bg-success{% elif metricas.conformidade_nr_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ metricas.conformidade_nr_media }}%"></div>
+                            </div>
+                            <small class="{% if metricas.conformidade_nr_media >= 80 %}text-success{% elif metricas.conformidade_nr_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ metricas.conformidade_nr_media }}% conf.
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <a href="{{ url_for('iso.lista_isos') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                    <div class="card-body">
+                        <div class="display-4 mb-2">🌐</div>
+                        <h6 class="fw-bold mb-1">ISOs</h6>
+                        <div class="text-muted small">{{ metricas.total_checklists_iso }} avaliações</div>
+                        {% if metricas.maturidade_iso_media > 0 %}
+                        <div class="mt-2">
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar {% if metricas.maturidade_iso_media >= 80 %}bg-success{% elif metricas.maturidade_iso_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ metricas.maturidade_iso_media }}%"></div>
+                            </div>
+                            <small class="{% if metricas.maturidade_iso_media >= 80 %}text-success{% elif metricas.maturidade_iso_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ metricas.maturidade_iso_media }}% matur.
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <a href="{{ url_for('projects.lista_projetos') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                    <div class="card-body">
+                        <div class="display-4 mb-2">📊</div>
+                        <h6 class="fw-bold mb-1">Projetos</h6>
+                        <div class="text-muted small">{{ metricas.total_projetos }} total</div>
+                        {% if metricas.projetos_ativos > 0 %}
+                        <div class="mt-2"><span class="badge bg-success">{{ metricas.projetos_ativos }} ativos</span></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                <div class="card-body">
+                    <div class="display-4 mb-2">📄</div>
+                    <h6 class="fw-bold mb-1">Documentos</h6>
+                    <div class="text-muted small">PGR, PCMSO, Laudos</div>
+                    <div class="mt-2"><span class="badge bg-info">Em breve</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100 text-center p-3 hover-card">
+                <div class="card-body">
+                    <div class="display-4 mb-2">👥</div>
+                    <h6 class="fw-bold mb-1">Funcionários</h6>
+                    <div class="text-muted small">{{ empresa.num_funcionarios }} registrados</div>
+                    <div class="mt-2"><span class="badge bg-info">Em breve</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GATILHOS AUTOMÁTICOS PDCA -->
+    <!-- ============================================ -->
+    <div class="card border-0 shadow-sm mb-4" id="card-gatilhos">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>
+                Gatilhos PDCA
+                <span class="badge bg-warning text-dark ms-2" id="total-sugestoes">0</span>
+            </h5>
+            <button class="btn btn-outline-warning btn-sm" onclick="verificarGatilhos()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Verificar Agora
+            </button>
+        </div>
+        <div class="card-body" id="body-gatilhos">
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-search fs-2 d-block mb-2"></i>
+                <small>Clique em "Verificar Agora" para identificar oportunidades de melhoria contínua.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RELATÓRIO EXECUTIVO DE CONFORMIDADE -->
+    <!-- ============================================ -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Relatório Executivo de Conformidade</h5>
+            <a href="{{ url_for('empresa.relatorio', id=empresa.id) }}" class="btn btn-primary btn-sm" target="_blank">
+                <i class="bi bi-file-earmark-text me-1"></i>Gerar Relatório Consolidado
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Barra NR -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-bold small">📋 Conformidade NRs</span>
+                    <span class="small {% if metricas.conformidade_nr_media >= 80 %}text-success{% elif metricas.conformidade_nr_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ metricas.conformidade_nr_media }}%
+                    </span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar {% if metricas.conformidade_nr_media >= 80 %}bg-success{% elif metricas.conformidade_nr_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         role="progressbar" style="width: {{ metricas.conformidade_nr_media }}%" 
+                         aria-valuenow="{{ metricas.conformidade_nr_media }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">{{ metricas.nr_concluidas }} checklists respondidos</small>
+            </div>
+
+            <!-- Barra ISO -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-bold small">🌐 Maturidade ISOs</span>
+                    <span class="small {% if metricas.maturidade_iso_media >= 80 %}text-success{% elif metricas.maturidade_iso_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ metricas.maturidade_iso_media }}%
+                    </span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar {% if metricas.maturidade_iso_media >= 80 %}bg-success{% elif metricas.maturidade_iso_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         role="progressbar" style="width: {{ metricas.maturidade_iso_media }}%" 
+                         aria-valuenow="{{ metricas.maturidade_iso_media }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">{{ metricas.total_checklists_iso }} autoavaliações realizadas</small>
+            </div>
+
+            <!-- Barra Planta -->
+            <div class="mb-0">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-bold small">🏗️ Adequação Planta Baixa</span>
+                    <span class="small {% if metricas.conformidade_planta_media >= 80 %}text-success{% elif metricas.conformidade_planta_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ metricas.conformidade_planta_media }}%
+                    </span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar {% if metricas.conformidade_planta_media >= 80 %}bg-success{% elif metricas.conformidade_planta_media >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         role="progressbar" style="width: {{ metricas.conformidade_planta_media }}%" 
+                         aria-valuenow="{{ metricas.conformidade_planta_media }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">{{ metricas.total_plantas }} planta(s) cadastrada(s)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONTEÚDO EM 2 COLUNAS -->
+    <!-- ============================================ -->
+    <div class="row g-4">
+        <!-- COLUNA ESQUERDA: NRs e ISOs -->
+        <div class="col-lg-7">
+            <!-- NRs Aplicáveis -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-info"></i>NRs Aplicáveis</h6>
+                    <a href="{{ url_for('nr.lista_nrs') }}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Ver Todas
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>NR</th>
+                                    <th>Título</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Conformidade</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for nr in nrs_detalhes %}
+                                <tr>
+                                    <td><span class="badge bg-dark">{{ nr.numero }}</span></td>
+                                    <td class="small">{{ nr.titulo[:40] }}{% if nr.titulo|length > 40 %}...{% endif %}</td>
+                                    <td class="text-center">
+                                        {% if nr.tem_checklist %}
+                                            {% if nr.vinculo == 'empresa' %}
+                                            <span class="badge bg-success">✅ Vinculado</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">🔄 Geral</span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-secondary">⬜ Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if nr.tem_checklist %}
+                                        <span class="fw-bold {% if nr.conformidade >= 80 %}text-success{% elif nr.conformidade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ nr.conformidade }}%
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if nr.tem_checklist %}
+                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-plus"></i>Responder
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ISOs Avaliadas -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-globe me-2 text-success"></i>Normas ISO</h6>
+                    <a href="{{ url_for('iso.lista_isos') }}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Ver Todas
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ISO</th>
+                                    <th>Título</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Maturidade</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for iso in isos_detalhes %}
+                                <tr>
+                                    <td><span class="badge bg-dark">{{ iso.numero }}</span></td>
+                                    <td class="small">{{ iso.titulo[:40] }}{% if iso.titulo|length > 40 %}...{% endif %}</td>
+                                    <td class="text-center">
+                                        {% if iso.tem_checklist %}
+                                            {% if iso.vinculo == 'empresa' %}
+                                            <span class="badge bg-success">✅ Vinculado</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">🔄 Geral</span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-secondary">⬜ Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if iso.tem_checklist %}
+                                        <span class="fw-bold {% if iso.maturidade >= 80 %}text-success{% elif iso.maturidade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ iso.maturidade }}%
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if iso.tem_checklist %}
+                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id) if iso.checklist_id else '#' }}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-plus"></i>Avaliar
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA: Plantas e Projetos -->
+        <div class="col-lg-5">
+            <!-- Plantas Baixas -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-warning"></i>Plantas Baixas</h6>
+                    <a href="{{ url_for('planta_baixa.nova') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Nova
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if plantas_dados %}
+                    <div class="list-group list-group-flush">
+                        {% for p in plantas_dados %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('planta_baixa.construtor', id=p.id) }}" class="fw-bold text-decoration-none">{{ p.nome }}</a>
+                                <div class="text-muted small">
+                                    {% if p.objetos.total > 0 %}{{ p.objetos.total }} objetos · {% endif %}
+                                    <span class="{% if p.conformidade >= 80 %}text-success{% elif p.conformidade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ p.conformidade }}% conf.
+                                    </span>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('planta_baixa.analise', id=p.id) }}" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-graph-up"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-building fs-2 d-block mb-2"></i>
+                        <small>Nenhuma planta vinculada.</small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if plantas_sem_vinculo %}
+                <div class="card-footer bg-white">
+                    <form method="POST" action="{{ url_for('empresa.vincular_dados', id=empresa.id) }}" class="d-flex gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select class="form-select form-select-sm" id="vincular-planta">
+                            <option value="">Vincular planta existente...</option>
+                            {% for p in plantas_sem_vinculo %}
+                            <option value="{{ p.id }}">{{ p.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="vincularItem('planta')">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Projetos PDCA -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Projetos PDCA</h6>
+                    <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Novo
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if projetos %}
+                    {% set fases_cores = {'plan': 'primary', 'do': 'warning', 'check': 'success', 'act': 'danger'} %}
+                    <div class="list-group list-group-flush">
+                        {% for proj in projetos %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('projects.projeto_pdca', id=proj.id) }}" class="fw-bold text-decoration-none">{{ proj.nome }}</a>
+                                <div class="d-flex gap-2 mt-1">
+                                    <span class="badge bg-{{ fases_cores.get(proj.fase_atual, 'secondary') }} rounded-pill" style="font-size:0.65rem;">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Ciclo #{{ proj.ciclo_atual }}
+                                    </span>
+                                    <span class="badge bg-{{ fases_cores.get(proj.fase_atual, 'secondary') }} text-uppercase" style="font-size:0.65rem;">
+                                        {{ proj.fase_atual }}
+                                    </span>
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    {{ proj.ferramentas|length }} ferramenta(s) · {{ proj.data_criacao.strftime('%d/%m/%Y') }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <a href="{{ url_for('projects.projeto_pdca', id=proj.id) }}" class="btn btn-sm btn-outline-dark">
+                                    <i class="bi bi-arrow-repeat"></i> PDCA
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-arrow-repeat fs-2 d-block mb-2"></i>
+                        <small>Nenhum projeto PDCA vinculado.</small>
+                        <div class="mt-2">
+                            <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Criar Projeto
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if projetos_sem_vinculo %}
+                <div class="card-footer bg-white">
+                    <form class="d-flex gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select class="form-select form-select-sm" id="vincular-projeto">
+                            <option value="">Vincular projeto existente...</option>
+                            {% for p in projetos_sem_vinculo %}
+                            <option value="{{ p.id }}">{{ p.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="vincularItem('projeto')">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .hover-card { transition: all 0.3s ease; cursor: pointer; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-gradient-primary h3, .bg-gradient-primary .text-muted { color: #fff !important; }
+    .bg-gradient-primary .text-muted span { color: rgba(255,255,255,0.85) !important; }
+    .bg-gradient-primary .btn { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: #fff; }
+    .bg-gradient-primary .btn:hover { background: rgba(255,255,255,0.3); }
+</style>
+
+<script>
+function vincularItem(tipo) {
+    const select = document.getElementById('vincular-' + tipo);
+    const itemId = select.value;
+    if (!itemId) { alert('Selecione um item para vincular.'); return; }
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch('/empresa/{{ empresa.id }}/vincular-dados', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ tipo: tipo === 'planta' ? 'planta' : 'projeto', item_id: parseInt(itemId) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.sucesso) {
+            window.location.reload();
+        } else {
+            alert('Erro: ' + (data.erro || 'Desconhecido'));
+        }
+    })
+    .catch(e => alert('Erro de conexão.'));
+}
+
+function verificarGatilhos() {
+    const btn = document.querySelector('#card-gatilhos button');
+    const body = document.getElementById('body-gatilhos');
+    const badge = document.getElementById('total-sugestoes');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verificando...';
+    
+    fetch('/empresa/{{ empresa.id }}/gatilhos-pdca')
+    .then(r => r.json())
+    .then(data => {
+        badge.textContent = data.total_sugestoes;
+        
+        if (data.sugestoes.length === 0) {
+            body.innerHTML = `
+                <div class="text-center text-success py-3">
+                    <i class="bi bi-check-circle fs-2 d-block mb-2"></i>
+                    <h6 class="fw-bold">Tudo em ordem!</h6>
+                    <small>Não foram encontradas não conformidades críticas no momento.</small>
+                </div>
+            `;
+        } else {
+            let html = '<div class="list-group list-group-flush">';
+            data.sugestoes.forEach(s => {
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="me-2 fs-5">${s.icone}</span>
+                            <strong>${s.origem}</strong>
+                            <p class="mb-0 small text-muted">${s.mensagem}</p>
+                        </div>
+                        <a href="${s.url_criar}" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-repeat me-1"></i>Abrir PDCA
+                        </a>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            body.innerHTML = html;
+        }
+    })
+    .catch(e => {
+        body.innerHTML = `<div class="text-center text-danger py-3"><small>Erro ao verificar: ${e.message}</small></div>`;
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Verificar Agora';
+    });
+}
+</script>
+{% endblock %}

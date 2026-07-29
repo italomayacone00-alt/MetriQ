@@ -1,8 +1,9 @@
 import os
 import json
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
-from ..models import Projeto, ProjetoFerramenta, db
+from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, db
 from groq import Groq
 
 projects = Blueprint('projects', __name__)
@@ -476,7 +477,13 @@ def validar_dados_ferramenta(tipo, dados):
 @projects.route('/projetos')
 @login_required
 def lista_projetos():
-    meus_projetos = Projeto.query.filter_by(user_id=current_user.id).order_by(Projeto.data_criacao.desc()).all()
+    tipo_filtro = request.args.get('tipo')
+    query = Projeto.query.filter_by(user_id=current_user.id)
+    
+    if tipo_filtro in ('normal', 'pdca'):
+        query = query.filter_by(tipo=tipo_filtro)
+    
+    meus_projetos = query.order_by(Projeto.data_criacao.desc()).all()
     return render_template('projetos/lista.html', projetos=meus_projetos)
 
 @projects.route('/projetos/novo', methods=['POST'])
@@ -484,17 +491,27 @@ def lista_projetos():
 def novo_projeto():
     nome = request.form.get('nome')
     objetivo = request.form.get('objetivo')
+    tipo = request.form.get('tipo', 'normal')  # padrão normal
     
     if not nome or not objetivo:
         flash('Nome e objetivo são obrigatórios!', 'danger')
         return redirect(url_for('projects.lista_projetos'))
     
-    novo = Projeto(nome=nome, objetivo=objetivo, user_id=current_user.id)
+    novo = Projeto(
+        nome=nome, 
+        objetivo=objetivo, 
+        user_id=current_user.id,
+        tipo=tipo
+    )
     db.session.add(novo)
     db.session.commit()
     
     flash('Projeto criado com sucesso!', 'success')
-    return redirect(url_for('projects.detalhe_projeto', id=novo.id))
+    
+    if tipo == 'pdca':
+        return redirect(url_for('projects.projeto_pdca', id=novo.id))
+    else:  # normal (padrão)
+        return redirect(url_for('projects.detalhe_projeto', id=novo.id))
 
 @projects.route('/projeto/<int:id>')
 @login_required
@@ -503,6 +520,10 @@ def detalhe_projeto(id):
     if projeto.user_id != current_user.id:
         flash('Acesso negado.', 'danger')
         return redirect(url_for('projects.lista_projetos'))
+    
+    # Redirecionar projetos PDCA para a tela unificada do ciclo
+    if projeto.tipo == 'pdca':
+        return redirect(url_for('projects.projeto_pdca', id=projeto.id))
     
     print(f"DEBUG: Gerando sugestão inteligente para projeto {projeto.nome} - {projeto.objetivo}")
     sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
@@ -1093,3 +1114,365 @@ def excluir_ferramenta_projeto(id, ferramenta_id):
     db.session.delete(ferramenta)
     db.session.commit()
     return jsonify({"status": "success", "message": "Ferramenta excluída!"})
+
+# ==========================================
+# ROTAS DO CICLO PDCA COMPLETO
+# ==========================================
+
+def verificar_requisitos_plan(projeto):
+    """Verifica se a fase PLAN está completa para avançar"""
+    ferramentas = [f.tipo for f in projeto.ferramentas]
+    faltando = []
+    
+    # Etapas obrigatórias do PLAN
+    if 'folha_verificacao' not in ferramentas and 'fluxograma' not in ferramentas:
+        faltando.append("📋 Coleta de Dados (Folha de Verificação) ou Mapeamento (Fluxograma)")
+    if 'pareto' not in ferramentas:
+        faltando.append("📊 Diagrama de Pareto (priorização de problemas)")
+    if 'ishikawa' not in ferramentas:
+        faltando.append("🐟 Diagrama de Ishikawa (análise de causa raiz)")
+    if '5w2h' not in ferramentas:
+        faltando.append("📝 Plano de Ação 5W2H")
+    
+    return len(faltando) == 0, faltando
+
+def verificar_requisitos_do(projeto):
+    """Verifica se a fase DO está completa"""
+    ferramentas = [f.tipo for f in projeto.ferramentas]
+    faltando = []
+    
+    if 'folha_verificacao' not in ferramentas:
+        faltando.append("📋 Folha de Verificação (coleta de dados da execução)")
+    
+    return len(faltando) == 0, faltando
+
+def verificar_requisitos_check(projeto):
+    """Verifica se a fase CHECK está completa"""
+    ferramentas = [f.tipo for f in projeto.ferramentas]
+    faltando = []
+    
+    # Precisa de pelo menos uma ferramenta de análise
+    analise_tools = ['histograma', 'dispersao', 'cep']
+    if not any(t in ferramentas for t in analise_tools):
+        faltando.append("📈 Ferramenta de Análise (Histograma, Dispersão ou CEP)")
+    
+    return len(faltando) == 0, faltando
+
+def verificar_requisitos_act(projeto):
+    """ACT sempre pode ser concluído"""
+    return True, []
+
+@projects.route('/projeto/<int:id>/pdca')
+@login_required
+def projeto_pdca(id):
+    """Página principal do ciclo PDCA"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('projects.lista_projetos'))
+    
+    # Verificar requisitos da fase atual
+    if projeto.fase_atual == 'plan':
+        pode_avancar, requisitos_faltando = verificar_requisitos_plan(projeto)
+    elif projeto.fase_atual == 'do':
+        pode_avancar, requisitos_faltando = verificar_requisitos_do(projeto)
+    elif projeto.fase_atual == 'check':
+        pode_avancar, requisitos_faltando = verificar_requisitos_check(projeto)
+    else:  # act
+        pode_avancar, requisitos_faltando = True, []
+    
+    # Sugestão da IA
+    sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
+    
+    # Histórico de ciclos para gráfico evolutivo
+    ciclos_historicos = CicloHistorico.query.filter_by(projeto_id=projeto.id).order_by(CicloHistorico.ciclo).all()
+    
+    return render_template('projetos/pdca.html', 
+                          projeto=projeto,
+                          pode_avancar=pode_avancar,
+                          requisitos_faltando=requisitos_faltando,
+                          sugestao=sugestao,
+                          ciclos_historicos=ciclos_historicos)
+
+@projects.route('/projeto/<int:id>/avancar_fase', methods=['POST'])
+@login_required
+def avancar_fase(id):
+    """Avança para a próxima fase do PDCA"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    
+    # Verificar se pode avançar
+    if projeto.fase_atual == 'plan':
+        pode, faltas = verificar_requisitos_plan(projeto)
+        if not pode:
+            return jsonify({"status": "error", "message": "Complete todos os requisitos do PLAN: " + "; ".join(faltas)})
+        projeto.fase_atual = 'do'
+        
+    elif projeto.fase_atual == 'do':
+        pode, faltas = verificar_requisitos_do(projeto)
+        if not pode:
+            return jsonify({"status": "error", "message": "Complete os requisitos do DO: " + "; ".join(faltas)})
+        projeto.fase_atual = 'check'
+        
+    elif projeto.fase_atual == 'check':
+        pode, faltas = verificar_requisitos_check(projeto)
+        if not pode:
+            return jsonify({"status": "error", "message": "Complete os requisitos do CHECK: " + "; ".join(faltas)})
+        projeto.fase_atual = 'act'
+        
+    elif projeto.fase_atual == 'act':
+        return jsonify({"status": "error", "message": "O ciclo já está concluído. Inicie um novo ciclo."})
+    
+    projeto.data_conclusao_ciclo = datetime.now()
+    db.session.commit()
+    
+    return jsonify({
+        "status": "success", 
+        "message": f"Avançou para fase {projeto.fase_atual.upper()}!",
+        "nova_fase": projeto.fase_atual
+    })
+
+@projects.route('/projeto/<int:id>/novo_ciclo', methods=['POST'])
+@login_required
+def novo_ciclo_pdca(id):
+    """Inicia um novo ciclo PDCA - salva snapshot do ciclo concluído"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('projects.lista_projetos'))
+    
+    if projeto.fase_atual != 'act':
+        flash('Complete a fase ACT antes de iniciar um novo ciclo.', 'warning')
+        return redirect(url_for('projects.projeto_pdca', id=id))
+    
+    # --- Salvar snapshot do ciclo concluído ---
+    ferramentas_dados = []
+    for f in projeto.ferramentas:
+        ferramentas_dados.append({
+            'tipo': f.tipo,
+            'dados': f.dados,
+            'data_criacao': f.data_criacao.strftime('%Y-%m-%d %H:%M') if f.data_criacao else ''
+        })
+    
+    # Calcular métricas do ciclo
+    metricas = {
+        'total_ferramentas': len(projeto.ferramentas),
+        'ferramentas_por_tipo': {}
+    }
+    for f in projeto.ferramentas:
+        if f.tipo not in metricas['ferramentas_por_tipo']:
+            metricas['ferramentas_por_tipo'][f.tipo] = 0
+        metricas['ferramentas_por_tipo'][f.tipo] += 1
+    
+    historico = CicloHistorico(
+        projeto_id=projeto.id,
+        ciclo=projeto.ciclo_atual,
+        fase_concluida='act',
+        ferramentas_snapshot=ferramentas_dados,
+        documento_padronizacao=projeto.documento_padronizacao,
+        metricas_ciclo=metricas
+    )
+    db.session.add(historico)
+    
+    # Incrementar ciclo e voltar para PLAN
+    projeto.ciclo_atual += 1
+    projeto.fase_atual = 'plan'
+    db.session.commit()
+    
+    flash(f'🚀 Novo ciclo PDCA #{projeto.ciclo_atual} iniciado! Snapshot do ciclo #{historico.ciclo} salvo.', 'success')
+    return redirect(url_for('projects.projeto_pdca', id=id))
+
+@projects.route('/projeto/<int:id>/salvar_padronizacao', methods=['POST'])
+@login_required
+def salvar_padronizacao(id):
+    """Salva o documento de padronização da fase ACT"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    
+    dados = request.json
+    
+    # Validação dos campos obrigatórios
+    if not dados:
+        return jsonify({"status": "error", "message": "Nenhum dado recebido."}), 400
+    
+    if not dados.get('titulo') or not dados.get('o_que'):
+        return jsonify({"status": "error", "message": "Título e descrição são obrigatórios."}), 400
+    
+    # Garantir estrutura completa do documento
+    documento = {
+        'titulo': dados.get('titulo', 'Procedimento Padrão'),
+        'responsavel': dados.get('responsavel', current_user.username),
+        'data_vigencia': dados.get('data_vigencia', ''),
+        'o_que': dados.get('o_que', ''),
+        'resultados': dados.get('resultados', ''),
+        'indicador': dados.get('indicador', ''),
+        'data_geracao': dados.get('data_geracao', datetime.now().isoformat()),
+        'ciclo': dados.get('ciclo', projeto.ciclo_atual)
+    }
+    
+    projeto.documento_padronizacao = documento
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Documento de padronização salvo com sucesso!"})
+
+
+@projects.route('/projeto/<int:id>/relatorio-padronizacao')
+@login_required
+def relatorio_padronizacao(id):
+    """Exibe o relatório de padronização do último ciclo ACT"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('projects.lista_projetos'))
+    
+    if not projeto.documento_padronizacao:
+        flash('Nenhum documento de padronização para este projeto.', 'warning')
+        return redirect(url_for('projects.projeto_pdca', id=id))
+    
+    return render_template('projetos/relatorio_padronizacao.html',
+                          projeto=projeto,
+                          doc=projeto.documento_padronizacao)
+
+
+@projects.route('/projeto/<int:id>/relatorio-ciclo')
+@login_required
+def relatorio_ciclo_pdca(id):
+    """Relatório consolidado do ciclo PDCA atual"""
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('projects.lista_projetos'))
+    
+    if projeto.tipo != 'pdca':
+        return redirect(url_for('projects.relatorio_projeto', id=id))
+    
+    # Preparar dados das fases
+    fases_info = {
+        'plan': {'nome': 'Planejar', 'cor': 'primary', 'icone': 'bi-clipboard-data', 'ordem': 1},
+        'do': {'nome': 'Executar', 'cor': 'warning', 'icone': 'bi-play-circle', 'ordem': 2},
+        'check': {'nome': 'Verificar', 'cor': 'success', 'icone': 'bi-search-heart', 'ordem': 3},
+        'act': {'nome': 'Agir', 'cor': 'danger', 'icone': 'bi-gear-wide-connected', 'ordem': 4}
+    }
+    
+    # Ferramentas agrupadas por fase
+    ferramentas_por_fase = {
+        'plan': {'ferramentas': [], 'analise': ''},
+        'do': {'ferramentas': [], 'analise': ''},
+        'check': {'ferramentas': [], 'analise': ''},
+        'act': {'ferramentas': [], 'analise': ''}
+    }
+    
+    # Mapa de ferramentas para fase
+    mapa_ferramenta_fase = {
+        'folha_verificacao': 'plan', 'fluxograma': 'plan', 'pareto': 'plan', 
+        'ishikawa': 'plan', '5w2h': 'plan',
+        'histograma': 'check', 'dispersao': 'check', 'cep': 'check'
+    }
+    
+    total_ferramentas = 0
+    for f in projeto.ferramentas:
+        fase = mapa_ferramenta_fase.get(f.tipo, 'plan')
+        ferramentas_por_fase[fase]['ferramentas'].append(f)
+        total_ferramentas += 1
+    
+    # Métricas do ciclo
+    metricas = {
+        'total_ferramentas': total_ferramentas,
+        'ferramentas_concluidas': len([f for f in projeto.ferramentas if f.dados and f.dados != {}]),
+        'fase_atual': projeto.fase_atual,
+        'fases_concluidas': sum(1 for fase in ['plan', 'do', 'check', 'act'] 
+                               if fases_info[fase]['ordem'] <= fases_info[projeto.fase_atual]['ordem']),
+        'total_fases': 4,
+        'ciclo_atual': projeto.ciclo_atual,
+        'progresso_pct': round((fases_info[projeto.fase_atual]['ordem'] / 4) * 100)
+    }
+    
+    # Análise IA consolidada (se disponível)
+    client_local = get_client_groq()
+    conclusao_geral = ""
+    if total_ferramentas > 0 and client_local:
+        analises = []
+        for f in projeto.ferramentas:
+            if f.analise_ia:
+                analises.append({
+                    'ferramenta': get_nome_ferramenta(f.tipo),
+                    'analise': f.analise_ia
+                })
+        
+        if analises:
+            try:
+                prompt = f"""
+                Relatório do Ciclo #{projeto.ciclo_atual} do projeto PDCA: {projeto.nome}
+                Objetivo: {projeto.objetivo}
+                Fase atual: {projeto.fase_atual.upper()}
+                
+                Ferramentas e análises:
+                {json.dumps(analises, ensure_ascii=False, indent=2)}
+                
+                Gere um resumo executivo em Markdown com:
+                1. **Status do Ciclo**: Progresso e fase atual
+                2. **Principais Descobertas**: Insights das ferramentas
+                3. **Recomendações**: Próximos passos
+                """
+                
+                resp = client_local.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.5,
+                    max_tokens=600
+                )
+                conclusao_geral = resp.choices[0].message.content
+            except Exception as e:
+                print(f"Erro ao gerar análise do ciclo: {e}")
+                conclusao_geral = "Análise consolidada temporariamente indisponível."
+    
+    return render_template('projetos/relatorio_completo.html',
+                          projeto=projeto,
+                          modo_ciclo=True,
+                          metricas=metricas,
+                          fases_info=fases_info,
+                          ferramentas_por_fase=ferramentas_por_fase,
+                          conclusao_geral=conclusao_geral,
+                          analises_ferramentas=[])
+
+
+@projects.route('/planta-baixa/<int:id>/criar-pdca', methods=['POST'])
+@login_required
+def criar_pdca_de_planta(id):
+    """Cria um novo projeto PDCA a partir de não conformidades de uma planta baixa"""
+    planta = PlantaBaixa.query.get_or_404(id)
+    if planta.user_id != current_user.id:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('planta_baixa.lista'))
+    
+    # Calcular não conformidades
+    pct, stats = planta.calcular_conformidade()
+    nao_conformes = planta.checklist_conformidade or {}
+    
+    # Buscar perguntas não conformes
+    from .planta_baixa import PERGUNTAS_CHECKLIST
+    itens_nao_conformes = []
+    for pergunta in PERGUNTAS_CHECKLIST:
+        pid = str(pergunta['id'])
+        if pid in nao_conformes and nao_conformes[pid] == 'nao_conforme':
+            itens_nao_conformes.append(f"- {pergunta['norma']}: {pergunta['texto']}")
+    
+    objetivo = f"Adequação normativa do layout da planta '{planta.nome}'"
+    if itens_nao_conformes:
+        objetivo += "\n\nNão conformidades identificadas:\n" + "\n".join(itens_nao_conformes[:10])
+    
+    projeto = Projeto(
+        nome=f"PDCA - Adequação {planta.nome}",
+        objetivo=objetivo,
+        user_id=current_user.id,
+        empresa_id=planta.empresa_id,
+        fase_atual='plan',
+        ciclo_atual=1
+    )
+    db.session.add(projeto)
+    db.session.commit()
+    
+    flash(f'✅ Projeto PDCA criado a partir da planta "{planta.nome}"!', 'success')
+    return redirect(url_for('projects.detalhe_projeto', id=projeto.id))

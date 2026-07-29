@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('planta_baixa.lista') }}">Plantas Baixas</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('planta_baixa.construtor', id=planta.id) }}">{{ planta.nome }}</a></li>
+            <li class="breadcrumb-item active">Análise de Conformidade</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ planta.nome }}</h3>
+                            <p class="mb-0 text-muted">
+                                {% if planta.tipo_ambiente %}<span class="badge bg-dark bg-opacity-10 text-dark me-2">{{ planta.tipo_ambiente }}</span>{% endif %}
+                                {% if planta.setor %}<span class="badge bg-info bg-opacity-10 text-info">{{ planta.setor }}</span>{% endif %}
+                                {% if planta.area_total_m2 > 0 %}<span class="badge bg-secondary bg-opacity-10 text-secondary">{{ planta.area_total_m2 }} m²</span>{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-center">
+                            <div class="display-4 fw-bold {% if stats.percentual >= 80 %}text-success{% elif stats.percentual >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ stats.percentual }}%
+                            </div>
+                            <small class="text-muted">Conformidade</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Gráfico de Conformidade Geral -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Conformidade por Norma</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartNormas" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico por Seção -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart me-2 text-success"></i>Conformidade por Seção</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartSecoes" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribuição de Objetos -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-boxes me-2 text-info"></i>Distribuição de Objetos</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartObjetos" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recomendações -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Recomendações</h6>
+                </div>
+                <div class="card-body">
+                    {% if recomendacoes %}
+                    <div class="list-group list-group-flush mb-3">
+                        {% for rec in recomendacoes %}
+                        <div class="list-group-item px-0 border-0 d-flex align-items-start gap-2">
+                            {% if rec.startswith('❌') %}
+                            <span class="text-danger flex-shrink-0 mt-1">{{ rec[0] }}</span>
+                            {% elif rec.startswith('⚠️') %}
+                            <span class="text-warning flex-shrink-0 mt-1">{{ rec[0] }}{{ rec[1] }}</span>
+                            {% else %}
+                            <span class="text-info flex-shrink-0 mt-1">ℹ️</span>
+                            {% endif %}
+                            <small>{{ rec[2:] if rec.startswith('❌') or rec.startswith('⚠️') else rec }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle display-4 text-success d-block mb-2"></i>
+                        <p>Nenhuma recomendação pendente.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Botão Criar PDCA -->
+                    {% if stats.percentual < 100 %}
+                    <div class="border-top pt-3">
+                        <form action="{{ url_for('projects.criar_pdca_de_planta', id=planta.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-arrow-repeat me-1"></i>
+                                Criar PDCA de Adequação
+                                <small class="d-block opacity-75">Cria um projeto com as não conformidades identificadas</small>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalhamento por Pergunta -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-2 text-secondary"></i>Detalhamento do Checklist</h6>
+                    <a href="{{ url_for('planta_baixa.checklist', id=planta.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Editar Checklist
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:80px;">Norma</th>
+                                    <th>Pergunta</th>
+                                    <th style="width:120px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pergunta in perguntas %}
+                                {% set pergunta_id = pergunta.id|string %}
+                                {% set resposta = planta.checklist_conformidade.get(pergunta_id, '') %}
+                                <tr>
+                                    <td><span class="badge bg-dark">{{ pergunta.norma }}</span></td>
+                                    <td class="small">{{ pergunta.texto }}</td>
+                                    <td>
+                                        {% if resposta == 'conforme' %}
+                                        <span class="badge bg-success">✅ Conforme</span>
+                                        {% elif resposta == 'nao_conforme' %}
+                                        <span class="badge bg-danger">❌ Não Conforme</span>
+                                        {% elif resposta == 'nao_aplicavel' %}
+                                        <span class="badge bg-secondary">⏭️ N/A</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-muted">⬜ Não Respondido</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Dados dos templates
+const normasData = {{ dados_analise.normas | tojson | safe }};
+const secoesData = {{ secoes | tojson | safe }};
+const objetosData = {{ objetos | tojson | safe }};
+
+// 1. Gráfico de Normas
+const ctxNormas = document.getElementById('chartNormas').getContext('2d');
+const normasLabels = Object.keys(normasData);
+const normasConforme = normasLabels.map(function(n) { return normasData[n].conforme || 0; });
+const normasNaoConforme = normasLabels.map(function(n) { return normasData[n].nao_conforme || 0; });
+
+new Chart(ctxNormas, {
+    type: 'bar',
+    data: {
+        labels: normasLabels,
+        datasets: [
+            {
+                label: 'Conforme',
+                data: normasConforme,
+                backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                borderColor: '#198754',
+                borderWidth: 1
+            },
+            {
+                label: 'Não Conforme',
+                data: normasNaoConforme,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+        },
+        scales: {
+            x: { ticks: { font: { size: 10 } } },
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+    }
+});
+
+// 2. Gráfico de Seções
+const ctxSecoes = document.getElementById('chartSecoes').getContext('2d');
+const secoesLabels = Object.keys(secoesData);
+const secoesPercentuais = secoesLabels.map(function(s) { return secoesData[s].percentual || 0; });
+
+new Chart(ctxSecoes, {
+    type: 'doughnut',
+    data: {
+        labels: secoesLabels,
+        datasets: [{
+            data: secoesPercentuais,
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.7)', 'rgba(25, 135, 84, 0.7)',
+                'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)',
+                'rgba(13, 202, 240, 0.7)', 'rgba(111, 66, 193, 0.7)',
+                'rgba(253, 126, 20, 0.7)', 'rgba(32, 201, 151, 0.7)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }
+        }
+    }
+});
+
+// 3. Gráfico de Objetos
+const ctxObjetos = document.getElementById('chartObjetos').getContext('2d');
+const objLabels = ['Paredes', 'Portas', 'Janelas', 'Extintores', 'Saídas', 'Máquinas', 'Mesas', 'Cadeiras'];
+const objValues = [
+    objetosData.paredes || 0, objetosData.portas || 0, objetosData.janelas || 0,
+    objetosData.extintores || 0, objetosData.saidas || 0, objetosData.maquinas || 0,
+    objetosData.mesas || 0, objetosData.cadeiras || 0
+];
+
+new Chart(ctxObjetos, {
+    type: 'polarArea',
+    data: {
+        labels: objLabels,
+        datasets: [{
+            data: objValues,
+            backgroundColor: [
+                'rgba(44, 62, 80, 0.7)', 'rgba(139, 69, 19, 0.7)',
+                'rgba(135, 206, 235, 0.7)', 'rgba(220, 53, 69, 0.7)',
+                'rgba(25, 135, 84, 0.7)', 'rgba(111, 66, 193, 0.7)',
+                'rgba(253, 126, 20, 0.7)', 'rgba(32, 201, 151, 0.7)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }
+        },
+        scales: {
+            r: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } }
+        }
+    }
+});
+</script>
+{% endblock %}
+

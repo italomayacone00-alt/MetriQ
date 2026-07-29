@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-building text-info me-2"></i>Plantas Baixas</h2>
+            <p class="text-muted">Crie e gerencie layouts de ambientes com verificação de conformidade normativa</p>
+        </div>
+        <a href="{{ url_for('planta_baixa.nova') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-lg me-1"></i>Nova Planta
+        </a>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small text-muted mb-1">Buscar</label>
+                    <input type="text" name="busca" class="form-control" placeholder="Buscar por nome ou descrição..." value="{{ busca }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">Tipo de Ambiente</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">Todos os ambientes</option>
+                        {% for t in tipos %}
+                        <option value="{{ t }}" {{ 'selected' if tipo_filtro == t }}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grid de Plantas -->
+    {% if plantas %}
+    <div class="row g-4">
+        {% for planta in plantas %}
+        {% set stats = planta.contar_objetos() %}
+        {% set pct_conformidade, _ = planta.calcular_conformidade() %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+                <!-- Thumbnail -->
+                {% if planta.thumbnail %}
+                <div class="card-img-top bg-light" style="height:160px;overflow:hidden;">
+                    <img src="{{ planta.thumbnail }}" alt="{{ planta.nome }}" style="width:100%;height:100%;object-fit:contain;">
+                </div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:160px;">
+                    <i class="bi bi-building display-3 text-muted opacity-50"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <!-- Header do Card -->
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold mb-0 text-truncate">{{ planta.nome }}</h5>
+                        {% if pct_conformidade > 0 %}
+                        <span class="badge {% if pct_conformidade >= 80 %}bg-success{% elif pct_conformidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ pct_conformidade }}%
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if planta.descricao %}
+                    <p class="card-text text-muted small mb-2">{{ planta.descricao[:80] }}{% if planta.descricao|length > 80 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    <!-- Info Tags -->
+                    <div class="d-flex gap-2 flex-wrap mb-2 small">
+                        {% if planta.tipo_ambiente %}
+                        <span class="badge bg-dark bg-opacity-10 text-dark">{{ planta.tipo_ambiente }}</span>
+                        {% endif %}
+                        {% if stats.total > 0 %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary">{{ stats.total }} itens</span>
+                        {% endif %}
+                        {% if planta.area_total_m2 > 0 %}
+                        <span class="badge bg-info bg-opacity-10 text-info">{{ planta.area_total_m2 }} m²</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Ícones de objetos -->
+                    <div class="d-flex gap-2 flex-wrap mb-3 small">
+                        {% if stats.paredes > 0 %}<span class="badge bg-dark bg-opacity-10 text-dark">🧱 {{ stats.paredes }}</span>{% endif %}
+                        {% if stats.portas > 0 %}<span class="badge bg-dark bg-opacity-10 text-dark">🚪 {{ stats.portas }}</span>{% endif %}
+                        {% if stats.extintores > 0 %}<span class="badge bg-danger bg-opacity-10 text-danger">🧯 {{ stats.extintores }}</span>{% endif %}
+                        {% if stats.saidas > 0 %}<span class="badge bg-success bg-opacity-10 text-success">🆘 {{ stats.saidas }}</span>{% endif %}
+                        {% if stats.maquinas > 0 %}<span class="badge bg-warning bg-opacity-10 text-warning">⚙️ {{ stats.maquinas }}</span>{% endif %}
+                        {% if stats.mesas > 0 %}<span class="badge bg-orange bg-opacity-10 text-orange">🪑 {{ stats.mesas }}</span>{% endif %}
+                    </div>
+                    
+                    <!-- Data -->
+                    <div class="text-muted small mb-3">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ planta.data_atualizacao.strftime('%d/%m/%Y %H:%M') if planta.data_atualizacao else planta.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                    
+                    <!-- Ações -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('planta_baixa.construtor', id=planta.id) }}" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </a>
+                        <a href="{{ url_for('planta_baixa.analise', id=planta.id) }}" class="btn btn-outline-info btn-sm" title="Análise de Conformidade">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
+                        <form action="{{ url_for('planta_baixa.duplicar', id=planta.id) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm" title="Duplicar">
+                                <i class="bi bi-files"></i>
+                            </button>
+                        </form>
+                        <form action="{{ url_for('planta_baixa.excluir', id=planta.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Excluir esta planta permanentemente?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="bg-light rounded-4 p-5">
+            <i class="bi bi-building display-1 text-muted mb-3"></i>
+            <h4>Nenhuma planta encontrada</h4>
+            <p class="text-muted">
+                {% if busca %}Tente ajustar a busca ou filtros.{% else %}Crie sua primeira planta baixa para começar.{% endif %}
+            </p>
+            {% if not busca %}
+            <a href="{{ url_for('planta_baixa.nova') }}" class="btn btn-primary btn-lg mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Criar Primeira Planta
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .transition { transition: all 0.3s ease; }
+    .bg-orange { background-color: #fd7e14; }
+    .text-orange { color: #fd7e14; }
+    .bg-opacity-10 { opacity: 0.1; }
+</style>
+{% endblock %}
+

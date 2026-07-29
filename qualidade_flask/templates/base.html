@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetriQ - Inteligência em Qualidade</title>
+    <title>MetriQ - Inteligencia em Qualidade</title>
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3384516600528737"
-         crossorigin="anonymous"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +29,7 @@
             
             <a class="navbar-brand fw-bold d-flex align-items-center brand-text" href="/">
                 <i class="bi bi-bullseye me-2 fs-4 text-info"></i>
-                <span>Metri<span class="text-info">Q</span></span>
+                <span>Metri<span class="text-info">Q</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,11 +45,35 @@
                     </li>
                     
                     <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('empresa') }}" href="/empresas">
+                            <i class="bi bi-building-fill me-1"></i> Empresa
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'projects.lista_projetos' }}" href="/projetos">
                             <i class="bi bi-folder-fill me-1"></i> Projetos
                         </a>
                     </li>
-                    
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'nr.lista_nrs' }}" href="/nr">
+                            <i class="bi bi-shield-check me-1"></i> NRs
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'iso.lista_isos' }}" href="/iso">
+                            <i class="bi bi-globe me-1"></i> ISOs
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('planta_baixa') }}" href="{{ url_for('planta_baixa.lista') }}">
+                            <i class="bi bi-building me-1"></i> Planta Baixa
+                        </a>
+                    </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-tools me-1"></i> Ferramentas
@@ -62,22 +82,19 @@
                             <li><a class="dropdown-item" href="/ferramenta/pareto"><i class="bi bi-bar-chart-fill me-2 text-warning"></i>Pareto (80/20)</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/ishikawa"><i class="bi bi-diagram-3 me-2 text-primary"></i>Ishikawa (6M)</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/5w2h"><i class="bi bi-clipboard-check me-2 text-success"></i>Plano 5W2H</a></li>
-                            
                             <li><a class="dropdown-item" href="/ferramenta/fluxograma"><i class="bi bi-diagram-2-fill me-2 text-info"></i>Fluxograma</a></li>
-                            
-                            <li><a class="dropdown-item" href="/ferramenta/folha_verificacao"><i class="bi bi-check2-square me-2 text-success"></i>Folha de Verificação</a></li>
-                            
+                            <li><a class="dropdown-item" href="/ferramenta/folha_verificacao"><i class="bi bi-check2-square me-2 text-success"></i>Folha de Verificacao</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/ferramenta/cep"><i class="bi bi-activity me-2 text-danger"></i>Gráfico CEP</a></li>
+                            <li><a class="dropdown-item" href="/ferramenta/cep"><i class="bi bi-activity me-2 text-danger"></i>Grafico CEP</a></li>
                             <li><a class="dropdown-item" href="/ferramenta/histograma"><i class="bi bi-bar-chart-steps me-2 text-info"></i>Histograma</a></li>
-                            <li><a class="dropdown-item" href="/ferramenta/dispersao"><i class="bi bi-graph-up me-2 text-secondary"></i>Dispersão</a></li>
+                            <li><a class="dropdown-item" href="/ferramenta/dispersao"><i class="bi bi-graph-up me-2 text-secondary"></i>Dispersao</a></li>
                         </ul>
                     </li>
 
                     {% if current_user.is_authenticated %}
                         <li class="nav-item ms-lg-3 border-start border-secondary ps-lg-3 mt-2 mt-lg-0">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="text-light small">Olá, <strong>{{ current_user.username }}</strong></span>
+                                <span class="text-light small">Ola, <strong>{{ current_user.username }}</strong></span>
                                 <a href="/logout" class="btn btn-sm btn-outline-danger" title="Sair">
                                     <i class="bi bi-box-arrow-right"></i>
                                 </a>
@@ -87,7 +104,6 @@
 
                 </ul>
             </div>
-        </div>
     </nav>
 
     <main class="flex-grow-1">
@@ -116,29 +132,22 @@
                         <i class="bi bi-bullseye text-info"></i> 
                         <strong>MetriQ</strong> &copy; 2025
                     </p>
-                    <small class="text-muted" style="font-size: 0.8rem;">Inteligência em Qualidade & Dados</small>
+                    <small class="text-muted" style="font-size: 0.8rem;">Inteligencia em Qualidade & Dados</small>
                 </div>
                 <div class="col-md-6 text-md-end text-center mt-2 mt-md-0">
-                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versão 5.5</span>
+                    <span class="badge bg-secondary bg-opacity-10 text-dark border">Versao 5.5</span>
                 </div>
-            </div>
         </div>
     </footer>
 
     <a id="btnFeedback" href="https://docs.google.com/forms/d/e/1FAIpQLSc6ZJWx9LMAzcBPMMdcK3FHIyoWjjz7ik7XjiTRzf5Kar_DFA/viewform?usp=sharing&ouid=112551274773752880388" target="_blank" title="Deixe seu Feedback" class="text-decoration-none">
-    <i class="bi bi-chat-dots-fill text-warning fs-4"></i>
+        <i class="bi bi-chat-dots-fill text-warning fs-4"></i>
     </a>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
     {% block scripts %}{% endblock %}
 </body>

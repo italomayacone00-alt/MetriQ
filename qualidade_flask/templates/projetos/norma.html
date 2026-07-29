@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+.norma-card {
+    transition: all 0.3s ease;
+    border: none;
+}
+.norma-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.12)!important;
+}
+.progress-thin {
+    height: 6px;
+    border-radius: 3px;
+}
+.conformidade-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.stat-card {
+    border: none;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+.stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+</style>
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.lista_projetos') }}">Projetos</a></li>
+            <li class="breadcrumb-item active">{{ projeto.nome }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header do Projeto -->
+    <div class="card border-0 shadow-sm mb-4 bg-success text-white">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="badge bg-white text-success fs-6 px-3 py-1">
+                            <i class="bi bi-shield-check me-1"></i>Projeto Normativo
+                        </span>
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ projeto.nome }}</h3>
+                    <p class="mb-0 opacity-75">{{ projeto.objetivo }}</p>
+                </div>
+                <div class="col-md-4 text-center mt-3 mt-md-0">
+                    <div class="conformidade-circle bg-white text-success mx-auto mb-2" style="width: 80px; height: 80px; font-size: 1.5rem;">
+                        {{ conformidade_geral }}%
+                    </div>
+                    <small class="opacity-75">Conformidade Geral</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-danger bg-opacity-10 text-danger h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-danger text-white">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ criticos }}</h4>
+                        <small class="fw-bold">Críticos (<50%)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-warning bg-opacity-10 text-warning h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-warning text-white">
+                        <i class="bi bi-exclamation-circle"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ atencao }}</h4>
+                        <small class="fw-bold">Atenção (50-79%)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-success bg-opacity-10 text-success h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-success text-white">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ ok }}</h4>
+                        <small class="fw-bold">Conforme (≥80%)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-secondary bg-opacity-10 text-secondary h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-secondary text-white">
+                        <i class="bi bi-dash-circle"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ sem_dados }}</h4>
+                        <small class="fw-bold">Sem dados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Normas Avaliadas -->
+    <div class="row g-4">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">
+                        <i class="bi bi-list-check text-success me-2"></i>
+                        Normas Avaliadas
+                    </h6>
+                    <span class="badge bg-success bg-opacity-10 text-success">{{ normas_status|length }} norma{{ 's' if normas_status|length != 1 else '' }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if normas_status %}
+                        <div class="list-group list-group-flush">
+                            {% for n in normas_status %}
+                            <div class="list-group-item border-0 px-4 py-3 norma-card">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="conformidade-circle 
+                                        {% if n.conformidade >= 80 %}bg-success bg-opacity-10 text-success
+                                        {% elif n.conformidade >= 50 %}bg-warning bg-opacity-10 text-warning
+                                        {% else %}bg-danger bg-opacity-10 text-danger{% endif %}">
+                                        {{ n.conformidade }}%
+                                    </div>
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div>
+                                                <span class="badge {% if n.tipo == 'NR' %}bg-primary{% else %}bg-info{% endif %} me-2">{{ n.tipo }}</span>
+                                                <strong class="text-truncate">{{ n.numero }}</strong>
+                                                <small class="text-muted ms-2">{{ n.titulo[:50] }}{% if n.titulo|length > 50 %}...{% endif %}</small>
+                                            </div>
+                                            <small class="text-muted flex-shrink-0 ms-2">{{ n.data }}</small>
+                                        </div>
+                                        <div class="progress progress-thin">
+                                            <div class="progress-bar 
+                                                {% if n.conformidade >= 80 %}bg-success
+                                                {% elif n.conformidade >= 50 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ n.conformidade }}%" 
+                                                aria-valuenow="{{ n.conformidade }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        {% if n.tipo == 'NR' %}
+                                            <a href="{{ url_for('nr.checklist_nr', id=n.norma_id) }}" class="btn btn-sm btn-outline-primary" title="Abrir checklist">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <a href="{{ url_for('nr.detalhe_nr', id=n.norma_id) }}" class="btn btn-sm btn-outline-secondary" title="Detalhes da norma">
+                                                <i class="bi bi-info-circle"></i>
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('iso.checklist_iso', id=n.norma_id) }}" class="btn btn-sm btn-outline-primary" title="Abrir checklist">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <a href="{{ url_for('iso.detalhe_iso', id=n.norma_id) }}" class="btn btn-sm btn-outline-secondary" title="Detalhes da norma">
+                                                <i class="bi bi-info-circle"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-shield-x display-4 text-muted mb-3"></i>
+                            <h5>Nenhuma avaliação encontrada</h5>
+                            <p class="text-muted">Você ainda não realizou nenhum checklist de NR ou ISO.</p>
+                            <div class="d-flex justify-content-center gap-3 mt-3">
+                                <a href="{{ url_for('nr.lista_nrs') }}" class="btn btn-primary">
+                                    <i class="bi bi-shield-check me-1"></i>Ir para NRs
+                                </a>
+                                <a href="{{ url_for('iso.lista_isos') }}" class="btn btn-info text-white">
+                                    <i class="bi bi-globe me-1"></i>Ir para ISOs
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h6 class="fw-bold mb-1"><i class="bi bi-lightbulb text-warning me-2"></i>Recomendações</h6>
+                    <p class="text-muted mb-0 small">
+                        {% if criticos > 0 %}
+                            <i class="bi bi-exclamation-triangle text-danger me-1"></i>{{ criticos }} norma{{ 's' if criticos != 1 else '' }} crítica{{ 's' if criticos != 1 else '' }} precisa{{ 'm' if criticos == 1 else 'm' }} de atenção imediata!
+                        {% elif atencao > 0 %}
+                            <i class="bi bi-exclamation-circle text-warning me-1"></i>{{ atencao }} norma{{ 's' if atencao != 1 else '' }} com conformidade abaixo de 80%.
+                        {% else %}
+                            <i class="bi bi-check-circle text-success me-1"></i>Todas as normas avaliadas estão em conformidade!
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

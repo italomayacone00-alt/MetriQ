@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3 d-print-none">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.lista_projetos') }}">Projetos</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}">{{ projeto.nome }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.projeto_pdca', id=projeto.id) }}">PDCA</a></li>
+            <li class="breadcrumb-item active">Documento de Padronização</li>
+        </ol>
+    </nav>
+
+    <div class="text-end mb-3 d-print-none">
+        <button class="btn btn-outline-danger rounded-pill me-2" data-bs-toggle="modal" data-bs-target="#modalEditarDoc">
+            <i class="bi bi-pencil me-1"></i>Editar Documento
+        </button>
+        <button onclick="window.print()" class="btn btn-dark">
+            <i class="bi bi-printer me-2"></i>Imprimir PDF
+        </button>
+        <a href="{{ url_for('projects.projeto_pdca', id=projeto.id) }}" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao PDCA
+        </a>
+    </div>
+
+    <!-- Documento A4 -->
+    <div class="doc-a4">
+        <!-- Header -->
+        <div class="doc-header text-center mb-5">
+            <h1 class="fw-bold text-dark mb-1">DOCUMENTO DE PADRONIZAÇÃO</h1>
+            <p class="text-muted mb-0">Procedimento Operacional Padrão (POP) - Ciclo PDCA #{{ doc.ciclo or projeto.ciclo_atual }}</p>
+            <hr class="my-3">
+        </div>
+
+        <!-- Info -->
+        <div class="row mb-4">
+            <div class="col-6">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:140px;">Projeto:</td>
+                        <td>{{ projeto.nome }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Objetivo:</td>
+                        <td>{{ projeto.objetivo[:100] }}{% if projeto.objetivo|length > 100 %}...{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Ciclo PDCA:</td>
+                        <td>#{{ doc.ciclo or projeto.ciclo_atual }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Empresa:</td>
+                        <td>{{ current_user.username }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-6">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted fw-bold" style="width:140px;">Responsável:</td>
+                        <td>{{ doc.responsavel or 'Não informado' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Data Vigência:</td>
+                        <td>{{ doc.data_vigencia or 'Não informada' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Data Geração:</td>
+                        <td>{{ (doc.data_geracao[:10] if doc.data_geracao) or 'Não informada' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">Versão:</td>
+                        <td>{{ doc.ciclo or projeto.ciclo_atual }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Título do Procedimento -->
+        <div class="doc-section mb-4">
+            <div class="doc-section-title">1. IDENTIFICAÇÃO DO PROCEDIMENTO</div>
+            <div class="doc-box p-3 bg-light rounded">
+                <h5 class="fw-bold mb-0">{{ doc.titulo or 'Procedimento Padrão' }}</h5>
+            </div>
+        </div>
+
+        <!-- O que foi padronizado -->
+        <div class="doc-section mb-4">
+            <div class="doc-section-title">2. DESCRIÇÃO DA PADRONIZAÇÃO</div>
+            <div class="doc-box p-3 bg-light rounded">
+                {% if doc.o_que %}
+                <p class="mb-0">{{ doc.o_que }}</p>
+                {% else %}
+                <p class="text-muted mb-0 fst-italic">Nenhuma descrição registrada.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="doc-section mb-4">
+            <div class="doc-section-title">3. RESULTADOS ALCANÇADOS</div>
+            <div class="doc-box p-3 bg-light rounded">
+                {% if doc.resultados %}
+                <p class="mb-0">{{ doc.resultados }}</p>
+                {% else %}
+                <p class="text-muted mb-0 fst-italic">Nenhum resultado registrado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Indicador -->
+        <div class="doc-section mb-4">
+            <div class="doc-section-title">4. INDICADOR DE MONITORAMENTO</div>
+            <div class="doc-box p-3 bg-light rounded">
+                {% if doc.indicador %}
+                <p class="mb-0">{{ doc.indicador }}</p>
+                {% else %}
+                <p class="text-muted mb-0 fst-italic">Nenhum indicador registrado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="doc-footer mt-5 pt-3 border-top">
+            <div class="row">
+                <div class="col-6">
+                    <p class="small text-muted mb-0">
+                        <strong>Responsável pela Padronização:</strong><br>
+                        {{ doc.responsavel or '___________________________' }}
+                    </p>
+                </div>
+                <div class="col-6 text-end">
+                    <p class="small text-muted mb-0">
+                        <strong>Data:</strong> {{ doc.data_vigencia or '___/___/____' }}
+                    </p>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <p class="small text-muted">
+                    Documento gerado pelo MetriQ - Sistema de Gestão da Qualidade
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Documento -->
+<div class="modal fade" id="modalEditarDoc" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Editar Documento de Padronização</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditarDoc" onsubmit="salvarDoc(event)">
+        <div class="modal-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-bold small text-uppercase">Título do Procedimento</label>
+              <input type="text" class="form-control" name="titulo" value="{{ doc.titulo or '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Responsável</label>
+              <input type="text" class="form-control" name="responsavel" value="{{ doc.responsavel or current_user.username }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Data de Vigência</label>
+              <input type="date" class="form-control" name="data_vigencia" value="{{ doc.data_vigencia or '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold small text-uppercase">Descrição da Padronização</label>
+              <textarea class="form-control" name="o_que" rows="3" required>{{ doc.o_que or '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Resultados Alcançados</label>
+              <textarea class="form-control" name="resultados" rows="3">{{ doc.resultados or '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Indicador de Monitoramento</label>
+              <textarea class="form-control" name="indicador" rows="3">{{ doc.indicador or '' }}</textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger px-4">
+            <i class="bi bi-check-circle me-1"></i>Salvar Alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+    .doc-a4 {
+        max-width: 210mm;
+        margin: 0 auto;
+        background: white;
+        padding: 20mm 25mm;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        min-height: 297mm;
+    }
+    .doc-section-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #0d6efd;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 4px;
+        display: inline-block;
+    }
+    .doc-box {
+        border-left: 4px solid #0d6efd;
+    }
+    @media print {
+        body { background: white; }
+        .d-print-none { display: none !important; }
+        .doc-a4 {
+            box-shadow: none;
+            padding: 15mm 20mm;
+            max-width: 100%;
+            min-height: auto;
+        }
+        .container { max-width: 100%; }
+    }
+</style>
+
+<script>
+function salvarDoc(event) {
+    event.preventDefault();
+    const form = document.getElementById('formEditarDoc');
+    const formData = new FormData(form);
+    const dados = {};
+    formData.forEach((value, key) => { if (key !== 'csrf_token') dados[key] = value; });
+
+    dados.data_geracao = new Date().toISOString();
+    dados.ciclo = {{ doc.ciclo or projeto.ciclo_atual }};
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    fetch('/projeto/{{ projeto.id }}/salvar_padronizacao', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('✅ Documento atualizado!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.message || 'Falha ao salvar'));
+        }
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        alert('Erro ao salvar documento.');
+    });
+}
+</script>
+{% endblock %}

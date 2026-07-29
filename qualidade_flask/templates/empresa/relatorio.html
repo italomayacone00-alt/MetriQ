@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="bi bi-file-earmark-text text-info me-2"></i>Relatório Executivo</h3>
+            <p class="text-muted">{{ empresa.razao_social }} • {{ hoje.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-1"></i>Imprimir PDF
+        </button>
+    </div>
+
+    <!-- Dados da Empresa -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-3">{{ empresa.razao_social }}</h5>
+                    <table class="table table-sm small mb-0">
+                        <tr><td class="fw-bold" style="width:140px;">CNPJ</td><td>{{ empresa.cnpj or '-' }}</td></tr>
+                        <tr><td class="fw-bold">Grau de Risco</td><td>GR {{ empresa.grau_risco }}</td></tr>
+                        <tr><td class="fw-bold">Funcionários</td><td>{{ empresa.num_funcionarios }}</td></tr>
+                        <tr><td class="fw-bold">CNAE</td><td>{{ empresa.cnae or '-' }}</td></tr>
+                        <tr><td class="fw-bold">Responsável SST</td><td>{{ empresa.responsavel_sst or '-' }}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Contato</h6>
+                    <table class="table table-sm small mb-0">
+                        <tr><td class="fw-bold" style="width:100px;">Endereço</td><td>{{ empresa.endereco or '-' }}{% if empresa.cidade %} - {{ empresa.cidade }}/{{ empresa.estado }}{% endif %}</td></tr>
+                        <tr><td class="fw-bold">Telefone</td><td>{{ empresa.telefone or '-' }}</td></tr>
+                        <tr><td class="fw-bold">E-mail</td><td>{{ empresa.email or '-' }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Consolidadas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="display-5 fw-bold {% if metricas.conformidade_nr_media >= 80 %}text-success{% elif metricas.conformidade_nr_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ metricas.conformidade_nr_media }}%
+                </div>
+                <small class="text-muted">Conformidade NRs</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="display-5 fw-bold {% if metricas.maturidade_iso_media >= 80 %}text-success{% elif metricas.maturidade_iso_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ metricas.maturidade_iso_media }}%
+                </div>
+                <small class="text-muted">Maturidade ISO</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="display-5 fw-bold {% if metricas.conformidade_planta_media >= 80 %}text-success{% elif metricas.conformidade_planta_media >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ metricas.conformidade_planta_media }}%
+                </div>
+                <small class="text-muted">Adequação Planta</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="display-5 fw-bold">{{ metricas.total_projetos }}</div>
+                <small class="text-muted">Projetos Ativos</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-4 mb-4 no-print">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-2">
+                    <h6 class="fw-bold mb-0 small">Conformidade NRs</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartNR" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-2">
+                    <h6 class="fw-bold mb-0 small">Maturidade ISOs</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartISO" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-2">
+                    <h6 class="fw-bold mb-0 small">Adequação Plantas</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartPlanta" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DETALHAMENTO NRs -->
+    <!-- ============================================================ -->
+    {% for nr in nrs_detalhadas %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-shield-check text-info me-2"></i>
+                {{ nr.numero }} - {{ nr.titulo }}
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                {% if nr.tem_checklist %}
+                <span class="badge bg-success">Respondido em {{ nr.data_resposta }}</span>
+                {% else %}
+                <span class="badge bg-secondary">Não respondido</span>
+                {% endif %}
+                <span class="badge {% if nr.conformidade >= 80 %}bg-success{% elif nr.conformidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                    {{ nr.conformidade }}%
+                </span>
+            </div>
+        </div>
+        {% if nr.respostas %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:60px;">Item</th>
+                            <th>Seção</th>
+                            <th>Pergunta</th>
+                            <th style="width:140px;">Resposta</th>
+                            {% for r in nr.respostas %}
+                            {% if r.observacao %}<th style="width:160px;">Observação</th>{% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in nr.respostas %}
+                        <tr>
+                            <td><span class="badge bg-dark">{{ r.item }}</span></td>
+                            <td class="text-muted">{{ r.secao }}</td>
+                            <td>{{ r.texto }}</td>
+                            <td>
+                                {% if r.resposta == 'conforme' %}
+                                <span class="badge bg-success">✅ Conforme</span>
+                                {% elif r.resposta == 'nao_conforme' %}
+                                <span class="badge bg-danger">❌ Não Conforme</span>
+                                {% elif r.resposta == 'nao_aplicavel' %}
+                                <span class="badge bg-secondary">⏭️ N/A</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted">⬜ Não Respondido</span>
+                                {% endif %}
+                            </td>
+                            {% if r.observacao %}
+                            <td><small class="text-muted">{{ r.observacao }}</small></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted py-3">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if nr.tem_checklist %}
+            Checklist respondido, mas sem detalhes disponíveis.
+            {% else %}
+            Checklist ainda não foi respondido.
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="card-footer bg-white text-muted small">
+            {{ nr.respondidas }} de {{ nr.total_perguntas }} perguntas respondidas
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- ============================================================ -->
+    <!-- DETALHAMENTO ISOs -->
+    <!-- ============================================================ -->
+    {% for iso in isos_detalhadas %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-globe text-success me-2"></i>
+                {{ iso.numero }} - {{ iso.titulo }}
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                {% if iso.tem_checklist %}
+                <span class="badge bg-success">Avaliado em {{ iso.data_resposta }}</span>
+                {% else %}
+                <span class="badge bg-secondary">Não avaliado</span>
+                {% endif %}
+                <span class="badge {% if iso.maturidade >= 80 %}bg-success{% elif iso.maturidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                    {{ iso.maturidade }}%
+                </span>
+            </div>
+        </div>
+        {% if iso.respostas %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:60px;">Item</th>
+                            <th>Seção</th>
+                            <th>Pergunta</th>
+                            <th style="width:150px;">Status</th>
+                            {% for r in iso.respostas %}
+                            {% if r.observacao %}<th style="width:160px;">Observação</th>{% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in iso.respostas %}
+                        <tr>
+                            <td><span class="badge bg-dark">{{ r.item }}</span></td>
+                            <td class="text-muted">{{ r.secao }}</td>
+                            <td>{{ r.texto }}</td>
+                            <td>
+                                {% if r.resposta == 'implementado' %}
+                                <span class="badge bg-success">✅ Implementado</span>
+                                {% elif r.resposta == 'em_andamento' %}
+                                <span class="badge bg-warning text-dark">🔄 Em Andamento</span>
+                                {% elif r.resposta == 'planejado' %}
+                                <span class="badge bg-info">📋 Planejado</span>
+                                {% elif r.resposta == 'nao_implementado' %}
+                                <span class="badge bg-danger">❌ Não Implementado</span>
+                                {% elif r.resposta == 'nao_aplicavel' %}
+                                <span class="badge bg-secondary">⏭️ N/A</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted">⬜ Não Respondido</span>
+                                {% endif %}
+                            </td>
+                            {% if r.observacao %}
+                            <td><small class="text-muted">{{ r.observacao }}</small></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted py-3">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if iso.tem_checklist %}
+            Avaliação realizada, mas sem detalhes disponíveis.
+            {% else %}
+            Avaliação ainda não foi realizada.
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="card-footer bg-white text-muted small">
+            {{ iso.respondidas }} de {{ iso.total_perguntas }} perguntas respondidas
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- ============================================================ -->
+    <!-- PLANTAS BAIXAS -->
+    <!-- ============================================================ -->
+    {% for p in plantas_detalhadas %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-building text-primary me-2"></i>
+                {{ p.nome }}
+            </h6>
+            <span class="badge {% if p.conformidade >= 80 %}bg-success{% elif p.conformidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                {{ p.conformidade }}%
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Tipo</small>
+                    <span class="fw-bold">{{ p.tipo_ambiente or '-' }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Área</small>
+                    <span class="fw-bold">{{ p.area or 0 }} m²</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Objetos no layout</small>
+                    <span class="fw-bold">{{ p.objetos.total }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Conformes / Total</small>
+                    <span class="fw-bold">{{ p.stats.conformes }} / {{ p.stats.total }}</span>
+                </div>
+            </div>
+
+            {% if p.checklist and p.checklist|length > 0 %}
+            <h6 class="fw-bold small text-muted mb-2">Checklist de Conformidade do Layout</h6>
+            <div class="table-responsive">
+                <table class="table table-sm small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chave, valor in p.checklist.items() %}
+                        <tr>
+                            <td>{{ chave }}</td>
+                            <td>
+                                {% if valor == 'conforme' %}
+                                <span class="badge bg-success">✅ Conforme</span>
+                                {% elif valor == 'nao_conforme' %}
+                                <span class="badge bg-danger">❌ Não Conforme</span>
+                                {% elif valor == 'nao_aplicavel' %}
+                                <span class="badge bg-secondary">⏭️ N/A</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted">{{ valor }}</span>
+                                {% endif %}
+                                {% if p.observacoes.get(chave) %}
+                                <small class="d-block text-muted">{{ p.observacoes[chave] }}</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Checklist de conformidade não preenchido.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- ============================================================ -->
+    <!-- PROJETOS DA QUALIDADE -->
+    <!-- ============================================================ -->
+    {% if projetos_detalhados %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-folder text-warning me-2"></i>Projetos da Qualidade</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Projeto</th>
+                            <th>Objetivo</th>
+                            <th>Data</th>
+                            <th style="width:120px;">Ferramentas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proj in projetos_detalhados %}
+                        <tr>
+                            <td class="fw-bold">{{ proj.nome }}</td>
+                            <td class="text-muted">{{ proj.objetivo[:80] }}{% if proj.objetivo|length > 80 %}...{% endif %}</td>
+                            <td>{{ proj.data }}</td>
+                            <td>
+                                {% for f in proj.ferramentas %}
+                                <span class="badge bg-dark bg-opacity-10 text-dark me-1">{{ f.tipo }}</span>
+                                {% else %}
+                                <span class="text-muted">Nenhuma</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resumo executivo -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-check2-square me-2 text-success"></i>Resumo Executivo</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert {% if metricas.conformidade_nr_media >= 70 and metricas.maturidade_iso_media >= 70 %}alert-success{% elif metricas.conformidade_nr_media >= 40 or metricas.maturidade_iso_media >= 40 %}alert-warning{% else %}alert-danger{% endif %}">
+                <h6 class="fw-bold">Diagnóstico Geral</h6>
+                <p class="mb-0 small">
+                    {% if metricas.conformidade_nr_media >= 70 and metricas.maturidade_iso_media >= 70 %}
+                    ✅ A empresa apresenta um bom nível de conformidade regulatória e maturidade em gestão. Recomenda-se manter as práticas atuais e focar na melhoria contínua.
+                    {% elif metricas.conformidade_nr_media >= 40 or metricas.maturidade_iso_media >= 40 %}
+                    ⚠️ A empresa está em processo de adequação. Algumas áreas já apresentam conformidade, mas é necessário avançar nas não conformidades identificadas para garantir a segurança e a gestão da qualidade.
+                    {% else %}
+                    ❌ A empresa apresenta baixo nível de conformidade. Recomenda-se priorizar a implementação dos checklists de NRs e ISOs, iniciando pelas normas de maior risco (NR-1, NR-4, NR-5, NR-7, NR-12).
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-shield-check me-1 text-info"></i>NRs</h6>
+                    <ul class="small">
+                        <li>{{ metricas.nr_concluidas }} NRs com checklist concluído</li>
+                        <li>Média de conformidade: {{ metricas.conformidade_nr_media }}%</li>
+                        <li>{{ metricas.total_checklists_nr }} checklists registrados</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-globe me-1 text-success"></i>ISOs</h6>
+                    <ul class="small">
+                        <li>{{ metricas.total_checklists_iso }} avaliações realizadas</li>
+                        <li>Maturidade média: {{ metricas.maturidade_iso_media }}%</li>
+                        <li>Meta recomendada: ≥ 70%</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-building me-1 text-primary"></i>Planta Baixa</h6>
+                    <ul class="small">
+                        <li>{{ metricas.total_plantas }} planta(s) cadastrada(s)</li>
+                        <li>Conformidade de layout: {{ metricas.conformidade_planta_media }}%</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-folder me-1 text-warning"></i>Projetos</h6>
+                    <ul class="small">
+                        <li>{{ metricas.total_projetos }} projeto(s) criado(s)</li>
+                        <li>{{ metricas.projetos_ativos }} com ferramentas aplicadas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-muted small mt-4 border-top pt-3">
+        <i class="bi bi-bullseye text-info"></i> <strong>MetriQ</strong> &copy; 2025 - Relatório gerado em {{ hoje.strftime('%d/%m/%Y às %H:%M') }}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico NR
+const ctxNR = document.getElementById('chartNR').getContext('2d');
+new Chart(ctxNR, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_nr | tojson | safe }},
+        datasets: [{
+            label: 'Conformidade (%)',
+            data: {{ dados_nr | tojson | safe }},
+            backgroundColor: 'rgba(13, 202, 240, 0.7)',
+            borderColor: '#0dcaf0',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+
+// Gráfico ISO
+const ctxISO = document.getElementById('chartISO').getContext('2d');
+new Chart(ctxISO, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_iso | tojson | safe }},
+        datasets: [{
+            label: 'Maturidade (%)',
+            data: {{ dados_iso | tojson | safe }},
+            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+            borderColor: '#198754',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+
+// Gráfico Planta
+const ctxPlanta = document.getElementById('chartPlanta').getContext('2d');
+new Chart(ctxPlanta, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_planta | tojson | safe }},
+        datasets: [{
+            label: 'Conformidade (%)',
+            data: {{ dados_planta | tojson | safe }},
+            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+            borderColor: '#0d6efd',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});
+</script>
+
+<style>
+@media print {
+    .no-print { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
+    .container { max-width: 100% !important; padding: 0 !important; }
+    body { font-size: 10pt; }
+    .table { font-size: 8pt; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header do Projeto -->
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('projects.lista_projetos') }}">Projetos</a></li>
+                    <li class="breadcrumb-item active">Dashboard PDCA</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold"><i class="bi bi-cycle text-primary me-2"></i>{{ projeto.nome }}</h2>
+            <p class="text-muted">{{ projeto.objetivo }}</p>
+        </div>
+        <div class="col-md-5 text-md-end">
+            <div class="d-flex flex-wrap gap-2 justify-content-md-end align-items-center">
+                <div class="badge bg-dark p-2 px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-arrow-repeat me-1"></i> Ciclo #{{ projeto.ciclo_atual }}
+                </div>
+                <div class="badge bg-primary p-2 px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-diagram-3-fill me-1"></i> Fase: <span class="text-uppercase">{{ projeto.fase_atual
+                        }}</span>
+                </div>
+                <a href="{{ url_for('projects.relatorio_projeto', id=projeto.id) }}"
+                    class="btn btn-outline-dark btn-sm rounded-pill">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stepper PDCA (Bloqueado) -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="pdca-stepper d-flex justify-content-between position-relative">
+                <div class="step-line"></div>
+
+                {% set fases = ['plan', 'do', 'check', 'act'] %}
+                {% set index_atual = fases.index(projeto.fase_atual) %}
+
+                <div class="step-item {{ 'active' if projeto.fase_atual == 'plan' else '' }} {{ 'completed' if index_atual > 0 else '' }}"
+                    data-phase="plan">
+                    <div class="step-icon">P</div>
+                    <span class="step-label">PLAN</span>
+                    <small>Planejar</small>
+                </div>
+
+                <div class="step-item {{ 'active' if projeto.fase_atual == 'do' else '' }} {{ 'completed' if index_atual > 1 else '' }} {{ 'locked' if index_atual < 1 else '' }}"
+                    data-phase="do">
+                    <div class="step-icon">D</div>
+                    <span class="step-label">DO</span>
+                    <small>Fazer</small>
+                </div>
+
+                <div class="step-item {{ 'active' if projeto.fase_atual == 'check' else '' }} {{ 'completed' if index_atual > 2 else '' }} {{ 'locked' if index_atual < 2 else '' }}"
+                    data-phase="check">
+                    <div class="step-icon">C</div>
+                    <span class="step-label">CHECK</span>
+                    <small>Verificar</small>
+                </div>
+
+                <div class="step-item {{ 'active' if projeto.fase_atual == 'act' else '' }} {{ 'locked' if index_atual < 3 else '' }}"
+                    data-phase="act">
+                    <div class="step-icon">A</div>
+                    <span class="step-label">ACT</span>
+                    <small>Agir</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Fases -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div id="phase-content" class="card-body p-4">
+
+                    {% if projeto.fase_atual == 'plan' %}
+                    <div class="phase-section" id="section-plan">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0">Fase 1: Planejar (PLAN)</h4>
+                            <button
+                                onclick="avancarFase({{ 'true' if sugestao and sugestao.pronto_avancar else 'false' }})"
+                                class="btn btn-primary btn-sm rounded-pill">
+                                Próxima Etapa (DO) <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                        <p>Identifique os problemas, as causas raiz e defina os objetivos e metas para este ciclo.</p>
+
+                        <div class="tool-grid mt-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='pareto') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-warning bg-opacity-10 text-warning"><i
+                                                class="bi bi-bar-chart-fill"></i></div>
+                                        <div class="details">
+                                            <h6>Pareto</h6>
+                                            <small>Priorizar problemas</small>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='ishikawa') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-primary bg-opacity-10 text-primary"><i
+                                                class="bi bi-diagram-3"></i></div>
+                                        <div class="details">
+                                            <h6>Ishikawa</h6>
+                                            <small>Causa Raiz (6M)</small>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='5w2h') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-success bg-opacity-10 text-success"><i
+                                                class="bi bi-clipboard-check"></i></div>
+                                        <div class="details">
+                                            <h6>5W2H</h6>
+                                            <small>Plano de Ação</small>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='fluxograma') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-info bg-opacity-10 text-info"><i
+                                                class="bi bi-diagram-2"></i></div>
+                                        <div class="details">
+                                            <h6>Fluxograma</h6>
+                                            <small>Mapear Processo</small>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if projeto.fase_atual == 'do' %}
+                    <div class="phase-section" id="section-do">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0 text-warning">Fase 2: Fazer (DO)</h4>
+                            <button
+                                onclick="avancarFase({{ 'true' if sugestao and sugestao.pronto_avancar else 'false' }})"
+                                class="btn btn-warning btn-sm rounded-pill">
+                                Próxima Etapa (CHECK) <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                        <p>Coloque o plano em ação e utilize ferramentas de coleta para monitorar o progresso.</p>
+
+                        <div class="tool-grid mt-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='folha_verificacao') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-success bg-opacity-10 text-success"><i
+                                                class="bi bi-check2-square"></i></div>
+                                        <div class="details">
+                                            <h6>Folha de Verificação</h6>
+                                            <small>Coleta de Dados em Tempo Real</small>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if projeto.fase_atual == 'check' %}
+                    <div class="phase-section" id="section-check">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0 text-success">Fase 3: Verificar (CHECK)</h4>
+                            <button
+                                onclick="avancarFase({{ 'true' if sugestao and sugestao.pronto_avancar else 'false' }})"
+                                class="btn btn-success btn-sm rounded-pill">
+                                Próxima Etapa (ACT) <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                        <p>Analise os resultados obtidos e compare com os objetivos estabelecidos no PLAN.</p>
+
+                        <div class="tool-grid mt-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='histograma') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-info bg-opacity-10 text-info"><i
+                                                class="bi bi-bar-chart-steps"></i></div>
+                                        <div class="details">
+                                            <h6>Histograma</h6>
+                                            <small>Análise de Distribuição</small>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo='cep') }}"
+                                        class="tool-card">
+                                        <div class="icon bg-danger bg-opacity-10 text-danger"><i
+                                                class="bi bi-activity"></i></div>
+                                        <div class="details">
+                                            <h6>CEP</h6>
+                                            <small>Controle Estatístico</small>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if projeto.fase_atual == 'act' %}
+                    <div class="phase-section" id="section-act">
+                        <h4 class="fw-bold mb-3 text-danger">Fase 4: Agir (ACT)</h4>
+                        <p>Padronize as soluções que funcionaram ou ajuste o plano para um novo ciclo.</p>
+
+                        <div class="bg-light rounded-4 p-5 mt-4 text-center shadow-sm border">
+                            <div class="mb-4">
+                                <i class="bi bi-arrow-repeat display-1 text-primary animate-spin"></i>
+                            </div>
+                            <h3 class="fw-bold">Conclusão do Ciclo #{{ projeto.ciclo_atual }}</h3>
+                            <p class="text-muted px-lg-5">Sua análise está completa! Se os resultados foram atingidos,
+                                padronize o processo. Caso contrário, inicie um novo ciclo de melhoria.</p>
+
+                            <form action="{{ url_for('projects.novo_ciclo_pdca', id=projeto.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
+                                    <i class="bi bi-plus-circle me-2"></i>Iniciar Próximo Ciclo
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Sugestão da IA -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-dark text-white ai-suggestion-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="ai-sparkle me-2">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Insights do Ciclo</h5>
+                    </div>
+
+                    {% if sugestao %}
+                    <p class="small opacity-75 mb-4">{{ sugestao.analise }}</p>
+
+                    {% if sugestao.ferramenta_sugerida %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=sugestao.ferramenta_sugerida) }}"
+                            class="btn btn-info rounded-pill fw-bold">
+                            Abrir {{ sugestao.nome_ferramenta }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <p class="small opacity-75">A IA está processando seu próximo passo...</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Histórico do Ciclo Atual -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Linha do Tempo (Ciclo {{ projeto.ciclo_atual }})</h5>
+                    <div class="list-group list-group-flush small">
+                        {% set ferr_ciclo = projeto.ferramentas | selectattr('ciclo', 'equalto', projeto.ciclo_atual) |
+                        list %}
+                        {% for f in ferr_ciclo | sort(attribute='data_criacao', reverse=True) %}
+                        <a href="{{ url_for('projects.abrir_ferramenta_projeto', id=projeto.id, tipo=f.tipo) }}"
+                            class="list-group-item list-group-item-action border-0 px-0 d-flex align-items-center">
+                            <div
+                                class="badge-dot me-2 bg-{{ 'primary' if f.fase == 'plan' else 'warning' if f.fase == 'do' else 'success' if f.fase == 'check' else 'danger' }}">
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="d-block fw-bold text-capitalize">{{ f.tipo.replace('_', ' ') }}</span>
+                                <small class="text-muted text-uppercase" style="font-size: 0.65rem;">FASE: {{ f.fase
+                                    }}</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                        {% endfor %}
+
+                        {% if not ferr_ciclo %}
+                        <p class="text-muted py-3 text-center mb-0">Aguardando primeira ferramenta...</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos Adicionais p/ Sequenciamento */
+    .step-item.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .step-item.completed .step-icon {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+
+    .step-item.completed::after {
+        content: '\F633';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: -5px;
+        right: 25px;
+        background: #198754;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .animate-spin {
+        animation: spin 10s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Reutilização dos estilos anteriores do stepper... */
+    .pdca-stepper {
+        padding: 0 20px;
+    }
+
+    .step-line {
+        position: absolute;
+        top: 25px;
+        left: 50px;
+        right: 50px;
+        height: 4px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+
+    .step-item {
+        background: none;
+        border: none;
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        width: 100px;
+        transition: all 0.3s;
+    }
+
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        background: #fff;
+        border: 4px solid #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: 800;
+        color: #adb5bd;
+        transition: all 0.3s;
+    }
+
+    .step-label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #adb5bd;
+    }
+
+    .step-item.active .step-icon {
+        border-color: #0d6efd;
+        color: #0d6efd;
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(13, 110, 253, 0.2);
+    }
+
+    .tool-card {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+        border: 1px solid #eee;
+    }
+
+    .tool-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        background: #fff;
+    }
+
+    .tool-card .icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+
+    .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+</style>
+
+<script>
+    function avancarFase(prontoIA) {
+        let msg = 'Deseja realmente avançar para a próxima fase do PDCA?';
+        if (!prontoIA) {
+            msg = '⚠️ A IA sugere que você ainda não completou todas as atividades recomendadas para esta fase.\n\nDeseja avançar mesmo assim?';
+        }
+
+        if (!confirm(msg)) return;
+
+        // Pega o CSRF token do formulário que está na página
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                         document.querySelector('meta[name="csrf-token"]')?.content;
+
+        fetch(`/projeto/{{ projeto.id }}/avancar_fase`, {
+            method: 'POST',
+            headers: { 
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.ai_review) {
+                        alert('Feedback da IA: ' + data.ai_review);
+                    }
+                    location.reload();
+                } else {
+                    alert(data.message || 'Erro ao avançar fase.');
+                }
+            })
+            .catch(err => {
+                console.error('Erro:', err);
+                alert('Erro ao comunicar com o servidor.');
+            });
+    }
+</script>
+{% endblock %}

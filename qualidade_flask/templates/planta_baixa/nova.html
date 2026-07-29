@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width:700px;">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('planta_baixa.lista') }}">Plantas Baixas</a></li>
+            <li class="breadcrumb-item active">Nova Planta</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <i class="bi bi-plus-circle me-2"></i>Nova Planta Baixa
+        </div>
+        <div class="card-body p-4">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Nome da Planta <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control form-control-lg" placeholder="Ex: Setor de Produção, Escritório..." required autofocus>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Tipo de Ambiente</label>
+                        <select name="tipo_ambiente" class="form-select form-select-lg">
+                            <option value="">Selecione...</option>
+                            <option value="Escritório">📋 Escritório</option>
+                            <option value="Fábrica">🏭 Fábrica</option>
+                            <option value="Galpão">📦 Galpão</option>
+                            <option value="Laboratório">🔬 Laboratório</option>
+                            <option value="Hospitalar">🏥 Hospitalar</option>
+                            <option value="Comercial">🛒 Comercial</option>
+                            <option value="Educacional">📚 Educacional</option>
+                            <option value="Outro">📌 Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3 mt-3">
+                    <label class="form-label fw-bold">Descrição (opcional)</label>
+                    <textarea name="descricao" class="form-control" rows="2" placeholder="Descreva o ambiente, setor ou finalidade da planta..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Setor / Departamento</label>
+                    <select name="setor" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="Produção">Produção</option>
+                        <option value="Administrativo">Administrativo</option>
+                        <option value="Segurança do Trabalho">Segurança do Trabalho</option>
+                        <option value="Qualidade">Qualidade</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Logística">Logística</option>
+                        <option value="Recursos Humanos">Recursos Humanos</option>
+                        <option value="Diretoria">Diretoria</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-info border-0 bg-opacity-10">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Dica:</strong> Você poderá definir as dimensões reais (metros) do ambiente no editor.
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                        <i class="bi bi-pencil-square me-2"></i>Criar e Abrir Editor
+                    </button>
+                    <a href="{{ url_for('planta_baixa.lista') }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

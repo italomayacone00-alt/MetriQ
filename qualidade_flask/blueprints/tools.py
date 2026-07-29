@@ -26,7 +26,6 @@ def ferramenta_5w2h():
 @tools.route('/ferramenta/cep')
 @login_required
 def cep():
-    # Renderiza o template de Controle Estatístico de Processo
     return render_template('cep.html')
 
 @tools.route('/ferramenta/histograma')
@@ -48,3 +47,13 @@ def folha_verificacao():
 @login_required
 def fluxograma():
     return render_template('fluxograma.html')
+
+@tools.route('/ferramenta/planta-baixa/lista')
+@login_required
+def planta_baixa_lista():
+    return render_template('planta_baixa/lista.html')
+
+@tools.route('/ferramenta/planta-baixa')
+@login_required
+def planta_baixa():
+    return render_template('planta_baixa/construtor.html')

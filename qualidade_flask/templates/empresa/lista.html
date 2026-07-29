@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-building text-info me-2"></i>Gestão da Empresa</h2>
+            <p class="text-muted">Gerencie os dados da sua organização e acompanhe a conformidade</p>
+        </div>
+        <a href="{{ url_for('empresa.cadastrar') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-lg me-1"></i>Nova Empresa
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label small text-muted mb-1">Buscar</label>
+                    <input type="text" name="busca" class="form-control" placeholder="Buscar por razão social, nome fantasia ou CNPJ..." value="{{ busca }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Empresas -->
+    {% if empresas %}
+    <div class="row g-4">
+        {% for e in empresas %}
+        {% set m = e.get_metricas_conformidade() %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm hover-shadow transition">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title fw-bold mb-1">{{ e.nome_fantasia or e.razao_social }}</h5>
+                            {% if e.cnpj %}
+                            <small class="text-muted"><i class="bi bi-credit-card me-1"></i>{{ e.cnpj }}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge {% if e.grau_risco >= 3 %}bg-danger{% elif e.grau_risco == 2 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
+                            GR {{ e.grau_risco }}
+                        </span>
+                    </div>
+
+                    <!-- Métricas rápidas -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">NRs</small>
+                                <span class="fw-bold {% if m.conformidade_nr_media >= 70 %}text-success{% elif m.conformidade_nr_media >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ m.conformidade_nr_media }}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">ISOs</small>
+                                <span class="fw-bold {% if m.maturidade_iso_media >= 70 %}text-success{% elif m.maturidade_iso_media >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ m.maturidade_iso_media }}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">Plantas</small>
+                                <span class="fw-bold">{{ m.total_plantas }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <small class="text-muted d-block">Projetos</small>
+                                <span class="fw-bold">{{ m.total_projetos }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info adicional -->
+                    <div class="d-flex gap-2 flex-wrap small mb-3">
+                        {% if e.ramo_atividade %}
+                        <span class="badge bg-info bg-opacity-10 text-info">{{ e.ramo_atividade }}</span>
+                        {% endif %}
+                        {% if e.num_funcionarios %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ e.num_funcionarios }} funcionários</span>
+                        {% endif %}
+                        {% if e.cidade %}
+                        <span class="badge bg-dark bg-opacity-10 text-dark">{{ e.cidade }}/{{ e.estado }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('empresa.dashboard', id=e.id) }}" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('empresa.editar', id=e.id) }}" class="btn btn-outline-secondary btn-sm" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('empresa.excluir', id=e.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Excluir esta empresa permanentemente?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="bg-light rounded-4 p-5">
+            <i class="bi bi-building display-1 text-muted mb-3"></i>
+            <h4>Nenhuma empresa cadastrada</h4>
+            <p class="text-muted">
+                {% if busca %}Tente ajustar a busca.{% else %}Cadastre sua empresa para começar a gerenciar a conformidade.{% endif %}
+            </p>
+            {% if not busca %}
+            <a href="{{ url_for('empresa.cadastrar') }}" class="btn btn-primary btn-lg mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Cadastrar Empresa
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .transition { transition: all 0.3s ease; }
+</style>
+{% endblock %}
+

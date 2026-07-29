@@ -1,0 +1,754 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('nr.lista_nrs') }}">NRs</a></li>
+            <li class="breadcrumb-item active">Análise</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 fw-bold fs-5 mb-2">
+                        {{ dados.norma_numero }}
+                    </span>
+                    <h2 class="fw-bold mb-2">{{ dados.norma_titulo }}</h2>
+                    <p class="text-muted mb-1">Análise de Conformidade</p>
+                    <p class="small text-secondary">Gerada em {{ analise.data_criacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+                <div class="text-end">
+                    <div class="display-4 fw-bold text-{{ 'success' if dados.conformidade_pct >= 70 else 'warning' if dados.conformidade_pct >= 50 else 'danger' }}">
+                        {{ dados.conformidade_pct }}%
+                    </div>
+                    <p class="text-muted mb-0">de Conformidade</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo de Conformidade -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Conforme</h6>
+                    <div class="display-5 fw-bold text-success">{{ dados.respostas_count.conforme }}</div>
+                    <div class="small text-muted">{{ dados.perguntas_respostas|selectattr('resposta', 'equalto', 'conforme')|list|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Não Conforme</h6>
+                    <div class="display-5 fw-bold text-danger">{{ dados.respostas_count.nao_conforme }}</div>
+                    <div class="small text-muted">Itens que precisam atenção</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Não Aplicável</h6>
+                    <div class="display-5 fw-bold text-secondary">{{ dados.respostas_count.nao_aplicavel }}</div>
+                    <div class="small text-muted">Não se aplica à empresa</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <!-- Gráfico Pizza -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-pie-chart me-2"></i>Distribuição de Respostas
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="chartRespostas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico Conformidade por Seção -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold py-3 text-dark">
+                    <i class="bi bi-bar-chart me-2"></i>Conformidade por Seção
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="chartSecoes"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise Detalhada com Soluções -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold py-3">
+            <i class="bi bi-lightbulb me-2"></i>Análise Detalhada e Recomendações
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">Item</th>
+                            <th style="width: 15%;">Seção</th>
+                            <th style="width: 35%;">Pergunta</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 15%;">Observação</th>
+                            <th style="width: 15%;">Recomendação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados.perguntas_respostas %}
+                        <tr class="{% if item.resposta == 'nao_conforme' %}table-danger{% elif item.resposta == 'conforme' %}table-success{% else %}table-secondary{% endif %}">
+                            <td class="fw-bold">
+                                {% if item.item and item.item != item.secao %}
+                                    {{ item.item }}
+                                {% else %}
+                                    Item {{ item.item }}
+                                {% endif %}
+                            </td>
+                            <td class="small">
+                                {% if item.secao %}
+                                    {{ item.secao }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 15px; line-height: 1.5;">{{ item.texto }}</td>
+                            <td>
+                                {% if item.resposta == 'conforme' %}
+                                    <span class="badge bg-success">Conforme</span>
+                                {% elif item.resposta == 'nao_conforme' %}
+                                    <span class="badge bg-danger">Não Conforme</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Não Aplicável</span>
+                                {% endif %}
+                            </td>
+                            <td class="small">
+                                {% if item.observacao %}
+                                    {{ item.observacao }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="small">
+                                {% if item.resposta == 'nao_conforme' %}
+                                    {% if item.secao == 'Responsabilidades Gerais e Direitos dos Trabalhadores' %}
+                                        Implemente programas de treinamento e conscientização sobre direitos e deveres dos trabalhadores. Estabeleça canais de comunicação abertos e mecanismos de denúncia seguros.
+                                    {% elif item.secao == 'Segurança e Saúde no Trabalho' %}
+                                        Revise e atualize procedimentos de segurança. Forneça EPIs adequados e realize inspeções periódicas. Implemente programa de gestão de riscos ocupacionais.
+                                    {% elif item.secao == 'Organização' %}
+                                        Reorganize processos e fluxos de trabalho. Defina claramente responsabilidades e autoridade. Estabeleça indicadores de desempenho e metas claras.
+                                    {% elif item.secao == '1. Campo de Aplicação e Modalidade' %}
+                                        Verifique se a organização possui empregados CLT e constitua SESMT conforme dimensionamento. Confirme a modalidade (Individual/Regionalizado/Estadual) e regras de SESMT compartilhado.
+                                    {% elif item.secao == '2. Competências Técnicas do SESMT' %}
+                                        Assegure que o SESMT participa do inventário de riscos, PGR e PCMSO. Implemente medidas de prevenção conforme NR-01 e estabeleça plano de trabalho com metas e indicadores.
+                                    {% elif item.secao == '3. Composição e Formação Profissional' %}
+                                        Verifique se o SESMT possui todos os profissionais exigidos com formação e registro nos conselhos. Indique coordenador e responsável pelo PCMSO entre os médicos.
+                                    {% elif item.secao == '4. Carga Horária e Funcionamento' %}
+                                        Garanta cumprimento das cargas horárias (44h técnicos/auxiliares, 15h/30h demais). Assegure recursos, isenção técnica e escala adequada para atendimento em todos os turnos.
+                                    {% elif item.secao == '5. Dimensionamento (Regras Específicas)' %}
+                                        Revise dimensionamento considerando número total de empregados e maior grau de risco. Inclua trabalhadores de terceiros e aplique regras específicas para ME/EPP e contratos temporários.
+                                    {% elif item.secao == '6. Registro Eletrônico' %}
+                                        Realize o registro do SESMT no sistema eletrônico gov.br. Mantenha atualizados CPF, qualificação, registro profissional, horários, grau de risco e número de trabalhadores.
+                                    {% elif item.secao == '1. Constituição e Dimensionamento' %}
+                                        Verifique o dimensionamento da CIPA conforme Quadro I. Para organizações sazonais, calcule pela média do ano anterior. Nomeie representante da NR-05 se não houver CIPA e SESMT.
+                                    {% elif item.secao == '2. Atribuições e Responsabilidades' %}
+                                        Estabeleça plano de trabalho preventivo. Garanta que a CIPA acompanhe identificação de riscos, participe de programas SST e promova SIPAT. Inclua temas de combate ao assédio.
+                                    {% elif item.secao == '3. Processo Eleitoral e Mandato' %}
+                                        Convocar eleições 60 dias antes do término do mandato. Comunique sindicato, constitua comissão eleitoral e divulge edital. Garanta estabilidade dos membros eleitos.
+                                    {% elif item.secao == '4. Funcionamento e Reuniões' %}
+                                        Realize reuniões mensais com atas assinadas. Convocar reuniões extraordinárias em acidentes graves. Assegure participação remota quando necessário e controle frequência dos membros.
+                                    {% elif item.secao == '5. Treinamento' %}
+                                        Promova treinamento antes da posse com carga horária conforme grau de risco (8h-20h). Inclua investigação de acidentes, legislação, inclusão PCD e combate ao assédio.
+                                    {% elif item.secao == '6. Contratadas e Terceirização' %}
+                                        Convide contratadas para reuniões da CIPA. Garanta compartilhamento de informações sobre riscos. Nomeie representante da NR-05 se contratada tiver 5+ empregados.
+                                    {% elif item.secao == '7. Anexo I - Indústria da Construção' %}
+                                        Verifique dimensionamento do canteiro de obras. Nomeie representante para cada frente de trabalho. Envie Comunicação Prévia ao sindicato em até 10 dias para obras até 180 dias.
+                                    {% elif item.secao == '8. Documentação' %}
+                                        Mantenha toda documentação da CIPA no estabelecimento por no mínimo 5 anos à disposição da fiscalização. Organize atas, registros e documentos de forma acessível.
+                                    {% elif item.secao == '1. Responsabilidades da Organização (Empregador)' %}
+                                        Adquira apenas EPIs com CA válido. Fornecimento deve ser gratuito e registrado. Mantenha EPIs em bom estado e substitua imediatamente quando danificados. Comunique irregularidades ao órgão competente.
+                                    {% elif item.secao == '2. Seleção do EPI' %}
+                                        Selecione EPIs conforme riscos do inventário. Garanta eficácia, conforto e compatibilidade. Integre seleção ao PGR. Participe com SESMT, CIPA e trabalhadores. Revise periodicamente.
+                                    {% elif item.secao == '3. Responsabilidades do Trabalhador' %}
+                                        Oriente trabalhadores a usar EPIs corretamente, apenas para finalidade específica. Responsabilize-se pela limpeza e conservação. Comunique alterações e cumpra determinações da organização.
+                                    {% elif item.secao == '4. Treinamentos e Informações' %}
+                                        Forneça informações sobre riscos, limitações e uso adequado. Inclua instruções de manutenção conforme manual. Realize treinamento prático quando necessário.
+                                    {% elif item.secao == '5. Certificado de Aprovação (CA) e Marcações' %}
+                                        Verifique validade do CA e marcações do EPI. Garanta manual em português disponível. Preserve eficácia em adaptações para PCDs.
+                                    {% elif item.secao == '6. Anexo I (Lista de Verificação de Itens Específicos)' %}
+                                        Verifique adequação específica: capacetes (impacto/choque/ térmico), proteção ocular (radiação/partículas), protetores auditivos (níveis NR-15), respiradores (oxigênio/contaminantes), luvas (agentes específicos), cinturão (trabalho em altura).
+                                    {% elif item.secao == '1. Responsabilidades e Diretrizes Gerais' %}
+                                        Garanta elaboração e implantação efetiva do PCMSO. Indique médico responsável (médico do trabalho preferencialmente). Elabore PCMSO baseado nos riscos do PGR. Assegure custeio integral pela empresa sem ônus ao empregado.
+                                    {% elif item.secao == '2. Exames Médicos Ocupacionais' %}
+                                        Implemente todos os exames obrigatórios nos prazos corretos. Admissional antes do início, periódico anual/bienal, retorno após 30+ dias, mudança antes da alteração, demissional em até 10 dias. Use laboratórios certificados.
+                                    {% elif item.secao == '3. Atestado de Saúde Ocupacional (ASO)' %}
+                                        Emita ASO para cada exame com todos os campos obrigatórios. Inclua razão social, CNPJ, dados do empregado, riscos do PGR, datas dos exames e aptidão. Assegure assinaturas do médico examinador e responsável pelo PCMSO.
+                                    {% elif item.secao == '4. Condutas Médicas e Previdenciárias' %}
+                                        Emeta CAT imediatamente em caso de doença ocupacional. Afaste trabalhador da situação de risco. Encaminhe à Previdência para afastamentos > 15 dias. Reavalie riscos e medidas preventivas no PGR após agravos.
+                                    {% elif item.secao == '5. Documentação e Relatórios' %}
+                                        Mantenha prontuários médicos por 20 anos após desligamento. Elabore Relatório Analítico anual com estatísticas. Discuta relatório com responsáveis SST e CIPA. MEI/ME/EPP realizam exames admissional/demissional/bienal.
+                                    {% elif item.secao == '6. Monitoramento Específico (Anexos I a V)' %}
+                                        Implemente monitoramento específico conforme anexos: químicos (IBE/EE e IBE/SC), ruído (audiometria com repouso 14h), poeiras (RX padrão OIT e espirometria), hiperbárica (observação 2h), cancerígenos (prontuário 40 anos), radiações ionizantes (até 75 anos).
+                                    {% elif item.secao == '1. Disposições Gerais e Identificação' %}
+                                        Identifique todas as exposições a agentes físicos, químicos e biológicos no PGR. Descreva atividades, agentes, formas de exposição e grupos de trabalhadores. Liste possíveis agravos à saúde e medidas de prevenção existentes.
+                                    {% elif item.secao == '2. Avaliação das Exposições' %}
+                                        Realize análise preliminar antes de avaliações quantitativas. Avaliações devem ser representativas e incorporadas ao inventário de riscos do PGR. Registre conforme aspectos específicos dos Anexos da NR-09.
+                                    {% elif item.secao == '3. Medidas de Prevenção e Controle' %}
+                                        Adote medidas de eliminação ou controle conforme critérios dos Anexos. Integre medidas ao PGR e Plano de Ação. Use limites NR-15 ou ACGIH. Implemente nível de ação (metade dos limites) para agentes químicos e ruído.
+                                    {% elif item.secao == '4. Vibração (Anexo I)' %}
+                                        Elimine ou reduza vibração aos menores níveis. Considere esforços físicos e postura. Mantenha manutenção preventiva. Monitore aren (VMB: 2,5/5 m/s², VCI: aren e VDVR). Adote assentos antivibratórios e melhorias de piso quando necessário.
+                                    {% elif item.secao == '5. Calor (Anexo III)' %}
+                                        Oriente trabalhadores sobre distúrbios do calor. Realize treinamentos anuais. Use metodologia NHO 06. Disponibilize água potável e incentive ingestão. Programe trabalhos pesados para períodos amenos. Adote pausas para recuperação e procedimento de emergência.
+                                    {% elif item.secao == '1. Medidas de Controle e Documentação' %}
+                                        Mantenha esquemas unifilares atualizados. Constitua PIE para carga > 75kW. Inclua procedimentos, EPCs, EPIs e documentação de trabalhadores. Arquive testes de isolação. Documentos elaborados por profissional habilitado.
+                                    {% elif item.secao == '2. Medidas de Proteção Coletiva e Individual' %}
+                                        Priorize medidas de proteção coletiva. Desenergize quando possível. Use obstáculos/barreiras se não for possível. EPIs adequados conforme NR-06. Vestimentas condutíveis/inflamáveis. Proíba adornos pessoais.
+                                    {% elif item.secao == '3. Segurança em Projetos' %}
+                                        Especifique dispositivos com bloqueio e sinalização. Dimensione espaços seguros. Separe circuitos por finalidade. Defina aterramento e interligação neutro/proteção. Indique posição de manobra (Verde D, Vermelho L). Iluminação conforme NR-17.
+                                    {% elif item.secao == '4. Segurança na Construção, Montagem e Manutenção' %}
+                                        Supervisione por profissional autorizado. Adote medidas contra riscos adicionais. Teste equipamentos conforme tensão. Mantenha locais exclusivos para serviços elétricos.
+                                    {% elif item.secao == '5. Instalações Elétricas Desenergizadas' %}
+                                        Siga sequência: seccionamento, impedimento, constatação ausência de tensão, aterramento temporário, proteção, sinalização. Reenergize após retirada de ferramentas/trabalhadores e remoção de aterramento.
+                                    {% elif item.secao == '6. Trabalhos em Alta Tensão (AT) e SEP' %}
+                                        Trabalhadores com treinamento básico (40h) e complementar (40h). Mínimo 2 trabalhadores. Ordem de serviço específica. Avaliação prévia e planejamento. Bloqueio de religamento automático. Comunicação permanente.
+                                    {% elif item.secao == '7. Habilitação e Treinamento' %}
+                                        Qualificado: curso reconhecido. Habilitado: registro em conselho. Capacitado: sob responsabilidade de habilitado. Reciclagem bienal ou mudanças. Exames de saúde conforme NR-07.
+                                    {% elif item.secao == '8. Proteção Contra Incêndio, Explosão e Sinalização' %}
+                                        Proteção contra incêndio/explosão conforme NR-23. Dispositivos de descarga para eletricidade estática. Treinamento específico e permissão para áreas classificadas. Sinalização de circuitos e áreas.
+                                    {% elif item.secao == '9. Situações de Emergência e Responsabilidades' %}
+                                        Ações de emergência no plano da empresa. Trabalhadores aptos para resgate e RCR. Informar riscos e medidas. Comunicação de riscos e direito de recusa. Documentação disponível.
+                                    {% elif item.secao == '1. Princípios Gerais e Responsabilidades' %}
+                                        Adote medidas de proteção na ordem: coletiva -> administrativa -> individual. Realize apreciação de riscos considerando máquina, processo e estado da técnica. Trabalhadores devem cumprir orientações e comunicar danos às proteções.
+                                    {% elif item.secao == '2. Arranjo Físico e Instalações' %}
+                                        Mantenha áreas de circulação demarcadas e desobstruídas. Garanta distância segura entre máquinas. Piso resistente e nivelado. Máquinas estacionárias estáveis. Máquinas móveis com travas em rodízios. Evite transporte aéreo sobre trabalhadores.
+                                    {% elif item.secao == '3. Instalações e Dispositivos Elétricos' %}
+                                        Previna choque, incêndio e explosão. Aterre carcaças e partes condutoras. Condutores com resistência mecânica e proteção. Quadros com sinalização e porta fechada. Proíba chaves faca e partes expostas. Baterias com proteção no terminal positivo.
+                                    {% elif item.secao == '4. Dispositivos de Partida, Acionamento e Parada' %}
+                                        Dispositivos fora de zonas de perigo. Seletor para operação por múltiplas pessoas. Sinal sonoro/visual para acionamento simultâneo. Interface em extrabaixa tensão (≤25VCA/60VCC). Dispositivos bimanuais com atuação síncrona (≤0,5s).
+                                    {% elif item.secao == '5. Sistemas de Segurança (Proteções)' %}
+                                        Proteja zonas de perigo com proteções fixas/móveis/dispositivos. Proteções fixas permanentes, removidas só com ferramentas. Proteções móveis com intertravamento. Transmissões de força totalmente protegidas. Eixos cardãs protegidos. Materiais resistentes sem arestas. Sensores/rearme manual contra partida acidental.
+                                    {% elif item.secao == '6. Dispositivos de Parada de Emergência' %}
+                                        Dispositivos prevalecem sobre outros comandos. Acesso fácil e visualização. Acionamento retém atuador e exige rearme manual. Cabos cessam funções em caso de ruptura/afrouxamento.
+                                    {% elif item.secao == '7. Componentes Pressurizados e Transportadores' %}
+                                        Proteja mangueiras/tubulações contra impactos e chicoteamento. Sistemas pressurizados com meios para não exceder pressão máxima. Transportadores protegidos em pontos de esmagamento. Passarelas em ambos os lados para correias >2,70m.
+                                    {% elif item.secao == '8. Manutenção, Inspeção e Limpeza' %}
+                                        Mantenha manutenção conforme fabricante. Registre intervenções com data e responsável. Use LOTO (bloqueio de energia) para intervenções. Repare defeitos de segurança imediatamente.
+                                    {% elif item.secao == '9. Sinalização e Manuais' %}
+                                        Sinalização em português para riscos e instruções. Informações indeléveis na máquina (razão social, CNPJ, modelo, série, ano, capacidade). Manual em português disponível no local de trabalho.
+                                    {% elif item.secao == '10. Procedimentos, Capacitação e Documentação' %}
+                                        Procedimentos baseados na apreciação de riscos. Inspeção rotineira no início de cada turno. Capacitação teórica e prática antes das funções. Cartão de identificação anual para operadores de máquinas autopropelidas. Relação atualizada de máquinas e equipamentos.
+                                    {% elif item.secao == '11. Acessos e Meios de Passagem (Anexo III)' %}
+                                        Escadas, passarelas e plataformas com corrimão e rodapé. Corrimão entre 1,10m e 1,20m. Rodapé mínimo 0,20m. Escadas marinheiro >3,50m com gaiola de proteção.
+                                    {% elif item.secao == '1. Disposições Gerais e Responsabilidades' %}
+                                        Empregador assume responsabilidade inclusive para equipamentos de terceiros. Equipamentos operam com dispositivos de segurança sem bloqueios. Inspeções em dia por PLH. Proíba inibição de segurança sem justificativa. Reparos seguem códigos originais. Comunique acidentes graves à autoridade e sindicato.
+                                    {% elif item.secao == '2. Segurança em Caldeiras' %}
+                                        Válvula de segurança ajustada ≤ PMTA. Instrumento de pressão e controle de nível com intertravamento. Placa de identificação indelével. Instalação em Casa/Área de Caldeiras. Duas saídas amplas em direções distintas. Água tratada conforme parâmetros. Operador qualificado. Caldeiras A com painel em sala de controle.
+                                    {% elif item.secao == '3. Segurança em Vasos de Pressão' %}
+                                        Válvula de segurança ajustada conforme PMTA. Medidas (DCBI) contra bloqueio inadvertido. Placa de identificação e categoria visíveis. Acessos seguros a drenos e bocas. Manual em português para vasos I/II. Operação por profissional capacitado.
+                                    {% elif item.secao == '4. Tubulações e Tanques Metálicos' %}
+                                        Programa e plano de inspeção considerando fluidos e pressão. Dispositivos de segurança e indicadores conforme projeto. Tubulações de vapor mantidas conforme plano. Tanques com dispositivos contra sobrepressão e vácuo. Identificação conforme padronização.
+                                    {% elif item.secao == '5. Documentação Técnica Obrigatória' %}
+                                        Prontuário disponível com código e memória de cálculo PMTA. Registro de Segurança com ocorrências anotadas. Projetos e relatórios atualizados disponíveis. Certificados válidos e arquivados. Documentação acessível a operadores, manutenção e CIPA.
+                                    {% elif item.secao == '6. Inspeções de Segurança' %}
+                                        Inspeções iniciais antes do funcionamento. Inspeções periódicas respeitando prazos (12 meses para caldeiras A/B sem SPIE). Inspeções extraordinárias após acidentes/reparos. Relatórios com parecer conclusivo e data próxima. Recomendações implementadas com prazos e responsáveis.
+                                    {% elif item.secao == '7. Capacitação e Treinamento (Anexo I)' %}
+                                        Operadores com ensino médio e certificado 40h. Prática supervisionada (80h A, 60h B, 300h vasos I/II). Treinamento supervisionado por PLH. Atualização após modificações/acidentes.
+                                    {% elif item.secao == '1. Diretrizes Gerais e Adicional' %}
+                                        Pague adicional de 30% sobre salário base (sem gratificações). Assegure direito de opção por insalubridade. Caracterize periculosidade com laudo por Médico/Engenheiro. Mantenha laudo disponível. Delimite áreas de risco.
+                                    {% elif item.secao == '2. Explosivos (Anexo I)' %}
+                                        Pague adicional para armazenamento/transporte/detonação. Respeite distâncias mínimas conforme tabelas. Delimite fisicamente áreas de risco com obstáculos.
+                                    {% elif item.secao == '3. Inflamáveis (Anexo II)' %}
+                                        Respeite limites de isenção (200L líquidos, 135kg gasosos). Pague adicional para operadores de bombas e áreas de risco. Área de risco = círculo 7,5m dos pontos. Recinto fechado = área toda risco. Respeite limites do Quadro I.
+                                    {% elif item.secao == '4. Segurança Pessoal ou Patrimonial (Anexo III)' %}
+                                        Profissionais expostos a roubos/violência recebem adicional. Empresa registrada no Ministério da Justiça. Vigilância, escolta e transporte de valores com adicional 30%. Supervisão direta também recebe.
+                                    {% elif item.secao == '5. Energia Elétrica (Anexo IV)' %}
+                                        Pague adicional para operação em AT. Trabalhadores em proximidade de AT ou SEP recebem. Trabalho intermitente = exposição permanente (integral nos meses). Exclua extra-baixa tensão e elementares em BT.
+                                    {% elif item.secao == '6. Motocicletas (Anexo V - Vigência 2026)' %}
+                                        Trabalhador usa moto para trabalho = adicional. Elabore laudo técnico. Exclua residência-trabalho e uso eventual/fortuito.
+                                    {% elif item.secao == '7. Agentes de Autoridade de Trânsito (Anexo VI)' %}
+                                        Agentes expostos a colisões/atropelamentos/violência recebem adicional. Laudo analisa exposição independentemente do local.
+                                    {% elif item.secao == '8. Radiações Ionizantes ou Substâncias Radioativas' %}
+                                        Pague adicional para produção/manuseio/transporte radioativos. Operadores de raios-X contemplados. Exclua equipamentos móveis em emergências, CTI e leitos.
+                                    {% elif item.secao == '1. Avaliação Ergonômica (AEP e AET)' %}
+                                        Realize AEP das situações que demandam adaptação. Registre AEP e subsidie PGR. Faça AET quando necessário ou por PCMSO. AET com diagnóstico e recomendações. Ouça empregados. Mantenha relatório 20 anos.
+                                    {% elif item.secao == '2. Organização do Trabalho' %}
+                                        Considere normas, ritmo, conteúdo e aspectos cognitivos. Reduza sobrecarga muscular estática/dinâmica. Use pausas/alternância para posturas extremas. Pausas = tempo efetivo, fora do posto. Garanta saída para necessidades fisiológicas. Avaliação de desempenho considere saúde. Oriente superiores para facilitar compreensão.
+                                    {% elif item.secao == '3. Levantamento, Transporte e Descarga Individual de Cargas' %}
+                                        Proíba transporte manual que comprometa saúde. Reduza carga para mulheres e menores. Organize pega/depósito para evitar rotações excessivas. Evite levantamento >60cm horizontal. Oriente trabalhadores em métodos seguros.
+                                    {% elif item.secao == '4. Mobiliário e Postos de Trabalho' %}
+                                        Mobiliário com regulagens antropométricas. Favoreça alternância pé/sentada. Espaço suficiente para pernas/pés. Fornça apoio para pés se necessário. Assentos com altura ajustável, borda arredondada, encosto lombar. Assentos com encosto para pausas em pé.
+                                    {% elif item.secao == '5. Máquinas, Equipamentos e Ferramentas Manuais' %}
+                                        Monitores/sinais/comandos claros para reduzir erros. Terminais de vídeo com ajuste anti-reflexo. Ferramentas pesadas com sustentação. Evite compressão palma/dedos em arestas. Empunhadura com textura/forma apropriados à tarefa/luvas.
+                                    {% elif item.secao == '6. Condições de Conforto no Ambiente de Trabalho' %}
+                                        Iluminação apropriada sem ofuscamentos. Siga NHO 11 da Fundacentro. Ruído de fundo ≤65 dB(A). Temperatura climatizada 18-25°C.
+                                    {% elif item.secao == '7. Operadores de Checkout (Anexo I)' %}
+                                        Mobiliário para 90% dos trabalhadores. Esteira eletromecânica para ≥2,70m. Balança nivelada, teclado ≤45cm. Saída para necessidades fisiológicas a qualquer momento. Não avalie desempenho só por volume. Treinamento inicial e anual ≥2h.
+                                    {% elif item.secao == '8. Teleatendimento / Telemarketing (Anexo II)' %}
+                                        Monitor/teclado com regulagens independentes. Headsets gratuitos com alternância de orelhas. Trabalho efetivo ≤6h/dia. Duas pausas 10min fora do posto. Intervalo repouso/alimentação 20min. Não exija script estrito. Treinamento inicial 4h, periódico a cada 6 meses.
+                                    {% elif item.secao == '1. Abrangência e Classificação' %}
+                                        Classifique instalação em Classe I/II/III considerando atividade e capacidade. Atividade tem prioridade (exceto >250.000m³ ou 3.000ton). Use classe maior para líquidos+gases.
+                                    {% elif item.secao == '2. Projeto da Instalação' %}
+                                        Projeto por profissional habilitado. Contenha descrição, planta, especificações e áreas classificadas. Documente distâncias de segurança. Preveja mecanismos de controle. Defina medidas para vapores/estática em transferência.
+                                    {% elif item.secao == '3. Prontuário da Instalação' %}
+                                        Prontuário organizado, atualizado, com índice. Contenha Projeto, Plano Inspeção/Manutenção, Análise Riscos, Plano Prevenção/Controle e PRE. Disponível para autoridades/trabalhadores.
+                                    {% elif item.secao == '4. Análise de Riscos' %}
+                                        Elabore análises para processos de inflamáveis. Classe I: APP/APR. Classes II/III: coordenada por habilitado, equipe multidisciplinar com trabalhador experiente. Revise nos prazos/mudanças/acidentes. Implemente recomendações com prazos/responsáveis.
+                                    {% elif item.secao == '5. Segurança Operacional e Manutenção' %}
+                                        Procedimentos operacionais atualizados (pré-operação, normal, emergência, paradas). Revise trienalmente (I/II) ou quinquenalmente (III). Plano Inspeção/Manutenção com cronograma anual. Atividades não rotineiras com PT. Rotineiras com instrução. Mangueiras com anti-retrocesso em soldagem/corte.
+                                    {% elif item.secao == '6. Capacitação dos Trabalhadores' %}
+                                        Capacite conforme atividade/classe (Básico, Intermediário, Avançado, Específico). Durante expediente, custeada pelo empregador. Atualização conforme periodicidade (anual/bienal/trienal). Após modificações (30 dias) ou morte (90 dias). Instrutores proficientes, cursos avançados com responsável técnico.
+                                    {% elif item.secao == '7. Prevenção e Controle de Fontes de Ignição' %}
+                                        Áreas classificadas conforme NR-10. Sinalize proibição de fontes de ignição. Veículos em áreas inflamáveis com características apropriadas e bom estado.
+                                    {% elif item.secao == '8. Resposta a Emergências e Comunicação' %}
+                                        PRE com cenários de vazamento/incêndio/explosão baseados em análise. Exercícios simulados anuais no trabalho. Equipe de emergência com exames médicos específicos (incluindo psicossociais). Comunique acidentes graves em 2 dias úteis.
+                                    {% elif item.secao == '9. Tanques no Interior de Edifícios (Anexo III)' %}
+                                        Tanques internos apenas enterrados para diesel/biodiesel (exceto geradores/bombas). Tanques superfície para geradores em recinto com paredes 2h, porta corta-fogo, bacia contenção. Volume máximo 5.000L/tanque, 10.000L/edifício.
+                                    {% elif item.secao == '10. Benzeno em Postos de Combustíveis (Anexo IV)' %}
+                                        Treinamento Benzeno 4h inicial e bienal. Hemogramas semestrais (plaquetas/reticulócitos). Proíba flanela/estopa. Bombas com bicos automáticos, proíba abastecimento após desarme. Sinalize "A GASOLINA CONTÉM BENZENO..." em todas as bombas.
+                                    {% elif item.secao == '1. Medidas de Prevenção e Legislação' %}
+                                        Adote medidas de prevenção conforme legislação estadual. Use normas técnicas oficiais complementarmente quando aplicável.
+                                    {% elif item.secao == '2. Informação aos Trabalhadores' %}
+                                        Informe todos sobre uso de equipamentos de combate. Treine procedimentos de resposta a emergências. Forneça procedimentos claros de evacuação. Garanta conhecimento dos dispositivos de alarme.
+                                    {% elif item.secao == '3. Saídas e Vias de Passagem' %}
+                                        Saídas em número suficiente para abandono rápido. Disponha para rapidez e segurança. Identifique e sinalize aberturas/saídas/vias. Sinalização correta conforme legislação. Mantenha permanentemente desobstruídas. Não feche à chave durante jornada. Dispositivos de travamento com fácil abertura do interior.
+                                    {% elif item.secao == '1. Gestão e Redução de Exposição' %}
+                                        Busque redução ativa da exposição. Adote melhores práticas tecnológicas/organizacionais. Proíba lançamento de contaminantes que comprometam saúde. Submeta métodos de controle a exame/aprovação de órgãos competentes.
+                                    {% elif item.secao == '2. Etapas do Gerenciamento de Resíduos' %}
+                                        Colete/acondicione conforme lei/regulamento. Armazene/transporte seguindo normas legais. Trate/disponha conforme legislação específica. Desenvolva medidas de prevenção para cada etapa (coleta, transporte, tratamento).
+                                    {% elif item.secao == '3. Resíduos com Riscos Específicos' %}
+                                        Disponha rejeitos radioativos conforme normatização ANSN. Disponha resíduos com risco biológico conforme legislações sanitária e ambiental.
+                                    {% elif item.secao == '4. Capacitação dos Trabalhadores' %}
+                                        Capacite todos em qualquer etapa do gerenciamento. Capacitação continuada. Treine sobre riscos ocupacionais com resíduos. Ensine/reforce medidas de prevenção para cada tipo de resíduo.
+                                    {% elif item.secao == '1. Sinalização por Cor' %}
+                                        Adote cores para indicar/advertir perigos. Use cores conforme normas técnicas para equipamentos/áreas. Identifique tubulações por cores. Reduza uso ao mínimo para evitar distração/fadiga. Cores não dispensam outras prevenções.
+                                    {% elif item.secao == '2. Classificação de Produtos Químicos' %}
+                                        Classifique produtos conforme critérios GHS. Use listas internacionais/ensaios sem lista nacional. Atenda integralmente normas técnicas oficiais.
+                                    {% elif item.secao == '3. Rotulagem Preventiva' %}
+                                        Embalagens com rotulagem preventiva escrita/gráfica. Rótulos com identificação, composição, pictogramas, palavra de advertência. Inclua frases de perigo/precaução e suplementares GHS. Não perigosos com rotulagem simplificada. Verifique regras Anvisa para saneantes.
+                                    {% elif item.secao == '4. Ficha com Dados de Segurança (FDS)' %}
+                                        Fornecedor disponibiliza FDS para produtos perigosos. Formato/conteúdo conforme GHS. Misturas: explicite nome/concentração de substâncias perigosas. FDS para não perigosos com uso que gere riscos.
+                                    {% elif item.secao == '5. Informações e Treinamento' %}
+                                        Acesso irrestrito dos trabalhadores às FDS. Treinamento específico sobre rotulagem/FDS. Treine perigos, riscos e medidas preventivas. Capacite procedimentos de emergência com produtos químicos.
+                                    {% elif item.secao == '1. Programa de Gerenciamento de Riscos (PGR)' %}
+                                        PGR identifica riscos biológicos com fontes/vias/patogenia. Avalia local/trabalhador com atividades/prevenção. Reavalie em mudanças/acidentes. Documentos disponíveis. Inclua inventário químico. Descreva perigos drogas de risco.
+                                    {% elif item.secao == '2. Riscos Biológicos e Medidas de Proteção' %}
+                                        Lavatórios exclusivos com água/sabão/toalhas/lixeira. Isolamentos com lavatório interno. Higienize mãos antes/depois luvas. Lesões avaliadas antes trabalho. Proíba adornos/fumar/lentes/alimentos. Proíba pias trabalho/calçados abertos. Vestimenta gratuita, não leve para fora. Empregador higieniza vestimentas críticas. Colchões revestidos laváveis/impermeáveis.
+                                    {% elif item.secao == '3. Materiais Perfurocortantes e Vacinação' %}
+                                        Usuário descarta imediatamente. Proíba reencape/desconexão manual. Plano prevenção acidentes implementado. Vacinação gratuita: Tétano/Difteria/Hepatite B/PCMSO. Informe vantagens/efeitos/risco. Registre prontuário, forneça comprovante.
+                                    {% elif item.secao == '4. Riscos Químicos e Gases Medicinais' %}
+                                        Mantenha rotulagem original, proíba reutilização. Fracionados identificados legível. Fichas riscos disponíveis. Local apropriado/sinalizado manipulação. Local com chuveiro/lava-olhos/exaustão. Proíba movimentação sem EPI/cilindros soltos. Inflamáveis 8m oxidantes ou barreira corta-fogo.
+                                    {% elif item.secao == '5. Quimioterápicos e Gases Anestésicos' %}
+                                        Preparo área exclusiva/restrita/vestiário dupla câmara. Cabine Classe II B2 com manutenções registradas. Afaste gestantes/nutrizes quimioterápicos. Kit derramamento disponível. Manutenção preventiva gases elimina vazamentos. Gestantes gases anestésicos com autorização PCMSO.
+                                    {% elif item.secao == '6. Radiações Ionizantes' %}
+                                        PPR aprovado CNEN/Vigilância. Trabalhadores com EPI/monitoração dose mensal. Afastamento imediato gestantes. Registro 30 anos após ocupação. Salas sinalização visual/luminosa vermelha. Proíba mais de um equipamento por sala.
+                                    {% elif item.secao == '7. Resíduos de Saúde' %}
+                                        Capacite segregação/acondicionamento/riscos. Sacos 2/3 capacidade, fechados. Perfurocortantes suporte exclusivo/altura visualização. Transporte carros rígidos/laváveis/tampa, horários não coincidentes alimentos/roupas.
+                                    {% elif item.secao == '8. Manutenção, Limpeza e Lavanderia' %}
+                                        Máquinas porta dupla/barreira. Proíba varrição seca. Descontaminação prévia manutenção. Cronograma manutenção gases/capelas. Capacite operadores modo/risco antes uso.
+                                    {% elif item.secao == '9. Disposições Gerais e Conforto' %}
+                                        Refeitório piso lavável/mesas/assentos/aquecedor. Programa controle animais sinantrópicos. Proíba pipetar boca. Torneiras sem contato mãos fechamento.
+                                    {% elif item.secao == '1. Gestão e Responsabilidades' %}
+                                        Aplique norma acima 2,0m com risco queda. Garanta implementação prevenção. Elabore procedimentos operacionais rotineiros. Disponibilize AR/PT/procedimentos acesso fácil. Suspenda trabalhos risco não previsto. Sistemática autorização trabalhadores. Arquive documentação 5 anos.
+                                    {% elif item.secao == '2. Capacitação e Aptidão' %}
+                                        Trabalhadores autorizados com capacitação/aptidão. Autorização consignada documentos. Treinamento inicial 8h antes atividades. Conteúdo AR/riscos/EPI/EPC/acidentes/emergência. Treinamento periódico 2 anos/8h. Instrutores proficiência sob responsabilidade SST. Aptidão clínica registrada ASO.
+                                    {% elif item.secao == '3. Planejamento e Organização (AR e PT)' %}
+                                        Planejamento hierarquia: evitar -> eliminar -> minimizar. Trabalho precedido AR. AR considera entorno/isolamento/sinalização/ancoragem/meteorologia. Não rotineiras com PT. PT validade duração/turno. Trabalho sob supervisão AR.
+                                    {% elif item.secao == '4. Sistemas de Proteção Contra Quedas (SPQ)' %}
+                                        SPQ selecionado profissional qualificado/habilitado. SPIQ apenas impossibilidade SPCQ/complementar. Inspeções inicial/periódica/rotineira. Impactos/defeitos inutilizados/descartados. Força impacto máximo 6kN. Retenção exclusivamente cinturão paraquedista. Talabarte com absorvedor energia. Posicionamento garante Zona Livre Queda.
+                                    {% elif item.secao == '5. Emergência e Salvamento' %}
+                                        Procedimentos resposta emergências com perigos/tempo socorro. Plano reduz tempo suspensão inerte. Equipe salvamento recursos/capacitação resgate/primeiros socorros.
+                                    {% elif item.secao == '6. Anexo I - Acesso por Cordas' %}
+                                        Equipe mínimo 2 trabalhadores, 1 supervisor. Trabalhador conectado 2 cordas ancoragem independentes. Cordas/equipamentos certificados. Inspeção periódica 6 meses. Interrompa ventos >40km/h.
+                                    {% elif item.secao == '7. Anexo II - Sistemas de Ancoragem' %}
+                                        Ancoragem projetada forças aplicáveis/pontos identificados. Ancoragem estrutural/fixação projetada profissional habilitado. Pontos marcação fabricante/lote/série/máximo trabalhadores. Sistemas permanentes projeto/instalação profissional habilitado.
+                                    {% elif item.secao == '8. Anexo III - Escadas de Uso Individual' %}
+                                        Escada precedida AR. Fixa vertical apenas inviabilidade técnica. Inspecione periodicamente, retire defeitos. Fixa vertical com SPQ. Escadas portáteis contato 3 pontos. Portáteis encosto ultrapassam 1m acesso.
+                                    {% else %}
+                                        Analise a causa raiz do problema, implemente ações corretivas imediatas e estabeleça controles preventivos. Documente todas as ações e monitore a eficácia das soluções implementadas.
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="d-flex gap-2 justify-content-between">
+        <div>
+            <a href="{{ url_for('nr.detalhe_nr', id=dados.norma_id) }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+        <div>
+            <button type="button" class="btn btn-info btn-lg px-4" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i>Imprimir
+            </button>
+            <button type="button" class="btn btn-primary btn-lg px-4" id="btnBaixarPDF">
+                <i class="bi bi-download me-2"></i>Baixar PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Dados para os gráficos
+    const conformes = {{ dados.respostas_count.conforme|default(0) }};
+    const naoConformes = {{ dados.respostas_count.nao_conforme|default(0) }};
+    const naoAplicaveis = {{ dados.respostas_count.nao_aplicavel|default(0) }};
+
+    // Gráfico de Pizza - Distribuição de Respostas
+    try {
+        const ctxRespostas = document.getElementById('chartRespostas');
+        if (ctxRespostas) {
+            const ctx = ctxRespostas.getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Conforme', 'Não Conforme', 'Não Aplicável'],
+                    datasets: [{
+                        data: [conformes, naoConformes, naoAplicaveis],
+                        backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+                        borderColor: ['#28a745', '#dc3545', '#6c757d'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    } catch(e) {
+        console.error('Erro ao criar gráfico de pizza:', e);
+    }
+
+    // Gráfico de Barras - Conformidade por Seção
+    try {
+        const secoes = {{ dados.secoes|tojson|default('{}') }};
+        const secaoLabels = Object.keys(secoes) || [];
+        
+        if (secaoLabels.length > 0) {
+            const conformesPorSecao = secaoLabels.map(s => secoes[s].conforme || 0);
+            const naoConformesPorSecao = secaoLabels.map(s => secoes[s].nao_conforme || 0);
+            const naoAplicaveisPorSecao = secaoLabels.map(s => secoes[s].nao_aplicavel || 0);
+
+            const ctxSecoes = document.getElementById('chartSecoes');
+            if (ctxSecoes) {
+                const ctx = ctxSecoes.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: secaoLabels,
+                        datasets: [
+                            {
+                                label: 'Conforme',
+                                data: conformesPorSecao,
+                                backgroundColor: '#28a745'
+                            },
+                            {
+                                label: 'Não Conforme',
+                                data: naoConformesPorSecao,
+                                backgroundColor: '#dc3545'
+                            },
+                            {
+                                label: 'Não Aplicável',
+                                data: naoAplicaveisPorSecao,
+                                backgroundColor: '#6c757d'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            x: {
+                                stacked: true
+                            },
+                            y: {
+                                stacked: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    } catch(e) {
+        console.error('Erro ao criar gráfico de seções:', e);
+    }
+
+    // Função para baixar PDF
+    const btnPDF = document.getElementById('btnBaixarPDF');
+    if (btnPDF) {
+        btnPDF.addEventListener('click', function() {
+            window.print();
+        });
+    }
+</script>
+
+<style>
+    @media print {
+        .navbar, .btn, .breadcrumb {
+            display: none;
+        }
+        body {
+            background-color: white;
+        }
+        .card {
+            border: 1px solid #ddd !important;
+            page-break-inside: avoid;
+        }
+    }
+
+    /* Estilos customizados para melhor visual */
+    .card-sm {
+        border: 1px solid #e9ecef !important;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        min-height: 170px;
+    }
+
+    .card-sm:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+        border-color: #dee2e6 !important;
+    }
+
+    .card-sm .card-body {
+        flex: 1;
+    }
+
+    .shadow-xs {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    }
+
+    .section-header {
+        background-color: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+    }
+
+    .section-header h6 {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    .section-title {
+        font-size: 1.25rem !important;
+        line-height: 1.5 !important;
+        font-weight: 700 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .question-text {
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+        height: auto !important;
+        display: block !important;
+        width: 100% !important;
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+        -webkit-transform: none !important;
+        -moz-transform: none !important;
+        -ms-transform: none !important;
+        -o-transform: none !important;
+    }
+
+    .card-body p {
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+    }
+
+    .card-body .text-muted {
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .card-sm .card-body p {
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+        -webkit-transform: none !important;
+        -moz-transform: none !important;
+        -ms-transform: none !important;
+        -o-transform: none !important;
+    }
+
+    .lh-lg {
+        line-height: 1.6 !important;
+    }
+
+    .card-sm {
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+    }
+
+    .card-sm .card-body {
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+    }
+
+    .card-sm .flex-grow-1 {
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+    }
+
+    .card-sm .mb-3 {
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+    }
+
+    .question-text {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        color: #6c757d !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        scale: 1 !important;
+        zoom: 1 !important;
+        -webkit-transform: none !important;
+        -moz-transform: none !important;
+        -ms-transform: none !important;
+        -o-transform: none !important;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .card-sm .card-body h6 {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+    }
+
+    .card-sm .card-body small {
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+    }
+
+    .card-sm .card-body .flex-grow-1 {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    .card-sm .card-body .mb-3 {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    .card-sm .card-body .d-flex {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    .card-sm .card-body .d-flex * {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    .card-sm .card-body .d-flex h6 {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+    }
+
+    .card-sm .card-body .d-flex .question-text {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+        min-height: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+
+    .card-sm .card-body .d-flex .mb-3 {
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    .card .card-body div {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        font-weight: 400 !important;
+    }
+
+    .card-body.p-4 {
+        background-color: #ffffff;
+    }
+
+    /* Melhor espaçamento nos badões de resposta */
+    .badge {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Melhora na leitura do texto */
+    .lh-lg {
+        line-height: 1.75;
+    }
+
+    /* Estilo melhorado para observações */
+    .alert-info.border-start {
+        background-color: #e7f3ff;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}

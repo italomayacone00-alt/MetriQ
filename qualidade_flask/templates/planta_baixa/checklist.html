@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('planta_baixa.lista') }}">Plantas Baixas</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('planta_baixa.construtor', id=planta.id) }}">{{ planta.nome }}</a></li>
+            <li class="breadcrumb-item active">Checklist de Conformidade</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Resumo -->
+        <div class="col-lg-4 order-lg-2">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-4">
+                    <h6 class="fw-bold mb-3">Conformidade do Layout</h6>
+                    
+                    {% if stats.total > 0 %}
+                    <div class="display-3 fw-bold mb-2 {% if percentual >= 80 %}text-success{% elif percentual >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ percentual }}%
+                    </div>
+                    <p class="text-muted small">de conformidade normativa</p>
+                    
+                    <div class="d-flex justify-content-center gap-3 mb-3">
+                        <div class="text-center">
+                            <div class="fw-bold text-success">{{ stats.conformes }}</div>
+                            <small class="text-muted">Conforme</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="fw-bold text-danger">{{ stats.nao_conformes }}</div>
+                            <small class="text-muted">Não Conforme</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="fw-bold text-secondary">{{ stats.nao_aplicaveis }}</div>
+                            <small class="text-muted">N/A</small>
+                        </div>
+                    </div>
+
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {% if percentual >= 80 %}bg-success{% elif percentual >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="width: {{ percentual }}%"></div>
+                    </div>
+                    {% else %}
+                    <div class="text-muted py-3">
+                        <i class="bi bi-clipboard-check display-4 d-block mb-2"></i>
+                        <p>Responda o checklist para calcular a conformidade.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Legenda -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-info-circle me-2"></i>Legenda</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-success" style="width:60px;">Conforme</span>
+                        <small class="text-muted">Atende ao requisito da NR</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-danger" style="width:60px;">Não Conforme</span>
+                        <small class="text-muted">Não atende ao requisito</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary" style="width:60px;">N/A</span>
+                        <small class="text-muted">Não se aplica ao ambiente</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Checklist de Conformidade Normativa</h5>
+                    <span class="badge bg-primary">{{ perguntas|length }} perguntas</span>
+                </div>
+                <div class="card-body p-0">
+                    <form method="POST" id="formChecklist">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        {% set current_secao = namespace(value='') %}
+                        {% for pergunta in perguntas %}
+                        {% set pergunta_id = pergunta.id|string %}
+                        
+                        <!-- Seção Header -->
+                        {% if current_secao.value != pergunta.secao %}
+                        {% set current_secao.value = pergunta.secao %}
+                        <div class="bg-light px-4 py-2 border-bottom">
+                            <small class="fw-bold text-muted text-uppercase">
+                                <span class="badge bg-dark me-2">{{ pergunta.norma }}</span>
+                                {{ pergunta.secao }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Pergunta -->
+                        <div class="px-4 py-3 border-bottom hover-bg">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1 me-3">
+                                    <p class="mb-1 fw-medium">{{ pergunta.texto }}</p>
+                                    <small class="text-muted"><i class="bi bi-lightbulb me-1"></i>{{ pergunta.dica }}</small>
+                                </div>
+                                <div class="d-flex gap-1 flex-shrink-0">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="resposta_{{ pergunta_id }}" 
+                                               id="res_conforme_{{ pergunta_id }}" value="conforme"
+                                               {{ 'checked' if planta.checklist_conformidade.get(pergunta_id) == 'conforme' else '' }}>
+                                        <label class="form-check-label small text-success" for="res_conforme_{{ pergunta_id }}">✅ Sim</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="resposta_{{ pergunta_id }}" 
+                                               id="res_naoconforme_{{ pergunta_id }}" value="nao_conforme"
+                                               {{ 'checked' if planta.checklist_conformidade.get(pergunta_id) == 'nao_conforme' else '' }}>
+                                        <label class="form-check-label small text-danger" for="res_naoconforme_{{ pergunta_id }}">❌ Não</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="resposta_{{ pergunta_id }}" 
+                                               id="res_na_{{ pergunta_id }}" value="nao_aplicavel"
+                                               {{ 'checked' if planta.checklist_conformidade.get(pergunta_id) == 'nao_aplicavel' else '' }}>
+                                        <label class="form-check-label small text-muted" for="res_na_{{ pergunta_id }}">⏭️ N/A</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Observação -->
+                            <div class="mt-2" id="obs_{{ pergunta_id }}" style="display:none;">
+                                <textarea name="observacao_{{ pergunta_id }}" class="form-control form-control-sm" rows="1" placeholder="Observação...">{{ planta.observacoes_conformidade.get(pergunta_id, '') }}</textarea>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Submit -->
+                        <div class="p-4 text-center border-top">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="bi bi-check2-circle me-2"></i>Salvar Checklist
+                            </button>
+                            <a href="{{ url_for('planta_baixa.analise', id=planta.id) }}" class="btn btn-outline-info btn-lg ms-2">
+                                <i class="bi bi-graph-up me-1"></i>Ver Análise
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-bg:hover { background-color: #f8fafc; }
+</style>
+
+<script>
+// Mostrar campo de observação quando selecionar "Não Conforme"
+document.querySelectorAll('input[type="radio"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        var perguntaId = this.name.replace('resposta_', '');
+        var obsDiv = document.getElementById('obs_' + perguntaId);
+        if (obsDiv) {
+            obsDiv.style.display = this.value === 'nao_conforme' ? 'block' : 'none';
+        }
+    });
+});
+
+// Inicializar visibilidade das observações
+document.querySelectorAll('input[type="radio"]:checked').forEach(function(radio) {
+    if (radio.value === 'nao_conforme') {
+        var perguntaId = radio.name.replace('resposta_', '');
+        var obsDiv = document.getElementById('obs_' + perguntaId);
+        if (obsDiv) obsDiv.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
+

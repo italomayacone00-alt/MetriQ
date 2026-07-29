@@ -75,12 +75,17 @@
                                             </small>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            data-id="{{ item.id }}"
-                                            onclick="deletarAnalise(this, event)"
-                                            title="Excluir análise">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <div class="d-flex flex-column align-items-end gap-2">
+                                        <a href="{{ url_for('main.visualizar', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Visualizar análise" target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                data-id="{{ item.id }}"
+                                                onclick="deletarAnalise(this, event)"
+                                                title="Excluir análise">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </label>
                             {% endfor %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a href="{{ url_for('empresa.lista') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h3 class="fw-bold mb-0">
+                        {% if empresa %}
+                        <i class="bi bi-pencil text-info me-2"></i>Editar Empresa
+                        {% else %}
+                        <i class="bi bi-plus-circle text-info me-2"></i>Nova Empresa
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">Preencha os dados cadastrais da organização</p>
+                </div>
+            </div>
+
+            <form method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Card: Dados Principais -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-primary"></i>Dados Principais</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Razão Social <span class="text-danger">*</span></label>
+                                <input type="text" name="razao_social" class="form-control" required
+                                       value="{{ empresa.razao_social if empresa else '' }}"
+                                       placeholder="Razão Social da empresa">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">CNPJ</label>
+                                <input type="text" name="cnpj" class="form-control cnpj-mask"
+                                       value="{{ empresa.cnpj if empresa else '' }}"
+                                       placeholder="00.000.000/0001-00">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nome Fantasia</label>
+                                <input type="text" name="nome_fantasia" class="form-control"
+                                       value="{{ empresa.nome_fantasia if empresa else '' }}"
+                                       placeholder="Nome fantasia">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">CNAE</label>
+                                <input type="text" name="cnae" class="form-control"
+                                       value="{{ empresa.cnae if empresa else '' }}"
+                                       placeholder="Ex: 25.93-4">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Ramo de Atividade</label>
+                                <input type="text" name="ramo_atividade" class="form-control"
+                                       value="{{ empresa.ramo_atividade if empresa else '' }}"
+                                       placeholder="Ex: Indústria, Comércio">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Classificação -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-shield-exclamation me-2 text-warning"></i>Classificação de Risco</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Grau de Risco (GR)</label>
+                                <select name="grau_risco" class="form-select">
+                                    <option value="1" {% if empresa and empresa.grau_risco == 1 %}selected{% endif %}>GR 1 - Baixo</option>
+                                    <option value="2" {% if empresa and empresa.grau_risco == 2 %}selected{% endif %}>GR 2 - Médio</option>
+                                    <option value="3" {% if empresa and empresa.grau_risco == 3 %}selected{% endif %}>GR 3 - Alto</option>
+                                    <option value="4" {% if empresa and empresa.grau_risco == 4 %}selected{% endif %}>GR 4 - Máximo</option>
+                                </select>
+                                <small class="text-muted">Define NRs aplicáveis e dimensionamento SESMT</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Nº de Funcionários</label>
+                                <input type="number" name="num_funcionarios" class="form-control"
+                                       value="{{ empresa.num_funcionarios if empresa else '0' }}"
+                                       min="0" step="1">
+                                <small class="text-muted">Usado para dimensionamento CIPA e SESMT</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Responsável SST</label>
+                                <input type="text" name="responsavel_sst" class="form-control"
+                                       value="{{ empresa.responsavel_sst if empresa else '' }}"
+                                       placeholder="Nome do responsável">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Endereço -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-geo-alt me-2 text-success"></i>Endereço</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Logradouro</label>
+                                <input type="text" name="endereco" class="form-control"
+                                       value="{{ empresa.endereco if empresa else '' }}"
+                                       placeholder="Rua, número, complemento">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Bairro</label>
+                                <input type="text" name="bairro" class="form-control"
+                                       value="{{ empresa.bairro if empresa else '' }}"
+                                       placeholder="Bairro">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Cidade</label>
+                                <input type="text" name="cidade" class="form-control"
+                                       value="{{ empresa.cidade if empresa else '' }}"
+                                       placeholder="Cidade">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Estado</label>
+                                <select name="estado" class="form-select">
+                                    <option value="">Selecione...</option>
+                                    {% for sigla in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                    <option value="{{ sigla }}" {% if empresa and empresa.estado == sigla %}selected{% endif %}>{{ sigla }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">CEP</label>
+                                <input type="text" name="cep" class="form-control"
+                                       value="{{ empresa.cep if empresa else '' }}"
+                                       placeholder="00000-000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Contato -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-telephone me-2 text-info"></i>Contato</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Telefone</label>
+                                <input type="text" name="telefone" class="form-control"
+                                       value="{{ empresa.telefone if empresa else '' }}"
+                                       placeholder="(11) 99999-0000">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">E-mail</label>
+                                <input type="email" name="email" class="form-control"
+                                       value="{{ empresa.email if empresa else '' }}"
+                                       placeholder="contato@empresa.com.br">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('empresa.lista') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x me-1"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-lg me-1"></i>
+                        {% if empresa %}Salvar Alterações{% else %}Cadastrar Empresa{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-label { font-size: 0.85rem; }
+</style>
+{% endblock %}
+

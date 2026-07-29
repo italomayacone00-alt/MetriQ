@@ -26,6 +26,7 @@
 <div class="row g-4">
     <div class="col-lg-4 d-print-none">
         
+        <!-- Card: Nome da Análise -->
         <div class="card shadow-sm border-0 mb-3 bg-danger bg-opacity-10 border-start border-4 border-danger">
             <div class="card-body p-3">
                 <label class="form-label small fw-bold text-dark mb-2">
@@ -53,6 +54,7 @@
             </div>
         </div>
 
+        <!-- Card: Importar Excel -->
         <div class="card shadow-sm border-0 mb-3">
             <div class="card-header bg-success text-white fw-bold">
                 <i class="bi bi-file-earmark-spreadsheet me-2"></i> Importar Excel
@@ -63,8 +65,9 @@
             </div>
         </div>
 
+        <!-- Card: Configurar Eixos -->
         <div class="card shadow-sm border-0 mb-3">
-            <div class="card-header bg-dark text-white fw-bold">
+            <div class="card-header bg-secondary text-white fw-bold">
                 <i class="bi bi-gear-fill me-2"></i> Configurar Eixos
             </div>
             <div class="card-body bg-light">
@@ -79,6 +82,7 @@
             </div>
         </div>
 
+        <!-- Card: Adicionar Ponto (sticky) -->
         <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
             <div class="card-header bg-primary text-white fw-bold">
                 <i class="bi bi-speedometer2 me-2"></i> Adicionar Ponto
@@ -126,13 +130,11 @@
                 </div>
             </div>
         </div>
-
-        
-
     </div>
 
     <div class="col-lg-8">
         
+        <!-- Card: Gráfico -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3">
                 <span class="fw-bold text-dark"><i class="bi bi-graph-up me-2"></i> Carta de Controle (X-Barra)</span>
@@ -144,6 +146,7 @@
             </div>
         </div>
 
+        <!-- Card: Tabela de Dados -->
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom">
                 <span class="fw-bold text-dark"><i class="bi bi-table me-2"></i> Tabela de Dados</span>
@@ -180,10 +183,10 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
+<!-- Modal de Ajuda -->
 <div class="modal fade" id="modalCepHelp" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -251,7 +254,9 @@
                                     <h6 class="text-muted small fw-bold mb-2">Exemplo Visual</h6>
                                     
                                     <svg width="100%" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg" class="img-fluid">
-                                        <line x1="30" y1="20" x2="30" y2="130" stroke="#dee2e6" stroke-width="2"/> <line x1="30" y1="130" x2="280" y2="130" stroke="#dee2e6" stroke-width="2"/> <line x1="30" y1="40" x2="280" y2="40" stroke="#dc3545" stroke-width="1" stroke-dasharray="4"/>
+                                        <line x1="30" y1="20" x2="30" y2="130" stroke="#dee2e6" stroke-width="2"/>
+                                        <line x1="30" y1="130" x2="280" y2="130" stroke="#dee2e6" stroke-width="2"/>
+                                        <line x1="30" y1="40" x2="280" y2="40" stroke="#dc3545" stroke-width="1" stroke-dasharray="4"/>
                                         <text x="282" y="44" font-family="Arial" font-size="8" fill="#dc3545" fw="bold">LSE</text>
                                         
                                         <line x1="30" y1="110" x2="280" y2="110" stroke="#dc3545" stroke-width="1" stroke-dasharray="4"/>
@@ -289,7 +294,6 @@
                                     </ol>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -311,6 +315,15 @@
 <script>
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
     
+    function adicionarPontoManual(amostra, valor) {
+        const val = parseFloat(valor);
+        if (!isNaN(val)) {
+            let nome = amostra || "A" + (dados.length + 1);
+            dados.push({ label: nome, value: val });
+            atualizarFerramenta();
+        }
+    }
+    
     window.addEventListener('DOMContentLoaded', () => {
         if (dadosIniciais) {
             if (dadosIniciais.titulo) {
@@ -326,6 +339,10 @@
                 dadosIniciais.pontos.forEach(ponto => {
                     adicionarPontoManual(ponto.amostra, ponto.valor);
                 });
+            } else if (dadosIniciais.itens && Array.isArray(dadosIniciais.itens)) {
+                dadosIniciais.itens.forEach(item => {
+                    adicionarPontoManual(item.label, item.value);
+                });
             }
         }
     });
@@ -338,7 +355,7 @@
             titulo: document.getElementById('tituloAnalise').value,
             labelX: document.getElementById('labelX').value,
             labelY: document.getElementById('labelY').value,
-            pontos: pontos,
+            pontos: dados,
             grafico: graficoImg
         };
         
@@ -369,7 +386,7 @@
                     msg += '\n\nA IA também gerou e salvou automaticamente a ferramenta: ' + data.proxima_gerada.nome;
                 }
                 alert(msg);
-                window.location.href = "{{ url_for('projects.detalhe_projeto', id=projeto.id) }}";
+                window.location.href = "{{ url_for('projects.projeto_pdca', id=projeto.id) if projeto.tipo == 'pdca' else url_for('projects.detalhe_projeto', id=projeto.id) }}";
             } else {
                 alert('Erro ao salvar: ' + data.message);
                 btn.innerHTML = originalText;
