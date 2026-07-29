@@ -112,4 +112,12 @@ def create_app():
     from .commands import register_commands
     register_commands(app)
 
+    # Tratamento de erros global para debug
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        import traceback
+        print(f"ERROR: {str(e)}")
+        print(traceback.format_exc())
+        return f"Erro: {str(e)}", 500
+
     return app

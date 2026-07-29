@@ -7,6 +7,12 @@
             <h2 class="fw-bold mb-0"><i class="bi bi-globe text-info me-2"></i>Normas ISO</h2>
             <p class="text-muted">Consulta e autoavaliação de maturidade de Normas ISO Internacionais</p>
         </div>
+        <form action="{{ url_for('iso.popular_isos') }}" method="POST" onsubmit="return confirm('Deseja popular o banco com ISOs básicas?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-database me-1"></i>Popular ISOs Básicas
+            </button>
+        </form>
     </div>
 
     <!-- Filtros e Busca -->
@@ -72,7 +78,7 @@
                         {% if busca or setor_filtro %}
                             Tente ajustar os filtros de busca.
                         {% else %}
-                            Nenhuma norma ISO cadastrada no sistema.
+                            Clique em "Popular ISOs Básicas" para carregar as normas principais.
                         {% endif %}
                     </p>
                 </div>

@@ -164,3 +164,28 @@ def excluir_checklist(id):
     db.session.commit()
     flash('Autoavaliação excluída com sucesso!', 'success')
     return redirect(url_for('iso.detalhe_iso', id=id))
+
+@iso.route('/iso/popular', methods=['POST'])
+@login_required
+def popular_isos():
+    """Popula o banco com ISOs básicas"""
+    from .commands import iso_9001_data, iso_14001_data, iso_45001_data
+    
+    try:
+        for iso_data in [iso_9001_data, iso_14001_data, iso_45001_data]:
+            existing = NormaISO.query.filter_by(numero=iso_data['numero']).first()
+            if existing:
+                for key, value in iso_data.items():
+                    setattr(existing, key, value)
+                db.session.add(existing)
+            else:
+                new_iso = NormaISO(**iso_data)
+                db.session.add(new_iso)
+        
+        db.session.commit()
+        flash('ISOs básicas populadas com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao popular ISOs: {str(e)}', 'danger')
+    
+    return redirect(url_for('iso.lista_isos'))
