@@ -474,14 +474,21 @@ def validar_dados_ferramenta(tipo, dados):
 @projects.route('/projetos')
 @login_required
 def lista_projetos():
-    tipo_filtro = request.args.get('tipo')
-    query = Projeto.query.filter_by(user_id=current_user.id)
-    
-    if tipo_filtro in ('normal', 'pdca'):
-        query = query.filter_by(tipo=tipo_filtro)
-    
-    meus_projetos = query.order_by(Projeto.data_criacao.desc()).all()
-    return render_template('projetos/lista.html', projetos=meus_projetos)
+    try:
+        tipo_filtro = request.args.get('tipo')
+        query = Projeto.query.filter_by(user_id=current_user.id)
+        
+        if tipo_filtro in ('normal', 'pdca'):
+            query = query.filter_by(tipo=tipo_filtro)
+        
+        meus_projetos = query.order_by(Projeto.data_criacao.desc()).all()
+        return render_template('projetos/lista.html', projetos=meus_projetos)
+    except Exception as e:
+        import traceback
+        print(f"ERRO em lista_projetos: {str(e)}")
+        print(traceback.format_exc())
+        flash(f'Erro ao carregar projetos: {str(e)}', 'danger')
+        return render_template('projetos/lista.html', projetos=[])
 
 @projects.route('/projetos/novo', methods=['POST'])
 @login_required
