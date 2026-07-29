@@ -1,11 +1,14 @@
-# TODO - Melhoria dos Relatórios no PDCA
+# TODO - Correções para Deploy no Render
 
-## Etapas
+## ✅ Etapa 1: Corrigir import quebrado em `iso.py`
+- [x] Alterar `from .commands import` para `from ..commands import` (subir um nível)
 
-- [x] 1. Analisar código existente (pdca.html, projects.py, models.py, relatorios)
-- [x] 2. **pdca.html**: Adicionar formulário de Padronização (modal) na fase ACT + botão "Relatório do Ciclo"
-- [x] 3. **projects.py**: Criar rota `relatorio_ciclo_pdca()` + melhorar `salvar_padronizacao()` com validação
-- [x] 4. **relatorio_completo.html**: Adicionar seção PDCA com timeline de fases + métricas do ciclo
-- [x] 5. **relatorio_padronizacao.html**: Melhorar layout, modo edição, fallbacks para dados vazios
-- [x] 6. Testar funcionalidades (sintaxe Python/Flask OK)
+## ✅ Etapa 2: Substituir dados ISO resumidos por completos em `commands.py`
+- [x] Importar dados completos do `populate_isos.py` para `commands.py`
+
+## ✅ Etapa 3: Adicionar população automática de ISOs e NRs no `__init__.py`
+- [x] Adicionar lógica para popular ISOs e NRs automaticamente ao iniciar
+
+## ✅ Etapa 4: Verificar proteção contra falta de GROQ_API_KEY
+- [x] Garantir que rotas funcionem sem API key
 

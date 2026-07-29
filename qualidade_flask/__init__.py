@@ -98,7 +98,7 @@ def create_app():
     # ==================================================
     # 4. CARREGAMENTO DO USUÁRIO
     # ==================================================
-    from .models import User
+    from .models import User, NormaRegulamentadora, NormaISO
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -107,6 +107,34 @@ def create_app():
     # Cria as tabelas do banco se não existirem
     with app.app_context():
         db.create_all()
+        
+        # ==================================================
+        # POPULAÇÃO AUTOMÁTICA - Primeira execução
+        # ==================================================
+        # Verifica se o banco já tem dados
+        from .commands import iso_9001_data, iso_14001_data, iso_45001_data, nrs_basicas_data
+        
+        # Popula ISOs automaticamente se não existirem
+        if NormaISO.query.count() == 0:
+            print("📝 Populando ISOs automaticamente...")
+            for iso_data in [iso_9001_data, iso_14001_data, iso_45001_data]:
+                existing = NormaISO.query.filter_by(numero=iso_data['numero']).first()
+                if not existing:
+                    new_iso = NormaISO(**iso_data)
+                    db.session.add(new_iso)
+            db.session.commit()
+            print(f"✅ {NormaISO.query.count()} ISOs populadas automaticamente!")
+        
+        # Popula NRs automaticamente se não existirem
+        if NormaRegulamentadora.query.count() == 0:
+            print("📝 Populando NRs automaticamente...")
+            for nr_data in nrs_basicas_data:
+                existing = NormaRegulamentadora.query.filter_by(numero=nr_data['numero']).first()
+                if not existing:
+                    new_nr = NormaRegulamentadora(**nr_data)
+                    db.session.add(new_nr)
+            db.session.commit()
+            print(f"✅ {NormaRegulamentadora.query.count()} NRs populadas automaticamente!")
 
     # Registrar comandos CLI personalizados
     from .commands import register_commands

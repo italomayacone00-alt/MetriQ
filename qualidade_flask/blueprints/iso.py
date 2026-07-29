@@ -169,7 +169,7 @@ def excluir_checklist(id):
 @login_required
 def popular_isos():
     """Popula o banco com ISOs básicas"""
-    from .commands import iso_9001_data, iso_14001_data, iso_45001_data
+    from ..commands import iso_9001_data, iso_14001_data, iso_45001_data
     
     try:
         for iso_data in [iso_9001_data, iso_14001_data, iso_45001_data]:
