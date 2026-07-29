@@ -1471,7 +1471,6 @@ def criar_pdca_de_planta(id):
         nome=f"PDCA - Adequação {planta.nome}",
         objetivo=objetivo,
         user_id=current_user.id,
-        empresa_id=planta.empresa_id,
         fase_atual='plan',
         ciclo_atual=1
     )

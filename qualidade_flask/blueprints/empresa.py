@@ -142,10 +142,6 @@ def vincular_dados(id):
             item = PlantaBaixa.query.get(item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
-        elif tipo == 'projeto':
-            item = Projeto.query.get(item_id)
-            if item and item.user_id == current_user.id:
-                item.empresa_id = id
         elif tipo == 'checklist_nr':
             item = ChecklistNR.query.get(item_id)
             if item and item.user_id == current_user.id:
@@ -188,21 +184,9 @@ def dashboard(id):
         # Tenta checklist vinculado à empresa
         checklist = ChecklistNR.query.filter_by(
             norma_id=nr.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
-        vinculo = 'empresa'
-        
-        # Se não achar, busca qualquer checklist do usuário (fallback)
-        if not checklist:
-            checklist = ChecklistNR.query.filter_by(
-                norma_id=nr.id,
-                user_id=current_user.id
-            ).filter(
-                (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)
-            ).first()
-            if checklist:
-                vinculo = 'usuario'
+        vinculo = 'usuario'
         
         pct = checklist.calcular_conformidade() if checklist else 0
         nrs_detalhes.append({
@@ -222,21 +206,9 @@ def dashboard(id):
         # Tenta ISO vinculado à empresa
         checklist = ChecklistISO.query.filter_by(
             norma_id=iso.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
-        vinculo = 'empresa'
-        
-        # Se não achar, busca qualquer ISO do usuário (fallback)
-        if not checklist:
-            checklist = ChecklistISO.query.filter_by(
-                norma_id=iso.id,
-                user_id=current_user.id
-            ).filter(
-                (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)
-            ).first()
-            if checklist:
-                vinculo = 'usuario'
+        vinculo = 'usuario'
         
         maturidade = checklist.calcular_maturidade_percentual() if checklist else 0
         isos_detalhes.append({
@@ -248,18 +220,10 @@ def dashboard(id):
             'vinculo': vinculo
         })
     
-    # Plantas baixas (vinculadas + sem vínculo do usuário)
-    plantas = PlantaBaixa.query.filter_by(
-        user_id=current_user.id,
-        empresa_id=id
-    ).all()
+    # Plantas baixas
+    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id).all()
     
-    # Plantas do usuário sem empresa (para vincular)
-    plantas_sem_vinculo = PlantaBaixa.query.filter_by(
-        user_id=current_user.id
-    ).filter(
-        (PlantaBaixa.empresa_id == None) | (PlantaBaixa.empresa_id == 0)
-    ).all()
+    plantas_sem_vinculo = []
     
     plantas_dados = []
     for p in plantas:
@@ -273,16 +237,9 @@ def dashboard(id):
         })
     
     # Projetos (vinculados + sem vínculo)
-    projetos = Projeto.query.filter_by(
-        user_id=current_user.id,
-        empresa_id=id
-    ).all()
+    projetos = Projeto.query.filter_by(user_id=current_user.id).all()
     
-    projetos_sem_vinculo = Projeto.query.filter_by(
-        user_id=current_user.id
-    ).filter(
-        (Projeto.empresa_id == None) | (Projeto.empresa_id == 0)
-    ).all()
+    projetos_sem_vinculo = []
     
     return render_template('empresa/dashboard.html',
                           empresa=empresa,
@@ -320,8 +277,7 @@ def relatorio(id):
     for nr in normas_db:
         checklist = ChecklistNR.query.filter_by(
             norma_id=nr.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
         pct = checklist.calcular_conformidade() if checklist else 0
         labels_nr.append(nr.numero)
@@ -367,8 +323,7 @@ def relatorio(id):
     for iso in normas_iso:
         checklist = ChecklistISO.query.filter_by(
             norma_id=iso.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
         m = checklist.calcular_maturidade_percentual() if checklist else 0
         labels_iso.append(iso.numero)
@@ -411,7 +366,7 @@ def relatorio(id):
     plantas_detalhadas = []
     labels_planta = []
     dados_planta = []
-    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id, empresa_id=id).all()
+    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id).all()
     for p in plantas:
         pct, stats = p.calcular_conformidade()
         labels_planta.append(p.nome[:20])
@@ -430,7 +385,7 @@ def relatorio(id):
     
     # Projetos detalhados
     projetos_detalhados = []
-    projetos = Projeto.query.filter_by(user_id=current_user.id, empresa_id=id).all()
+    projetos = Projeto.query.filter_by(user_id=current_user.id).all()
     for proj in projetos:
         ferramentas_info = []
         for f in proj.ferramentas:
@@ -486,8 +441,7 @@ def verificar_gatilhos_pdca(id):
     for nr in normas_nr:
         checklist = ChecklistNR.query.filter_by(
             norma_id=nr.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
         
         if checklist:
@@ -516,8 +470,7 @@ def verificar_gatilhos_pdca(id):
     for iso in normas_iso:
         checklist = ChecklistISO.query.filter_by(
             norma_id=iso.id,
-            user_id=current_user.id,
-            empresa_id=id
+            user_id=current_user.id
         ).first()
         
         if checklist:
@@ -533,7 +486,7 @@ def verificar_gatilhos_pdca(id):
                 })
     
     # 3. Verificar plantas com baixa conformidade
-    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id, empresa_id=id).all()
+    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id).all()
     for planta in plantas:
         pct, _ = planta.calcular_conformidade()
         if 0 < pct < 60:

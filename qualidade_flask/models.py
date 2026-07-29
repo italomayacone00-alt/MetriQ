@@ -109,10 +109,7 @@ class Empresa(db.Model):
             or_(PlantaBaixa.empresa_id == self.id, PlantaBaixa.empresa_id == None, PlantaBaixa.empresa_id == 0)
         ).all()
         
-        user_projetos = Projeto.query.filter(
-            Projeto.user_id == self.user_id,
-            or_(Projeto.empresa_id == self.id, Projeto.empresa_id == None, Projeto.empresa_id == 0)
-        ).all()
+        user_projetos = Projeto.query.filter_by(user_id=self.user_id).all()
         
         metricas = {
             'total_plantas': len(user_plantas),
@@ -183,7 +180,6 @@ class Projeto(db.Model):
     objetivo = db.Column(db.Text, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
     
     # Tipo: 'normal' (ferramentas da qualidade) ou 'pdca' (ciclo de melhoria)
     tipo = db.Column(db.String(20), default='normal')
