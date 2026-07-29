@@ -38,7 +38,6 @@ class Empresa(db.Model):
 
     # Relacionamentos com outros módulos
     plantas_baixas = db.relationship('PlantaBaixa', backref='empresa', lazy=True)
-    projetos = db.relationship('Projeto', backref='empresa', lazy=True)
     checklists_nr = db.relationship('ChecklistNR', backref='empresa', lazy=True)
     checklists_iso = db.relationship('ChecklistISO', backref='empresa', lazy=True)
 
