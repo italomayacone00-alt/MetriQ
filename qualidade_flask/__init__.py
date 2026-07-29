@@ -108,4 +108,8 @@ def create_app():
     with app.app_context():
         db.create_all()
 
+    # Registrar comandos CLI personalizados
+    from .commands import register_commands
+    register_commands(app)
+
     return app

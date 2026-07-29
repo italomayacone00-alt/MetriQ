@@ -26,11 +26,8 @@ def get_ai_suggestion(projeto_nome, projeto_objetivo, ferramentas_existentes=Non
         ferramentas_existentes = []
 
     if not client:
-        return {
-            "analise": "Erro de configuração: Chave da API Groq não encontrada.",
-            "ferramenta_sugerida": "pareto",
-            "nome_ferramenta": "Pareto"
-        }
+        # Fallback para lógica determinística sem IA
+        return get_suggestion_for_new_project(projeto_nome, projeto_objetivo)
 
     ferramentas_info = []
     for f in ferramentas_existentes:
@@ -88,14 +85,6 @@ def get_ai_suggestion_with_data(projeto_nome, projeto_objetivo, ferramentas_exis
     Função inteligente que analisa o histórico completo do projeto
     e sugere a próxima ferramenta com dados preenchidos automaticamente
     """
-    if not client:
-        return {
-            "analise": "Erro de configuração: Chave da API Groq não encontrada.",
-            "ferramenta_sugerida": "pareto",
-            "nome_ferramenta": "Pareto",
-            "dados_preenchidos": None
-        }
-
     # Se não há ferramentas, usar lógica simples baseada no objetivo
     if not ferramentas_existentes:
         return get_suggestion_for_new_project(projeto_nome, projeto_objetivo)
@@ -194,7 +183,15 @@ def get_suggestion_for_existing_project(projeto_nome, projeto_objetivo, ferramen
             "dados_preenchidos": None
         }
     
-    # Fallback para IA se não houver sequência clara
+    # Fallback para lógica simples se não houver sequência clara ou IA não disponível
+    if not client:
+        return {
+            "analise": f"Continue adicionando ferramentas para análise completa do projeto.",
+            "ferramenta_sugerida": "pareto",
+            "nome_ferramenta": "Pareto",
+            "dados_preenchidos": None
+        }
+    
     return get_suggestion_from_ai(projeto_nome, projeto_objetivo, ferramentas_existentes)
 
 def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
