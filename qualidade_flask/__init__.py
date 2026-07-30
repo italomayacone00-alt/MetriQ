@@ -136,6 +136,16 @@ def create_app():
             db.session.commit()
             print(f"✅ {NormaRegulamentadora.query.count()} NRs populadas automaticamente!")
 
+        # ==================================================
+        # 5. MIGRAÇÃO AUTOMÁTICA DO BANCO DE DADOS
+        # ==================================================
+        # Verifica se o schema está atualizado e adiciona colunas faltantes
+        try:
+            from .migrate_projeto_columns import run_migration_auto
+            run_migration_auto()
+        except Exception as e:
+            print(f"⚠️ Erro na migração automática (ignorado): {e}")
+
     # Registrar comandos CLI personalizados
     from .commands import register_commands
     register_commands(app)
