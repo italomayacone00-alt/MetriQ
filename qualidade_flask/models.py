@@ -7,10 +7,44 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    nome_completo = db.Column(db.String(200), default='')
+    email = db.Column(db.String(150), default='')
+    telefone = db.Column(db.String(20), default='')
+    cargo = db.Column(db.String(100), default='')
+    data_cadastro = db.Column(db.DateTime, default=datetime.now)
     # Cria a relação: Um usuário tem várias análises
     analises = db.relationship('Analise', backref='dono', lazy=True)
     # Relacionamento com empresas
     empresas = db.relationship('Empresa', backref='usuario', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'nome_completo': self.nome_completo,
+            'email': self.email,
+            'telefone': self.telefone,
+            'cargo': self.cargo,
+            'data_cadastro': self.data_cadastro.strftime('%d/%m/%Y') if self.data_cadastro else ''
+        }
+
+    def get_estatisticas(self):
+        """Retorna estatísticas de uso do usuário em todo o sistema."""
+        from .models import Analise, Projeto, PlantaBaixa, ChecklistNR, ChecklistISO, Empresa
+
+        return {
+            'total_analises': Analise.query.filter_by(user_id=self.id).count(),
+            'total_projetos': Projeto.query.filter_by(user_id=self.id).count(),
+            'total_empresas': Empresa.query.filter_by(user_id=self.id).count(),
+            'total_plantas': PlantaBaixa.query.filter_by(user_id=self.id).count(),
+            'total_checklists_nr': ChecklistNR.query.filter_by(user_id=self.id).count(),
+            'total_checklists_iso': ChecklistISO.query.filter_by(user_id=self.id).count(),
+            'total_geral': (Analise.query.filter_by(user_id=self.id).count()
+                            + Projeto.query.filter_by(user_id=self.id).count()
+                            + PlantaBaixa.query.filter_by(user_id=self.id).count()
+                            + ChecklistNR.query.filter_by(user_id=self.id).count()
+                            + ChecklistISO.query.filter_by(user_id=self.id).count())
+        }
 
 # ============================================
 # MODELO: Empresa (Gestão da Empresa)

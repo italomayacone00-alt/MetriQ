@@ -94,7 +94,17 @@
                     {% if current_user.is_authenticated %}
                         <li class="nav-item ms-lg-3 border-start border-secondary ps-lg-3 mt-2 mt-lg-0">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="text-light small">Ola, <strong>{{ current_user.username }}</strong></span>
+                                <a href="{{ url_for('auth.perfil') }}" class="text-decoration-none d-flex align-items-center gap-2" title="Meu Perfil">
+                                    <div class="rounded-circle bg-info text-dark d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 700;">
+                                        {{ current_user.username[0]|upper }}
+                                    </div>
+                                    <span class="text-light small">
+                                        Ola, <strong>{{ current_user.nome_completo.split(' ')[0] if current_user.nome_completo else current_user.username }}</strong>
+                                    </span>
+                                </a>
+                                <a href="{{ url_for('auth.perfil') }}" class="btn btn-sm btn-outline-info" title="Meu Perfil">
+                                    <i class="bi bi-person"></i>
+                                </a>
                                 <a href="/logout" class="btn btn-sm btn-outline-danger" title="Sair">
                                     <i class="bi bi-box-arrow-right"></i>
                                 </a>

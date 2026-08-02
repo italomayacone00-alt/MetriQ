@@ -7,6 +7,7 @@ Colunas cobertas:
 - planta_baixa:   empresa_id
 - checklist_nr:   empresa_id
 - checklist_iso:  empresa_id
+- user:           nome_completo, email, telefone, cargo, data_cadastro
 
 Uso: python -c "from qualidade_flask.migrate_projeto_columns import run_migration; run_migration()"
 """
@@ -66,6 +67,28 @@ TABELAS_COLUNAS = {
         'empresa_id': {
             'sqlite': "INTEGER",
             'postgresql': "INTEGER"
+        }
+    },
+    'user': {
+        'nome_completo': {
+            'sqlite': "VARCHAR(200) DEFAULT ''",
+            'postgresql': "VARCHAR(200) DEFAULT ''"
+        },
+        'email': {
+            'sqlite': "VARCHAR(150) DEFAULT ''",
+            'postgresql': "VARCHAR(150) DEFAULT ''"
+        },
+        'telefone': {
+            'sqlite': "VARCHAR(20) DEFAULT ''",
+            'postgresql': "VARCHAR(20) DEFAULT ''"
+        },
+        'cargo': {
+            'sqlite': "VARCHAR(100) DEFAULT ''",
+            'postgresql': "VARCHAR(100) DEFAULT ''"
+        },
+        'data_cadastro': {
+            'sqlite': "DATETIME",
+            'postgresql': "TIMESTAMP"
         }
     }
 }

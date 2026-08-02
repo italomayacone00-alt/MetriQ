@@ -45,6 +45,26 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                 <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Nome Completo</label>
+                    <input type="text" name="nome_completo" class="form-control bg-light" placeholder="Seu nome completo">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">E-mail</label>
+                    <input type="email" name="email" class="form-control bg-light" placeholder="voce@exemplo.com">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Telefone</label>
+                    <input type="text" name="telefone" class="form-control bg-light" placeholder="(00) 00000-0000">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Cargo / Função</label>
+                    <input type="text" name="cargo" class="form-control bg-light" placeholder="Ex: Analista da Qualidade">
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label fw-bold small text-muted">Escolha um Usuário</label>
                     <input type="text" name="username" class="form-control bg-light" required>
                 </div>

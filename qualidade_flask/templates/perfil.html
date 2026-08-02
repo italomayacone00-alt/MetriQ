@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Meu Perfil</li>
+        </ol>
+    </nav>
+
+    <!-- Header do Perfil -->
+    <div class="card border-0 shadow-sm mb-4 bg-gradient-primary">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 2.2rem;">
+                    <i class="bi bi-person-fill text-white"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h3 class="fw-bold mb-1 text-white">{{ user.nome_completo or user.username }}</h3>
+                    <div class="text-white-50 d-flex flex-wrap gap-3 small">
+                        <span><i class="bi bi-person-badge me-1"></i>@{{ user.username }}</span>
+                        {% if user.cargo %}<span><i class="bi bi-briefcase me-1"></i>{{ user.cargo }}</span>{% endif %}
+                        {% if user.email %}<span><i class="bi bi-envelope me-1"></i>{{ user.email }}</span>{% endif %}
+                        {% if user.data_cadastro %}<span><i class="bi bi-calendar-check me-1"></i>Desde {{ user.data_cadastro.strftime('%d/%m/%Y') }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUNA ESQUERDA: ABAS -->
+        <div class="col-lg-8">
+            <ul class="nav nav-tabs mb-4" id="perfilTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados" type="button" role="tab">
+                        <i class="bi bi-person-lines-fill me-1"></i> Meus Dados
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="senha-tab" data-bs-toggle="tab" data-bs-target="#senha" type="button" role="tab">
+                        <i class="bi bi-shield-lock me-1"></i> Alterar Senha
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- ABA: MEUS DADOS -->
+                <div class="tab-pane fade show active" id="dados" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Dados Cadastrais</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth.perfil') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Nome Completo</label>
+                                        <input type="text" name="nome_completo" class="form-control" value="{{ user.nome_completo or '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Nome de Usuário</label>
+                                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                                        <div class="form-text">O nome de usuário não pode ser alterado.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">E-mail</label>
+                                        <input type="email" name="email" class="form-control" value="{{ user.email or '' }}" placeholder="voce@exemplo.com">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Telefone</label>
+                                        <input type="text" name="telefone" class="form-control" value="{{ user.telefone or '' }}" placeholder="(00) 00000-0000">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Cargo / Função</label>
+                                        <input type="text" name="cargo" class="form-control" value="{{ user.cargo or '' }}" placeholder="Ex: Analista da Qualidade">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Data de Cadastro</label>
+                                        <input type="text" class="form-control" value="{{ user.data_cadastro.strftime('%d/%m/%Y %H:%M') if user.data_cadastro else '' }}" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="submit" class="btn btn-primary fw-bold">
+                                        <i class="bi bi-check-lg me-1"></i> Salvar Alterações
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA: ALTERAR SENHA -->
+                <div class="tab-pane fade" id="senha" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2 text-warning"></i>Alterar Senha</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth.perfil_senha') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted">Senha Atual</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                                        <input type="password" name="senha_atual" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Nova Senha</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+                                            <input type="password" name="nova_senha" class="form-control" required>
+                                        </div>
+                                        <div class="form-text">Mínimo de 6 caracteres.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Confirmar Nova Senha</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="bi bi-key-fill"></i></span>
+                                            <input type="password" name="confirmar_senha" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="submit" class="btn btn-warning fw-bold">
+                                        <i class="bi bi-shield-check me-1"></i> Alterar Senha
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA: ESTATÍSTICAS -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-graph-up me-2 text-success"></i>Minhas Estatísticas</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-tools text-primary me-2"></i>Análises (Ferramentas)</span>
+                            <span class="badge bg-primary rounded-pill">{{ estatisticas.total_analises }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-folder2-open text-info me-2"></i>Projetos</span>
+                            <span class="badge bg-info rounded-pill">{{ estatisticas.total_projetos }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-building text-warning me-2"></i>Empresas</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ estatisticas.total_empresas }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-house-gear text-success me-2"></i>Plantas Baixas</span>
+                            <span class="badge bg-success rounded-pill">{{ estatisticas.total_plantas }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-shield-check text-danger me-2"></i>Checklists NR</span>
+                            <span class="badge bg-danger rounded-pill">{{ estatisticas.total_checklists_nr }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-globe text-secondary me-2"></i>Avaliações ISO</span>
+                            <span class="badge bg-secondary rounded-pill">{{ estatisticas.total_checklists_iso }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Total de registros</span>
+                        <span class="badge bg-dark rounded-pill fs-6">{{ estatisticas.total_geral }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-gradient-primary .btn { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: #fff; }
+    .nav-tabs .nav-link { font-weight: 600; color: #6c757d; }
+    .nav-tabs .nav-link.active { color: #0d6efd; }
+    /* Corrige o texto branco dos títulos quando o header é branco */
+    .card-header.bg-white { color: #2c3e50 !important; }
+    .card-header.bg-white h5 { color: #2c3e50 !important; }
+</style>
+{% endblock %}
+
