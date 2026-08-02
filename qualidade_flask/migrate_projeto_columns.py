@@ -115,7 +115,9 @@ def migrar_tabela(engine, inspector, dialect, tabela, colunas_necessarias):
             col_type = col_types.get(dialect, col_types.get('sqlite'))
             try:
                 with engine.connect() as conn:
-                    alter_sql = f"ALTER TABLE {tabela} ADD COLUMN {col_name} {col_type}"
+                    # Usa aspas duplas para citar o nome da tabela.
+                    # Necessário porque 'user' é palavra reservada no PostgreSQL.
+                    alter_sql = f'ALTER TABLE "{tabela}" ADD COLUMN "{col_name}" {col_type}'
                     conn.execute(text(alter_sql))
                     conn.commit()
                 print(f"  ✅ Coluna '{col_name}' ({col_type}) ADICIONADA em '{tabela}'!")
@@ -224,7 +226,8 @@ def run_migration_auto():
                     col_type = colunas[col_name].get(dialect, colunas[col_name].get('sqlite'))
                     if col_type:
                         try:
-                            conn.execute(text(f"ALTER TABLE {tabela} ADD COLUMN {col_name} {col_type}"))
+                            # Aspas duplas: 'user' é palavra reservada no PostgreSQL
+                            conn.execute(text(f'ALTER TABLE "{tabela}" ADD COLUMN "{col_name}" {col_type}'))
                             print(f"  ✅ Coluna '{col_name}' adicionada em '{tabela}'")
                             colunas_adicionadas.append(f"{tabela}.{col_name}")
                         except Exception as e:
