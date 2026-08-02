@@ -1,19 +1,16 @@
-# TODO - Correção do erro `projeto.empresa_id does not exist` no Render
+# TODO - Correção da interface da Planta Baixa
 
 ## Problema
-A tabela `projeto` no PostgreSQL do Render foi criada em um deploy anterior e não possui
-a coluna `empresa_id` (nem as tabelas `planta_baixa`, `checklist_nr` e `checklist_iso`).
+Com a tela em 100% (janela/zoom sem espaço horizontal suficiente), os botões da topbar
+do editor de planta baixa quebram de linha, mas a barra possui altura fixa de 44px,
+fazendo os botões vazarem/sobreporem o workspace (visual bugado).
 
 ## Passos
 
-- [x] 1. Diagnosticar a causa (banco local SQLite tem `empresa_id`, banco do Render não tem)
-- [x] 2. Adicionar `empresa_id` à lista de colunas verificadas na migração `run_migration()`
-- [x] 3. Adicionar `empresa_id` na migração automática `run_migration_auto()` (roda a cada deploy)
-- [x] 4. Generalizar a migração para verificar `empresa_id` também em `planta_baixa`, `checklist_nr` e `checklist_iso`
-- [x] 5. Testar a migração localmente com o SQLite (verificar que não quebra e é idempotente)
-- [ ] 6. Enviar as alterações para o Git e fazer deploy no Render
-- [ ] 7. Verificar se a página /projetos carrega sem erro no Render
-
-## Arquivo alterado
-- `qualidade_flask/migrate_projeto_columns.py`
+- [x] 1. Analisar o layout da interface (construtor.html + style.css + planta_baixa.js)
+- [x] 2. Ajustar `.topbar`: altura automática (min-height) + flex-wrap
+- [x] 3. Ajustar `.topbar-left` (row-gap) e criar `.topbar-right` com flex-wrap
+- [x] 4. Atualizar o HTML do grupo direito para usar a classe `.topbar-right`
+- [x] 5. Adicionar media queries responsivas para telas menores (1280px / 1000px)
+- [x] 6. Validar visualmente (recarregar editor em 100% e redimensionar janela)
 
