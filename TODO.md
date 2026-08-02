@@ -15,3 +15,21 @@ alterar a senha e ver estatísticas de uso do sistema.
 - [x] 7. Atualizar `base.html` para linkar o nome do usuário ao perfil
 - [x] 8. Testar rotas e validações (senha atual, confirmação, CSRF) — migração rodou, rotas registradas, template renderizado com sucesso
 
+---
+
+# TODO - Otimização de Performance (CDNs e Banco)
+
+## Resumo
+- **Chart.js (~130 KB) + Datalabels (~30 KB)**: Removidos do `base.html`. Agora carregados apenas em: cep, dispersao, folha_verificacao, histograma
+- **SheetJS/xlsx.full.min.js (~500 KB)**: Removido do `base.html`. Agora carregado apenas em: cep, dispersao, fluxograma, folha_verificacao, histograma, ishikawa
+- **Índices no banco**: Adicionados em `user_id`, `empresa_id`, `norma_id` nas tabelas mais consultadas
+- **`__tablename__` explícito**: Adicionado em todas as tabelas para evitar conflitos com palavras reservadas
+
+## Passos
+
+- [x] 1. Remover Chart.js, Datalabels e SheetJS do `base.html`
+- [x] 2. Adicionar índices e `__tablename__` em todas as tabelas em `models.py`
+- [x] 3. Remover Chart.js duplicado do `{% block content %}` em cep.html, dispersao.html, histograma.html
+- [x] 4. Mover Chart.js/Datalabels para `{% block scripts %}` em folha_verificacao.html
+- [x] 5. Remover `scan_templates.py` (script temporário)
+

@@ -4,8 +4,9 @@ from datetime import datetime
 
 # Tabela de Usuários
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=False)
     nome_completo = db.Column(db.String(200), default='')
     email = db.Column(db.String(150), default='')
@@ -50,6 +51,7 @@ class User(UserMixin, db.Model):
 # MODELO: Empresa (Gestão da Empresa)
 # ============================================
 class Empresa(db.Model):
+    __tablename__ = 'empresa'
     id = db.Column(db.Integer, primary_key=True)
     razao_social = db.Column(db.String(200), nullable=False)
     nome_fantasia = db.Column(db.String(200), default='')
@@ -68,7 +70,7 @@ class Empresa(db.Model):
     responsavel_sst = db.Column(db.String(100), default='')
     data_criacao = db.Column(db.DateTime, default=datetime.now)
     data_atualizacao = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
 
     # Relacionamentos com outros módulos
     plantas_baixas = db.relationship('PlantaBaixa', backref='empresa', lazy=True)
@@ -195,12 +197,13 @@ class Empresa(db.Model):
 
 # Tabela de Análises
 class Analise(db.Model):
+    __tablename__ = 'analise'
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50))
     titulo = db.Column(db.String(100))
     dados = db.Column(db.JSON)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
 
     def to_dict(self):
         return {
@@ -212,12 +215,13 @@ class Analise(db.Model):
         }
 
 class Projeto(db.Model):
+    __tablename__ = 'projeto'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     objetivo = db.Column(db.Text, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
     
     # Tipo: 'normal' (ferramentas da qualidade) ou 'pdca' (ciclo de melhoria)
     tipo = db.Column(db.String(20), default='normal')
@@ -308,10 +312,11 @@ class NormaISO(db.Model):
         }
 
 class ChecklistNR(db.Model):
+    __tablename__ = 'checklist_nr'
     id = db.Column(db.Integer, primary_key=True)
-    norma_id = db.Column(db.Integer, db.ForeignKey('norma_regulamentadora.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
+    norma_id = db.Column(db.Integer, db.ForeignKey('norma_regulamentadora.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
     respostas = db.Column(db.JSON)
     observacoes = db.Column(db.JSON)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
@@ -325,6 +330,7 @@ class ChecklistNR(db.Model):
         return round((conformes / total) * 100, 1) if total > 0 else 0
 
 class PlantaBaixa(db.Model):
+    __tablename__ = 'planta_baixa'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text, default='')
@@ -339,8 +345,8 @@ class PlantaBaixa(db.Model):
     observacoes_conformidade = db.Column(db.JSON, default=dict)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
     data_atualizacao = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
 
     def to_dict(self):
         return {
@@ -392,10 +398,11 @@ class PlantaBaixa(db.Model):
         return percentual, stats
 
 class ChecklistISO(db.Model):
+    __tablename__ = 'checklist_iso'
     id = db.Column(db.Integer, primary_key=True)
-    norma_id = db.Column(db.Integer, db.ForeignKey('norma_iso.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
+    norma_id = db.Column(db.Integer, db.ForeignKey('norma_iso.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
     respostas = db.Column(db.JSON)
     observacoes = db.Column(db.JSON)
     data_criacao = db.Column(db.DateTime, default=datetime.now)
