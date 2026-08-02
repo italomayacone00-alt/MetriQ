@@ -58,18 +58,33 @@
                         </button>
                     {% endif %}
                 </div>
-                {% if modo_projeto %}
+{% if modo_projeto %}
+                {% if modo_projeto and (dados_projeto is none or dados_projeto == {} or (not dados_projeto.get('diagrama') and not dados_projeto.get('problema'))) %}
+                <div class="mt-2">
+                    <button onclick="preencherComIA()" class="btn btn-info btn-sm w-100 fw-bold text-white" title="Preencher automaticamente com IA">
+                        <i class="bi bi-stars me-1"></i> Preencher com IA
+                    </button>
+                </div>
+                {% endif %}
+                {% if modo_projeto and ferramenta %}
+                <div class="mt-2">
+                    <form action="{{ url_for('projects.excluir_ferramenta_projeto', id=projeto.id, ferramenta_id=ferramenta.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta ferramenta? Todos os dados serão perdidos.')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="bi bi-trash me-1"></i> Excluir Ferramenta
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
                 <div class="mt-2">
                     <a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}" class="btn btn-sm btn-outline-secondary w-100">
                         <i class="bi bi-arrow-left me-1"></i> Voltar ao Projeto
                     </a>
                 </div>
-                {% endif %}
+{% endif %}
                 <small class="text-muted d-block mt-2">Salve para gerar relatórios depois.</small>
             </div>
         </div>
-
-        
 
         <div class="card shadow-sm border-0 mb-3">
             <div class="card-header bg-primary text-white fw-bold">
@@ -193,7 +208,7 @@
             </div>
             <div class="card-body">
                 <div class="row g-3" id="resumoCausas">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -318,7 +333,6 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -346,6 +360,63 @@
         }
     });
 
+    /**
+     * Preenche o Ishikawa com dados gerados pela IA.
+     * Chamado apenas quando o usuário clica no botão "Preencher com IA".
+     */
+    function preencherComIA() {
+        if (!confirm("Deseja que a IA preencha automaticamente este diagrama Ishikawa com base nos dados do projeto?")) {
+            return;
+        }
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const btn = document.querySelector('button[onclick="preencherComIA()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gerando...';
+        btn.disabled = true;
+        
+        fetch("{{ url_for('projects.preencher_ferramenta_ia', id=projeto.id, tipo='ishikawa') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Carregar dados no diagrama
+                const dadosIA = data.dados;
+                if (dadosIA.problema) document.getElementById('problemaPrincipal').value = dadosIA.problema;
+                if (dadosIA.titulo) document.getElementById('tituloProjeto').value = dadosIA.titulo;
+                
+                const causasData = dadosIA.diagrama || dadosIA.causas;
+                if (causasData) {
+                    for (const key in causasData) {
+                        if (diagrama.hasOwnProperty(key)) {
+                            diagrama[key] = causasData[key];
+                        }
+                    }
+                    atualizarTudo();
+                }
+                
+                alert('✅ Diagrama preenchido com IA! Revise as causas e ajuste se necessário.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else {
+                alert('A IA não conseguiu gerar dados: ' + (data.message || 'Erro desconhecido'));
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao gerar dados com IA.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
     function salvarNoProjeto(tipo, event) {
         if (event) event.preventDefault();
         
@@ -358,8 +429,6 @@
             diagrama: diagrama,
             grafico: graficoImg
         };
-        
-        const autoGenerate = confirm("Deseja que a IA preencha automaticamente a próxima ferramenta sugerida com base nestes dados?");
         
         // Garantir que temos o botão correto mesmo se o clique for no ícone
         const btn = event ? event.currentTarget : document.querySelector('button[onclick*="salvarNoProjeto"]');
@@ -377,8 +446,7 @@
             },
             body: JSON.stringify({
                 tipo: tipo,
-                dados: dadosParaSalvar,
-                auto_generate: autoGenerate
+                dados: dadosParaSalvar
             })
         })
         .then(response => {
@@ -387,11 +455,7 @@
         })
         .then(data => {
             if (data.status === 'success') {
-                let msg = 'Salvo com sucesso!';
-                if (data.proxima_gerada) {
-                    msg += '\n\nA IA também gerou e salvou automaticamente a ferramenta: ' + data.proxima_gerada.nome;
-                }
-                alert(msg);
+                alert('Salvo com sucesso!');
                 window.location.href = "{{ url_for('projects.detalhe_projeto', id=projeto.id) }}";
             } else {
                 alert('Erro ao salvar: ' + (data.message || 'Erro desconhecido'));
@@ -409,3 +473,4 @@
 </script>
 {% endif %}
 {% endblock %}
+

@@ -77,8 +77,8 @@
     <div class="row g-4 mb-4 no-print">
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-2">
-                    <h6 class="fw-bold mb-0 small">Conformidade NRs</h6>
+                <div class="card-header bg-info bg-opacity-10 border-bottom border-info py-2">
+                    <h6 class="fw-bold mb-0 small text-info-emphasis">Conformidade NRs</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="chartNR" height="200"></canvas>
@@ -87,8 +87,8 @@
         </div>
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-2">
-                    <h6 class="fw-bold mb-0 small">Maturidade ISOs</h6>
+                <div class="card-header bg-success bg-opacity-10 border-bottom border-success py-2">
+                    <h6 class="fw-bold mb-0 small text-success-emphasis">Maturidade ISOs</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="chartISO" height="200"></canvas>
@@ -97,8 +97,8 @@
         </div>
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-2">
-                    <h6 class="fw-bold mb-0 small">Adequação Plantas</h6>
+                <div class="card-header bg-primary bg-opacity-10 border-bottom border-primary py-2">
+                    <h6 class="fw-bold mb-0 small text-primary-emphasis">Adequação Plantas</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="chartPlanta" height="200"></canvas>
@@ -112,9 +112,9 @@
     <!-- ============================================================ -->
     {% for nr in nrs_detalhadas %}
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0">
-                <i class="bi bi-shield-check text-info me-2"></i>
+<div class="card-header bg-info bg-opacity-10 border-bottom border-info py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-info-emphasis">
+                <i class="bi bi-shield-check me-2"></i>
                 {{ nr.numero }} - {{ nr.titulo }}
             </h6>
             <div class="d-flex align-items-center gap-2">
@@ -190,9 +190,9 @@
     <!-- ============================================================ -->
     {% for iso in isos_detalhadas %}
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0">
-                <i class="bi bi-globe text-success me-2"></i>
+        <div class="card-header bg-success bg-opacity-10 border-bottom border-success py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-success-emphasis">
+                <i class="bi bi-globe me-2"></i>
                 {{ iso.numero }} - {{ iso.titulo }}
             </h6>
             <div class="d-flex align-items-center gap-2">
@@ -272,14 +272,17 @@
     <!-- ============================================================ -->
     {% for p in plantas_detalhadas %}
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0">
-                <i class="bi bi-building text-primary me-2"></i>
+        <div class="card-header bg-primary bg-opacity-10 border-bottom border-primary py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-primary-emphasis">
+                <i class="bi bi-building me-2"></i>
                 {{ p.nome }}
             </h6>
-            <span class="badge {% if p.conformidade >= 80 %}bg-success{% elif p.conformidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
-                {{ p.conformidade }}%
-            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary">{{ p.objetos.total }} objetos</span>
+                <span class="badge {% if p.conformidade >= 80 %}bg-success{% elif p.conformidade >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                    {{ p.conformidade }}%
+                </span>
+            </div>
         </div>
         <div class="card-body">
             <div class="row g-3 mb-3">
@@ -287,9 +290,28 @@
                     <small class="text-muted d-block">Tipo</small>
                     <span class="fw-bold">{{ p.tipo_ambiente or '-' }}</span>
                 </div>
-                <div class="col-md-3">
+<div class="col-md-3">
                     <small class="text-muted d-block">Área</small>
-                    <span class="fw-bold">{{ p.area or 0 }} m²</span>
+                    <span class="fw-bold" id="area-{{ p.id }}">Calculando...</span>
+                    <script>
+                    (function() {
+                        const canvasData = {{ p.canvas_data | tojson | safe }};
+                        let areaTotal = 0;
+                        if (canvasData && canvasData.objects) {
+                            canvasData.objects.forEach(function(obj) {
+                                if (obj.objectType === 'piso' && obj.pontos && obj.pontos.length >= 3) {
+                                    let area = 0;
+                                    for (let i = 0, j = obj.pontos.length - 1; i < obj.pontos.length; j = i++) {
+                                        area += (obj.pontos[j].x + obj.pontos[i].x) * (obj.pontos[j].y - obj.pontos[i].y);
+                                    }
+                                    area = Math.abs(area / 2) / (50 * 50);
+                                    areaTotal += area;
+                                }
+                            });
+                        }
+                        document.getElementById('area-{{ p.id }}').textContent = areaTotal.toFixed(2) + ' m²';
+                    })();
+                    </script>
                 </div>
                 <div class="col-md-3">
                     <small class="text-muted d-block">Objetos no layout</small>
@@ -301,8 +323,58 @@
                 </div>
             </div>
 
+            <!-- Represencação visual da planta -->
+            {% if p.canvas_data and p.canvas_data.get('objects') and p.canvas_data.objects|length > 0 %}
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="bg-light rounded p-2 text-center">
+                        <canvas id="plantaCanvas-{{ p.id }}" 
+                                class="planta-visualization" 
+                                width="800" 
+                                height="400"
+                                style="max-width:100%;width:100%;height:auto;aspect-ratio:800/400;border:1px solid #dee2e6;border-radius:8px;background:#fff;cursor:pointer;image-rendering:pixelated;"
+                                data-planta-id="{{ p.id }}"
+                                data-canvas-data='{{ p.canvas_data | tojson | safe }}'
+                                onclick="window.open('{{ url_for('planta_baixa.construtor', id=p.id) }}','_blank')">
+                        </canvas>
+                    </div>
+                    <div class="text-center mt-1">
+                        <a href="{{ url_for('planta_baixa.construtor', id=p.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrows-angle-expand me-1"></i>Abrir Planta Completa
+                        </a>
+                        <a href="{{ url_for('planta_baixa.analise', id=p.id) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-graph-up me-1"></i>Análise
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Legenda de objetos -->
+            {% if p.objetos and p.objetos.total > 0 %}
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <h6 class="fw-bold small text-muted mb-2">📦 Objetos na Planta</h6>
+                </div>
+                {% if p.objetos.paredes > 0 %}<div class="col-auto"><span class="badge bg-dark bg-opacity-10 text-dark fs-6">🧱 {{ p.objetos.paredes }} paredes</span></div>{% endif %}
+                {% if p.objetos.portas > 0 %}<div class="col-auto"><span class="badge bg-dark bg-opacity-10 text-dark fs-6">🚪 {{ p.objetos.portas }} portas</span></div>{% endif %}
+                {% if p.objetos.janelas > 0 %}<div class="col-auto"><span class="badge bg-dark bg-opacity-10 text-dark fs-6">🪟 {{ p.objetos.janelas }} janelas</span></div>{% endif %}
+                {% if p.objetos.extintores > 0 %}<div class="col-auto"><span class="badge bg-danger bg-opacity-10 text-danger fs-6">🧯 {{ p.objetos.extintores }} extintores</span></div>{% endif %}
+                {% if p.objetos.saidas > 0 %}<div class="col-auto"><span class="badge bg-success bg-opacity-10 text-success fs-6">🚪 {{ p.objetos.saidas }} saídas</span></div>{% endif %}
+                {% if p.objetos.maquinas > 0 %}<div class="col-auto"><span class="badge bg-warning bg-opacity-10 text-dark fs-6">⚙️ {{ p.objetos.maquinas }} máquinas</span></div>{% endif %}
+                {% if p.objetos.mesas > 0 %}<div class="col-auto"><span class="badge bg-primary bg-opacity-10 text-primary fs-6">🪑 {{ p.objetos.mesas }} mesas</span></div>{% endif %}
+                {% if p.objetos.cadeiras > 0 %}<div class="col-auto"><span class="badge bg-info bg-opacity-10 text-info fs-6">💺 {{ p.objetos.cadeiras }} cadeiras</span></div>{% endif %}
+                {% if p.objetos.lava_olhos > 0 %}<div class="col-auto"><span class="badge bg-success bg-opacity-10 text-success fs-6">🚿 {{ p.objetos.lava_olhos }} lava-olhos</span></div>{% endif %}
+                {% if p.objetos.sinalizacao > 0 %}<div class="col-auto"><span class="badge bg-warning bg-opacity-10 text-dark fs-6">🪧 {{ p.objetos.sinalizacao }} sinalizações</span></div>{% endif %}
+                {% if p.objetos.colunas > 0 %}<div class="col-auto"><span class="badge bg-secondary bg-opacity-10 text-secondary fs-6">⬜ {{ p.objetos.colunas }} colunas</span></div>{% endif %}
+                {% if p.objetos.escadas > 0 %}<div class="col-auto"><span class="badge bg-info bg-opacity-10 text-info fs-6">📐 {{ p.objetos.escadas }} escadas</span></div>{% endif %}
+            </div>
+            {% endif %}
+
             {% if p.checklist and p.checklist|length > 0 %}
-            <h6 class="fw-bold small text-muted mb-2">Checklist de Conformidade do Layout</h6>
+            <h6 class="fw-bold small text-muted mb-2">
+                <i class="bi bi-clipboard-check me-1"></i>Checklist de Conformidade do Layout
+            </h6>
             <div class="table-responsive">
                 <table class="table table-sm small mb-0">
                     <thead class="table-light">
@@ -346,8 +418,8 @@
     <!-- ============================================================ -->
     {% if projetos_detalhados %}
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3">
-            <h6 class="fw-bold mb-0"><i class="bi bi-folder text-warning me-2"></i>Projetos da Qualidade</h6>
+        <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning py-3">
+            <h6 class="fw-bold mb-0 text-warning-emphasis"><i class="bi bi-folder me-2"></i>Projetos da Qualidade</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -384,8 +456,8 @@
 
     <!-- Resumo executivo -->
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <h5 class="fw-bold mb-0"><i class="bi bi-check2-square me-2 text-success"></i>Resumo Executivo</h5>
+<div class="card-header bg-success bg-opacity-10 border-bottom border-success py-3">
+            <h5 class="fw-bold mb-0 text-success-emphasis"><i class="bi bi-check2-square me-2"></i>Resumo Executivo</h5>
         </div>
         <div class="card-body">
             <div class="alert {% if metricas.conformidade_nr_media >= 70 and metricas.maturidade_iso_media >= 70 %}alert-success{% elif metricas.conformidade_nr_media >= 40 or metricas.maturidade_iso_media >= 40 %}alert-warning{% else %}alert-danger{% endif %}">
@@ -504,6 +576,275 @@ new Chart(ctxPlanta, {
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, max: 100 } }
     }
+});
+
+// ============================================================
+// RENDERIZADOR DE PLANTA BAIXA (Visualização simplificada)
+// ============================================================
+function renderizarMiniPlanta(canvasEl) {
+    const ctx = canvasEl.getContext('2d');
+    const W = canvasEl.width;
+    const H = canvasEl.height;
+    
+    // Limpar canvas
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Parse dos dados
+    let canvasData;
+    try {
+        canvasData = JSON.parse(canvasEl.dataset.canvasData);
+    } catch(e) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Dados da planta não disponíveis', W/2, H/2);
+        return;
+    }
+    
+    if (!canvasData || !canvasData.objects || canvasData.objects.length === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nenhum objeto na planta', W/2, H/2);
+        return;
+    }
+    
+    const objects = canvasData.objects;
+    
+    // Calcular bounds
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    objects.forEach(obj => {
+        if (obj.x1 !== undefined && obj.x2 !== undefined) {
+            minX = Math.min(minX, obj.x1, obj.x2);
+            maxX = Math.max(maxX, obj.x1, obj.x2);
+            minY = Math.min(minY, obj.y1, obj.y2);
+            maxY = Math.max(maxY, obj.y1, obj.y2);
+        }
+        if (obj.x !== undefined) {
+            minX = Math.min(minX, obj.x);
+            maxX = Math.max(maxX, obj.x);
+        }
+        if (obj.y !== undefined) {
+            minY = Math.min(minY, obj.y);
+            maxY = Math.max(maxY, obj.y);
+        }
+        if (obj.pontos && obj.pontos.length > 0) {
+            obj.pontos.forEach(p => {
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y);
+                maxY = Math.max(maxY, p.y);
+            });
+        }
+    });
+    
+    if (minX === Infinity) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Dados insuficientes para renderizar', W/2, H/2);
+        return;
+    }
+    
+    // Adicionar margem
+    const margin = 40;
+    const rangeX = (maxX - minX) || 1;
+    const rangeY = (maxY - minY) || 1;
+    const scaleX = (W - margin * 2) / rangeX;
+    const scaleY = (H - margin * 2) / rangeY;
+    const scale = Math.min(scaleX, scaleY);
+    
+    function transformX(x) { return margin + (x - minX) * scale; }
+    function transformY(y) { return margin + (y - minY) * scale; }
+    
+    // Desenhar grid (fino)
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 0.5;
+    const gridStep = 25;
+    for (let i = Math.floor(minX / gridStep) * gridStep; i <= maxX; i += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(transformX(i), transformY(minY));
+        ctx.lineTo(transformX(i), transformY(maxY));
+        ctx.stroke();
+    }
+    for (let i = Math.floor(minY / gridStep) * gridStep; i <= maxY; i += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(transformX(minX), transformY(i));
+        ctx.lineTo(transformX(maxX), transformY(i));
+        ctx.stroke();
+    }
+    
+    // 1. Desenhar pisos (ambientes)
+    objects.forEach(obj => {
+        if (obj.objectType === 'piso' && obj.pontos && obj.pontos.length >= 3) {
+            ctx.beginPath();
+            ctx.moveTo(transformX(obj.pontos[0].x), transformY(obj.pontos[0].y));
+            for (let i = 1; i < obj.pontos.length; i++) {
+                ctx.lineTo(transformX(obj.pontos[i].x), transformY(obj.pontos[i].y));
+            }
+            ctx.closePath();
+            ctx.fillStyle = obj.corHex || '#e6f0fa';
+            ctx.globalAlpha = 0.4;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            ctx.strokeStyle = '#c0d4e8';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Nome do ambiente
+            if (obj.nome) {
+                let cx = 0, cy = 0;
+                obj.pontos.forEach(p => { cx += transformX(p.x); cy += transformY(p.y); });
+                cx /= obj.pontos.length;
+                cy /= obj.pontos.length;
+                ctx.fillStyle = '#555';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(obj.nome, cx, cy - 4);
+                ctx.font = '9px Arial';
+                ctx.fillStyle = '#888';
+                ctx.fillText('ambiente', cx, cy + 8);
+            }
+        }
+    });
+    
+    // 2. Desenhar paredes
+    objects.forEach(obj => {
+        if (obj.objectType === 'parede' || (obj.x1 !== undefined && obj.x2 !== undefined && !obj.objectType)) {
+            ctx.beginPath();
+            ctx.moveTo(transformX(obj.x1), transformY(obj.y1));
+            ctx.lineTo(transformX(obj.x2), transformY(obj.y2));
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = Math.max(3, (obj.espessuraMetros || 0.15) * scale);
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+    });
+    
+    // 3. Desenhar portas
+    objects.forEach(obj => {
+        if (obj.objectType === 'porta') {
+            ctx.save();
+            ctx.translate(transformX(obj.x), transformY(obj.y));
+            ctx.rotate(-(obj.angulo || 0));
+            
+            const largPx = (obj.larguraMetros || 0.80) * scale;
+            const espPx = Math.max(4, 0.15 * scale);
+            
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-largPx/2, -espPx/2, largPx, espPx);
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-largPx/2, -espPx/2, largPx, espPx);
+            
+            ctx.beginPath();
+            ctx.moveTo(-largPx/2, espPx/2);
+            ctx.lineTo(-largPx/2, espPx/2 - largPx);
+            ctx.strokeStyle = '#A0522D';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(-largPx/2, espPx/2, largPx, -Math.PI/2, 0);
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.restore();
+        }
+    });
+    
+    // 4. Desenhar janelas
+    objects.forEach(obj => {
+        if (obj.objectType === 'janela') {
+            ctx.save();
+            ctx.translate(transformX(obj.x), transformY(obj.y));
+            ctx.rotate(-(obj.angulo || 0));
+            
+            const largPx = (obj.larguraMetros || 1.20) * scale;
+            const espPx = Math.max(4, 0.15 * scale);
+            
+            ctx.fillStyle = '#f0f8ff';
+            ctx.fillRect(-largPx/2, -espPx/2, largPx, espPx);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-largPx/2, -espPx/2, largPx, espPx);
+            
+            ctx.beginPath();
+            ctx.moveTo(-largPx/2, 0);
+            ctx.lineTo(largPx/2, 0);
+            ctx.strokeStyle = '#5DADE2';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+    });
+    
+    // 5. Desenhar objetos (móveis/equipamentos)
+    objects.forEach(obj => {
+        if (['mesa','extintor','placa','cadeira','computador','bebedouro','maquina','sinalizacao','lava_olhos'].includes(obj.objectType || obj.tipo)) {
+            const tipo = obj.objectType || obj.tipo;
+            const x = transformX(obj.x);
+            const y = transformY(obj.y);
+            
+            ctx.save();
+            ctx.translate(x, y);
+            
+            const tam = Math.max(8, 0.4 * scale);
+            
+            // Cores por tipo
+            let cor = obj.corHex || '#666';
+            let icone = '■';
+            if (tipo === 'extintor') { cor = '#ff0000'; icone = 'EX'; }
+            else if (tipo === 'placa') { cor = '#00aa00'; icone = 'S'; }
+            else if (tipo === 'mesa') { cor = '#8B5A2B'; icone = 'M'; }
+            else if (tipo === 'cadeira') { cor = '#4444cc'; icone = 'C'; }
+            else if (tipo === 'computador') { cor = '#333'; icone = 'PC'; }
+            else if (tipo === 'bebedouro') { cor = '#66ccff'; icone = 'B'; }
+            else if (tipo === 'maquina') { cor = '#ff8c00'; icone = '⚙'; }
+            else if (tipo === 'sinalizacao') { cor = '#00aa00'; icone = '!'; }
+            else if (tipo === 'lava_olhos') { cor = '#00cc99'; icone = 'LO'; }
+            
+            ctx.fillStyle = cor;
+            ctx.globalAlpha = 0.8;
+            ctx.fillRect(-tam/2, -tam/2, tam, tam);
+            ctx.globalAlpha = 1.0;
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-tam/2, -tam/2, tam, tam);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold ' + Math.max(7, tam * 0.4) + 'px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icone, 0, 0);
+            
+            ctx.restore();
+        }
+    });
+    
+    // Moldura final
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, W, H);
+    
+    // Legenda: escala
+    ctx.fillStyle = '#888';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Clique para abrir o editor completo', 8, H - 8);
+}
+
+// Renderizar todas as miniaturas de planta
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.planta-visualization').forEach(function(canvas) {
+        renderizarMiniPlanta(canvas);
+    });
 });
 </script>
 

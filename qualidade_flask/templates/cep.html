@@ -45,6 +45,16 @@
                     {% endif %}
                 </div>
                 {% if modo_projeto %}
+                {% if ferramenta %}
+                <div class="mt-2">
+                    <form action="{{ url_for('projects.excluir_ferramenta_projeto', id=projeto.id, ferramenta_id=ferramenta.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta ferramenta?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="bi bi-trash me-1"></i> Excluir Ferramenta
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
                 <div class="mt-2">
                     <a href="{{ url_for('projects.detalhe_projeto', id=projeto.id) }}" class="btn btn-sm btn-outline-secondary w-100">
                         <i class="bi bi-arrow-left me-1"></i> Voltar ao Projeto
@@ -359,7 +369,7 @@
             grafico: graficoImg
         };
         
-        const autoGenerate = confirm("Deseja que a IA preencha automaticamente a próxima ferramenta sugerida com base nestes dados?");
+        
         
         const btn = event.target;
         const originalText = btn.innerHTML;
@@ -374,18 +384,13 @@
             },
             body: JSON.stringify({
                 tipo: tipo,
-                dados: dadosParaSalvar,
-                auto_generate: autoGenerate
+                dados: dadosParaSalvar
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                let msg = 'Salvo com sucesso!';
-                if (data.proxima_gerada) {
-                    msg += '\n\nA IA também gerou e salvou automaticamente a ferramenta: ' + data.proxima_gerada.nome;
-                }
-                alert(msg);
+                alert('Salvo com sucesso!');
                 window.location.href = "{{ url_for('projects.projeto_pdca', id=projeto.id) if projeto.tipo == 'pdca' else url_for('projects.detalhe_projeto', id=projeto.id) }}";
             } else {
                 alert('Erro ao salvar: ' + data.message);

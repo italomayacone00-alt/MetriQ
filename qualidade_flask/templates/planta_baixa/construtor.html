@@ -115,6 +115,7 @@ window.addEventListener('resize', ajustarPagePlanta);
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
             <span id="statusBadge" style="font-size:0.7rem;color:#888;">✅ Salvo</span>
+            <button class="topbar-btn" style="background:#fff3cd;border-color:#ffc107;color:#856404;font-weight:bold;" onclick="recomendarSeguranca()">🔒 Auto Segurança</button>
             <button class="topbar-btn" onclick="salvar()">💾 Salvar</button>
             <button class="topbar-btn" onclick="exportarImagem()">📸 Exportar</button>
             <a href="{{ url_for('planta_baixa.checklist', id=planta.id) }}" class="topbar-btn">📋 Checklist</a>

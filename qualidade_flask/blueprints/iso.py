@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from ..models import NormaISO, ChecklistISO
+from ..models import NormaISO, ChecklistISO, Empresa
 from .. import db
 from datetime import datetime
 import json
@@ -53,11 +53,12 @@ def checklist_iso(id):
     """Checklist de autoavaliação de maturidade de uma Norma ISO"""
     norma = NormaISO.query.get_or_404(id)
     
-    # Buscar ou criar checklist do usuário
-    checklist = ChecklistISO.query.filter_by(
-        norma_id=id,
-        user_id=current_user.id
-    ).first()
+    # Buscar empresas do usuário para seleção
+    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()
+    
+    # Capturar empresa_id da query string (GET) ou formulário (POST)
+    empresa_selecionada = request.args.get('empresa_id', request.form.get('empresa_id', '')).strip()
+    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None
     
     if request.method == 'POST':
         respostas = {}
@@ -75,16 +76,39 @@ def checklist_iso(id):
                 if observacao:
                     observacoes[pergunta_id] = observacao
         
+        # Se empresa selecionada: primeiro tenta checklist vinculado,
+        # se não existir, tenta checklist geral (sem empresa) e vincula
+        if empresa_selecionada_id:
+            checklist = ChecklistISO.query.filter_by(
+                norma_id=id, user_id=current_user.id,
+                empresa_id=empresa_selecionada_id
+            ).first()
+            
+            if not checklist:
+                # Reaproveitar checklist geral (sem empresa) e vincular à empresa
+                checklist = ChecklistISO.query.filter(
+                    ChecklistISO.norma_id == id,
+                    ChecklistISO.user_id == current_user.id,
+                    (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)
+                ).first()
+                if checklist:
+                    checklist.empresa_id = empresa_selecionada_id
+        else:
+            # Sem empresa: busca checklist geral
+            checklist = ChecklistISO.query.filter_by(
+                norma_id=id, user_id=current_user.id,
+                empresa_id=None
+            ).first()
+        
         if checklist:
             checklist.respostas = respostas
             checklist.observacoes = observacoes
             checklist.data_atualizacao = datetime.now()
         else:
             checklist = ChecklistISO(
-                norma_id=id,
-                user_id=current_user.id,
-                respostas=respostas,
-                observacoes=observacoes
+                norma_id=id, user_id=current_user.id,
+                empresa_id=empresa_selecionada_id,
+                respostas=respostas, observacoes=observacoes
             )
             db.session.add(checklist)
         
@@ -92,9 +116,30 @@ def checklist_iso(id):
         flash('Autoavaliação salva com sucesso!', 'success')
         return redirect(url_for('iso.detalhe_iso', id=id))
     
+    # Buscar checklist para exibir no formulário
+    checklist = None
+    if empresa_selecionada_id:
+        # Primeiro procura com empresa_id
+        checklist = ChecklistISO.query.filter_by(
+            norma_id=id, user_id=current_user.id,
+            empresa_id=empresa_selecionada_id
+        ).first()
+        # Se não achar, busca checklist geral (sem empresa)
+        if not checklist:
+            checklist = ChecklistISO.query.filter(
+                ChecklistISO.norma_id == id,
+                ChecklistISO.user_id == current_user.id,
+                (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)
+            ).first()
+    else:
+        checklist = ChecklistISO.query.filter_by(
+            norma_id=id, user_id=current_user.id,
+            empresa_id=None
+        ).first()
+    
     glossario = norma.glossario if norma.glossario else []
     
-    return render_template('iso/checklist.html', norma=norma, checklist=checklist, glossario=glossario)
+    return render_template('iso/checklist.html', norma=norma, checklist=checklist, glossario=glossario, empresas=empresas, empresa_selecionada_id=empresa_selecionada_id)
 
 @iso.route('/iso/<int:id>/analise')
 @login_required

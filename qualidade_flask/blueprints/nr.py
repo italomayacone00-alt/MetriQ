@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from ..models import NormaRegulamentadora, ChecklistNR, Analise
+from ..models import NormaRegulamentadora, ChecklistNR, Analise, Empresa
 from .. import db
 from datetime import datetime
 import json
@@ -1147,6 +1147,13 @@ def checklist_nr(id):
         {'sigla': 'NR', 'significado': 'Norma Regulamentadora'}
     ]
     
+    # Buscar empresas do usuário para seleção
+    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()
+    
+    # Capturar empresa_id da query string (GET) ou formulário (POST)
+    empresa_selecionada = request.args.get('empresa_id', request.form.get('empresa_id', '')).strip()
+    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None
+    
     if request.method == 'POST':
         # Salvar respostas do checklist
         respostas = {}
@@ -1164,36 +1171,68 @@ def checklist_nr(id):
                 if observacao:
                     observacoes[pergunta_id] = observacao
         
-        # Verificar se já existe checklist deste usuário para esta NR
-        checklist_existente = ChecklistNR.query.filter_by(
-            norma_id=id,
-            user_id=current_user.id
-        ).first()
-        
-        if checklist_existente:
-            checklist_existente.respostas = respostas
-            checklist_existente.observacoes = observacoes
-            checklist_existente.data_atualizacao = datetime.now()
+        # Se empresa selecionada: primeiro tenta checklist vinculado, 
+        # se não existir, tenta checklist geral (sem empresa) e vincula
+        if empresa_selecionada_id:
+            checklist = ChecklistNR.query.filter_by(
+                norma_id=id, user_id=current_user.id,
+                empresa_id=empresa_selecionada_id
+            ).first()
+            
+            if not checklist:
+                # Reaproveitar checklist geral (sem empresa) e vincular à empresa
+                checklist = ChecklistNR.query.filter(
+                    ChecklistNR.norma_id == id,
+                    ChecklistNR.user_id == current_user.id,
+                    (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)
+                ).first()
+                if checklist:
+                    checklist.empresa_id = empresa_selecionada_id
         else:
-            novo_checklist = ChecklistNR(
-                norma_id=id,
-                user_id=current_user.id,
-                respostas=respostas,
-                observacoes=observacoes
+            # Sem empresa: busca checklist geral
+            checklist = ChecklistNR.query.filter_by(
+                norma_id=id, user_id=current_user.id,
+                empresa_id=None
+            ).first()
+        
+        if checklist:
+            checklist.respostas = respostas
+            checklist.observacoes = observacoes
+            checklist.data_atualizacao = datetime.now()
+        else:
+            checklist = ChecklistNR(
+                norma_id=id, user_id=current_user.id,
+                empresa_id=empresa_selecionada_id,
+                respostas=respostas, observacoes=observacoes
             )
-            db.session.add(novo_checklist)
+            db.session.add(checklist)
         
         db.session.commit()
         flash('Checklist salvo com sucesso!', 'success')
         return redirect(url_for('nr.detalhe_nr', id=id))
     
-    # Buscar checklist existente se houver
-    checklist_existente = ChecklistNR.query.filter_by(
-        norma_id=id,
-        user_id=current_user.id
-    ).first()
+    # Buscar checklist para exibir no formulário
+    checklist_existente = None
+    if empresa_selecionada_id:
+        # Primeiro procura com empresa_id
+        checklist_existente = ChecklistNR.query.filter_by(
+            norma_id=id, user_id=current_user.id,
+            empresa_id=empresa_selecionada_id
+        ).first()
+        # Se não achar, busca checklist geral (sem empresa)
+        if not checklist_existente:
+            checklist_existente = ChecklistNR.query.filter(
+                ChecklistNR.norma_id == id,
+                ChecklistNR.user_id == current_user.id,
+                (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)
+            ).first()
+    else:
+        checklist_existente = ChecklistNR.query.filter_by(
+            norma_id=id, user_id=current_user.id,
+            empresa_id=None
+        ).first()
     
-    return render_template('nr/checklist.html', norma=norma, checklist=checklist_existente, glossario=glossario)
+    return render_template('nr/checklist.html', norma=norma, checklist=checklist_existente, glossario=glossario, empresas=empresas, empresa_selecionada_id=empresa_selecionada_id)
 
 @nr.route('/nr/<int:id>/checklist/excluir', methods=['POST'])
 @login_required

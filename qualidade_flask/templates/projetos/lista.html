@@ -185,6 +185,16 @@
                         <label class="form-label fw-bold">Objetivo do Projeto</label>
                         <textarea name="objetivo" class="form-control" rows="4" placeholder="Descreva o que você pretende alcançar com este projeto..." required></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Empresa (opcional)</label>
+                        <select name="empresa_id" class="form-select">
+                            <option value="">— Selecione uma empresa —</option>
+                            {% for e in empresas %}
+                            <option value="{{ e.id }}">{{ e.razao_social }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Vincule este projeto a uma empresa específica</small>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

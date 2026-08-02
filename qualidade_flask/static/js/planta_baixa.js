@@ -544,41 +544,61 @@ function limparTela() {
 }
 
 function exportarImagem() {
+    // Considera todos os elementos (paredes, objetos, portas, janelas e pisos)
+    // para calcular a bounding box do desenho.
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    paredes.forEach(p => {
-        minX = Math.min(minX, p.x1, p.x2);
-        maxX = Math.max(maxX, p.x1, p.x2);
-        minY = Math.min(minY, p.y1, p.y2);
-        maxY = Math.max(maxY, p.y1, p.y2);
+    const considerarPonto = (x, y) => {
+        if (typeof x === 'number' && typeof y === 'number' && isFinite(x) && isFinite(y)) {
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
+    };
+    paredes.forEach(p => { considerarPonto(p.x1, p.y1); considerarPonto(p.x2, p.y2); });
+    objetos.forEach(o => considerarPonto(o.x, o.y));
+    portas.forEach(p => considerarPonto(p.x, p.y));
+    janelas.forEach(j => considerarPonto(j.x, j.y));
+    pisos.forEach(p => {
+        if (p.pontos && p.pontos.length) p.pontos.forEach(pt => considerarPonto(pt.x, pt.y));
     });
+
     if (minX === Infinity) { alert("Não há nada desenhado."); return; }
 
     const margem = 50;
-    const canvasExport = document.createElement('canvas');
-    canvasExport.width = (maxX - minX) + margem * 2;
-    canvasExport.height = (maxY - minY) + margem * 2;
-    const ctxEx = canvasExport.getContext('2d');
-    ctxEx.fillStyle = '#ffffff';
-    ctxEx.fillRect(0, 0, canvasExport.width, canvasExport.height);
+    const larguraExport = Math.ceil((maxX - minX) + margem * 2);
+    const alturaExport = Math.ceil((maxY - minY) + margem * 2);
 
+    // Salva estado atual do canvas e da câmera
     const backupX = camera.x, backupY = camera.y, backupScale = camera.scale;
+    const backupLargura = canvas.width, backupAltura = canvas.height;
+
+    // Enquadra o desenho (escala 1:1, deslocando para a margem)
     camera = { x: -minX + margem, y: -minY + margem, scale: 1 };
 
-    const realCanvas = canvas;
-    canvas.width = canvasExport.width;
-    canvas.height = canvasExport.height;
-    redesenharCena();
-    const url = canvasExport.toDataURL('image/png');
+    // Redimensiona o canvas visível para o tamanho de exportação
+    canvas.width = larguraExport;
+    canvas.height = alturaExport;
 
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    // Desenha a cena com fundo branco
+    redesenharCena(true);
+
+    // Captura a imagem DO MESMO canvas que foi desenhado
+    const url = canvas.toDataURL('image/png');
+
+    // Restaura o canvas e a câmera ao estado original
+    canvas.width = backupLargura;
+    canvas.height = backupAltura;
     camera = { x: backupX, y: backupY, scale: backupScale };
     redesenharCena();
 
+    // Dispara o download
     const a = document.createElement('a');
     a.href = url;
     a.download = 'planta_baixa.png';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
 }
 
 // ============================================
@@ -946,8 +966,13 @@ window.addEventListener('keyup', (e) => {
 // ============================================
 // RENDERIZACAO PRINCIPAL
 // ============================================
-function redesenharCena() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function redesenharCena(comFundoBranco) {
+    if (comFundoBranco) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
     ctx.save();
     ctx.translate(camera.x, camera.y);
     ctx.scale(camera.scale, camera.scale);
@@ -1518,7 +1543,7 @@ function iniciar3D() {
         scene.add(windowGroup);
     });
 
-    // Objetos em 3D
+// Objetos em 3D
     objetos.forEach(obj => {
         const group = new THREE.Group();
         group.position.set(obj.x, 0, obj.y);
@@ -1535,6 +1560,12 @@ function iniciar3D() {
         if (typeof cor3D === 'string') cor3D = parseInt(cor3D.replace('#', ''), 16);
         const matDinamico = new THREE.MeshLambertMaterial({ color: cor3D });
         const matCinza = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const matPrata = new THREE.MeshLambertMaterial({ color: 0xC0C0C0, metalness: 0.5 });
+        const matBranco = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+        const matVidro = new THREE.MeshLambertMaterial({ color: 0x88ccff, transparent: true, opacity: 0.4 });
+        const matLaranja = new THREE.MeshLambertMaterial({ color: 0xFF6600 });
+        const matPreto = new THREE.MeshLambertMaterial({ color: 0x111111 });
+        const matVerde = new THREE.MeshLambertMaterial({ color: 0x00cc00 });
 
         if (obj.tipo === 'mesa') {
             const compMesa = 1.2 * PIXELS_POR_METRO;
@@ -1547,18 +1578,219 @@ function iniciar3D() {
             perna.position.y = altMesa / 2;
             group.add(perna);
         } else if (obj.tipo === 'extintor') {
-            const raioExt = 0.1 * PIXELS_POR_METRO;
-            const altExt = 0.5 * PIXELS_POR_METRO;
-            const corpo = new THREE.Mesh(new THREE.CylinderGeometry(raioExt, raioExt, altExt, 16), matDinamico);
-            corpo.position.y = altExt / 2;
+            // --- EXTINTOR DE INCÊNDIO DETALHADO ---
+            const P = PIXELS_POR_METRO;
+            
+            // Corpo principal (cilindro levemente cônico - mais largo embaixo)
+            const corpo = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.09 * P, 0.11 * P, 0.45 * P, 20),
+                matDinamico
+            );
+            corpo.position.y = 0.225 * P;
             group.add(corpo);
+            
+            // Anel de rótulo (faixa mais clara no meio)
+            const rotulo = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.092 * P, 0.092 * P, 0.08 * P, 20),
+                matBranco
+            );
+            rotulo.position.y = 0.22 * P;
+            group.add(rotulo);
+            
+            // Detalhe do rótulo (faixa laranja)
+            const faixaRotulo = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.093 * P, 0.093 * P, 0.02 * P, 20),
+                matLaranja
+            );
+            faixaRotulo.position.y = 0.22 * P;
+            group.add(faixaRotulo);
+            
+            // Base do extintor (anel mais escuro)
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1 * P, 0.12 * P, 0.03 * P, 16),
+                matCinza
+            );
+            base.position.y = 0.015 * P;
+            group.add(base);
+            
+            // Pescoço / válvula (topo)
+            const pescoco = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04 * P, 0.06 * P, 0.06 * P, 12),
+                matPrata
+            );
+            pescoco.position.y = 0.48 * P;
+            group.add(pescoco);
+            
+            // Alça de acionamento (horizontal)
+            const alca = new THREE.Mesh(
+                new THREE.BoxGeometry(0.14 * P, 0.02 * P, 0.03 * P),
+                matPreto
+            );
+            alca.position.set(0, 0.54 * P, 0);
+            group.add(alca);
+            
+            // Gatilho (pequena alavanca)
+            const gatilho = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06 * P, 0.04 * P, 0.015 * P),
+                matLaranja
+            );
+            gatilho.position.set(0.06 * P, 0.52 * P, 0);
+            group.add(gatilho);
+            
+            // Mangueira / bico (tubo saindo da lateral)
+            const bico = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.015 * P, 0.02 * P, 0.12 * P, 8),
+                matPreto
+            );
+            bico.position.set(0.06 * P, 0.42 * P, 0);
+            bico.rotation.z = Math.PI / 4;
+            group.add(bico);
+            
+            // Ponteira do bico
+            const ponteira = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.01 * P, 0.025 * P, 0.03 * P, 8),
+                matPrata
+            );
+            ponteira.position.set(0.09 * P, 0.36 * P, 0);
+            ponteira.rotation.z = Math.PI / 4;
+            group.add(ponteira);
+            
         } else if (obj.tipo === 'placa') {
-            const compPlaca = 0.4 * PIXELS_POR_METRO;
-            const altPlaca = 0.2 * PIXELS_POR_METRO;
-            const elevacao = 2.0 * PIXELS_POR_METRO;
-            const placa = new THREE.Mesh(new THREE.BoxGeometry(compPlaca, altPlaca, 0.05 * PIXELS_POR_METRO), matDinamico);
+            // --- PLACA DE SINALIZAÇÃO DETALHADA ---
+            const P = PIXELS_POR_METRO;
+            const elevacao = 2.0 * P;
+            
+            // Corpo da placa (retangular com fundo verde)
+            const placa = new THREE.Mesh(
+                new THREE.BoxGeometry(0.45 * P, 0.25 * P, 0.04 * P),
+                matVerde
+            );
             placa.position.y = elevacao;
             group.add(placa);
+            
+            // Moldura da placa (borda branca)
+            const molduraMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+            const molduraHorizontal = new THREE.Mesh(
+                new THREE.BoxGeometry(0.47 * P, 0.02 * P, 0.05 * P),
+                molduraMat
+            );
+            molduraHorizontal.position.y = elevacao + 0.135 * P;
+            group.add(molduraHorizontal);
+            
+            const molduraHorizontal2 = new THREE.Mesh(
+                new THREE.BoxGeometry(0.47 * P, 0.02 * P, 0.05 * P),
+                molduraMat
+            );
+            molduraHorizontal2.position.y = elevacao - 0.135 * P;
+            group.add(molduraHorizontal2);
+            
+            const molduraVertical = new THREE.Mesh(
+                new THREE.BoxGeometry(0.02 * P, 0.25 * P, 0.05 * P),
+                molduraMat
+            );
+            molduraVertical.position.set(0.235 * P, elevacao, 0);
+            group.add(molduraVertical);
+            
+            const molduraVertical2 = new THREE.Mesh(
+                new THREE.BoxGeometry(0.02 * P, 0.25 * P, 0.05 * P),
+                molduraMat
+            );
+            molduraVertical2.position.set(-0.235 * P, elevacao, 0);
+            group.add(molduraVertical2);
+            
+            // Símbolo SVG/Canvas na placa (figura correndo + texto)
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 80;
+            const ctx2d = canvas.getContext('2d');
+            
+            // Fundo verde
+            ctx2d.fillStyle = '#00cc00';
+            ctx2d.fillRect(0, 0, 128, 80);
+            
+            // Figura do homem correndo (branca)
+            ctx2d.fillStyle = '#ffffff';
+            // Cabeça
+            ctx2d.beginPath();
+            ctx2d.arc(50, 22, 8, 0, Math.PI * 2);
+            ctx2d.fill();
+            // Corpo
+            ctx2d.fillRect(46, 30, 8, 22);
+            // Braço direito (esticado para frente)
+            ctx2d.beginPath();
+            ctx2d.moveTo(54, 34);
+            ctx2d.lineTo(72, 44);
+            ctx2d.lineWidth = 4;
+            ctx2d.stroke();
+            // Braço esquerdo (para trás)
+            ctx2d.beginPath();
+            ctx2d.moveTo(46, 34);
+            ctx2d.lineTo(30, 42);
+            ctx2d.lineWidth = 4;
+            ctx2d.stroke();
+            // Perna direita (frente)
+            ctx2d.beginPath();
+            ctx2d.moveTo(52, 52);
+            ctx2d.lineTo(62, 68);
+            ctx2d.lineWidth = 5;
+            ctx2d.stroke();
+            // Perna esquerda (trás)
+            ctx2d.beginPath();
+            ctx2d.moveTo(48, 52);
+            ctx2d.lineTo(36, 68);
+            ctx2d.lineWidth = 5;
+            ctx2d.stroke();
+            
+            // Seta para direita (em frente à figura)
+            ctx2d.fillStyle = '#ffffff';
+            ctx2d.beginPath();
+            ctx2d.moveTo(78, 40);
+            ctx2d.lineTo(108, 40);
+            ctx2d.lineTo(108, 32);
+            ctx2d.lineTo(122, 45);
+            ctx2d.lineTo(108, 58);
+            ctx2d.lineTo(108, 50);
+            ctx2d.lineTo(78, 50);
+            ctx2d.closePath();
+            ctx2d.fill();
+            
+            // Texto "SAÍDA"
+            ctx2d.fillStyle = '#ffffff';
+            ctx2d.font = 'bold 14px Arial';
+            ctx2d.textAlign = 'center';
+            ctx2d.fillText('SAÍDA', 64, 76);
+            
+            // Criar textura a partir do canvas
+            const texturaCanvas = new THREE.CanvasTexture(canvas);
+            const matPlaca = new THREE.MeshLambertMaterial({ 
+                map: texturaCanvas, 
+                side: THREE.DoubleSide 
+            });
+            
+            // Face frontal da placa com o desenho
+            const facePlaca = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.43 * P, 0.23 * P),
+                matPlaca
+            );
+            facePlaca.position.set(0, elevacao, 0.021 * P);
+            group.add(facePlaca);
+            
+            // Suporte de fixação (braço no teto/parede)
+            const suporte = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.01 * P, 0.01 * P, 0.15 * P, 6),
+                matCinza
+            );
+            suporte.position.set(0, elevacao + 0.15 * P, 0);
+            group.add(suporte);
+            
+            // Base do suporte
+            const baseSuporte = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06 * P, 0.02 * P, 0.06 * P),
+                matCinza
+            );
+            baseSuporte.position.set(0, elevacao + 0.22 * P, 0);
+            group.add(baseSuporte);
+            
         } else if (obj.tipo === 'cadeira') {
             const tam = 0.4 * PIXELS_POR_METRO;
             const assento = new THREE.Mesh(new THREE.BoxGeometry(tam, 0.1 * PIXELS_POR_METRO, tam), matDinamico);
@@ -1577,11 +1809,82 @@ function iniciar3D() {
             base.position.y = 0.05 * PIXELS_POR_METRO;
             group.add(base);
         } else if (obj.tipo === 'bebedouro') {
-            const tam = 0.3 * PIXELS_POR_METRO;
-            const alt = 0.8 * PIXELS_POR_METRO;
-            const corpo = new THREE.Mesh(new THREE.CylinderGeometry(tam / 2, tam / 2, alt, 8), matDinamico);
-            corpo.position.y = alt / 2;
-            group.add(corpo);
+            // --- BEBEDOURO DETALHADO ---
+            const P = PIXELS_POR_METRO;
+            
+            // Coluna principal (corpo do bebedouro)
+            const coluna = new THREE.Mesh(
+                new THREE.BoxGeometry(0.28 * P, 0.75 * P, 0.18 * P),
+                new THREE.MeshLambertMaterial({ color: 0xE8E8E8 })
+            );
+            coluna.position.y = 0.375 * P;
+            group.add(coluna);
+            
+            // Painel frontal (rebaixo decorativo)
+            const painel = new THREE.Mesh(
+                new THREE.BoxGeometry(0.22 * P, 0.4 * P, 0.02 * P),
+                new THREE.MeshLambertMaterial({ color: 0xD0D0D0 })
+            );
+            painel.position.set(0, 0.38 * P, 0.1 * P);
+            group.add(painel);
+            
+            // Bacia / cuba (topo)
+            const bacia = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12 * P, 0.15 * P, 0.06 * P, 16),
+                new THREE.MeshLambertMaterial({ color: 0xCCCCCC })
+            );
+            bacia.position.y = 0.78 * P;
+            group.add(bacia);
+            
+            // Interior da bacia (parte côncava)
+            const interiorBacia = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.09 * P, 0.11 * P, 0.04 * P, 16),
+                matCinza
+            );
+            interiorBacia.position.y = 0.78 * P;
+            group.add(interiorBacia);
+            
+            // Bico (torneirinha)
+            const bicoBeb = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.015 * P, 0.02 * P, 0.04 * P, 8),
+                matPrata
+            );
+            bicoBeb.position.set(0.04 * P, 0.82 * P, 0.04 * P);
+            bicoBeb.rotation.x = 0.3;
+            group.add(bicoBeb);
+            
+            // Botão de pressão (no topo)
+            const botao = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.025 * P, 0.03 * P, 0.015 * P, 12),
+                matLaranja
+            );
+            botao.position.set(0.08 * P, 0.82 * P, 0.06 * P);
+            group.add(botao);
+            
+            // Grelha / ralo (base da bacia)
+            const grelha = new THREE.Mesh(
+                new THREE.RingGeometry(0.02 * P, 0.05 * P, 12),
+                matCinza
+            );
+            grelha.position.set(0, 0.76 * P, 0);
+            grelha.rotation.x = Math.PI / 2;
+            group.add(grelha);
+            
+            // Base do bebedouro (pé)
+            const baseBeb = new THREE.Mesh(
+                new THREE.BoxGeometry(0.32 * P, 0.05 * P, 0.22 * P),
+                matCinza
+            );
+            baseBeb.position.y = 0.025 * P;
+            group.add(baseBeb);
+            
+            // Tampa superior (parte de trás)
+            const tampaTras = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2 * P, 0.1 * P, 0.04 * P),
+                new THREE.MeshLambertMaterial({ color: 0xE0E0E0 })
+            );
+            tampaTras.position.set(0, 0.8 * P, -0.08 * P);
+            group.add(tampaTras);
         }
         scene.add(group);
     });
@@ -1607,6 +1910,215 @@ window.addEventListener('resize', () => {
         }
     }
 });
+
+// ============================================
+// RECOMENDACAO AUTOMATICA DE SEGURANCA
+// ============================================
+function recomendarSeguranca() {
+    if (paredes.length === 0) {
+        alert('Desenhe as paredes primeiro para que possamos recomendar a posição dos equipamentos de segurança.');
+        return;
+    }
+
+    salvarEstado();
+
+    // --- 1. CONTAR EQUIPAMENTOS EXISTENTES ---
+    const extintoresExistentes = objetos.filter(o => o.tipo === 'extintor').length;
+    const placasExistentes = objetos.filter(o => o.tipo === 'placa').length;
+
+    // --- 2. CALCULAR ÁREA TOTAL ---
+    let areaTotalM2 = 0;
+    if (pisos.length > 0) {
+        pisos.forEach(p => {
+            areaTotalM2 += calcularAreaPiso(p.pontos);
+        });
+    } else {
+        // Fallback: bounding box das paredes
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        paredes.forEach(p => {
+            minX = Math.min(minX, p.x1, p.x2);
+            maxX = Math.max(maxX, p.x1, p.x2);
+            minY = Math.min(minY, p.y1, p.y2);
+            maxY = Math.max(maxY, p.y1, p.y2);
+        });
+        if (minX !== Infinity) {
+            const largPx = maxX - minX;
+            const altPx = maxY - minY;
+            areaTotalM2 = (largPx / PIXELS_POR_METRO) * (altPx / PIXELS_POR_METRO);
+        }
+    }
+
+    // --- 3. CALCULAR QUANTIDADE RECOMENDADA ---
+    // NR-23: extintores a cada 20m (risco baixo), 15m (risco médio), 10m (risco alto)
+    // Regra prática: 1 extintor a cada 150m²
+    const extintoresRecomendados = Math.max(1, Math.ceil(areaTotalM2 / 150));
+    const extintoresParaAdicionar = Math.max(0, extintoresRecomendados - extintoresExistentes);
+
+    // Placas de saída: 1 por porta identificada, +1 a cada 200m²
+    const totalPortas = portas.length;
+    const placasBase = Math.max(1, totalPortas);
+    const placasPorArea = Math.floor(areaTotalM2 / 200);
+    const placasRecomendadas = Math.max(placasBase, placasBase + placasPorArea);
+    const placasParaAdicionar = Math.max(0, placasRecomendadas - placasExistentes);
+
+    // --- 4. ENCONTRAR PONTOS ESTRATÉGICOS ---
+    // Calcular bounding box geral
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    paredes.forEach(p => {
+        minX = Math.min(minX, p.x1, p.x2);
+        maxX = Math.max(maxX, p.x1, p.x2);
+        minY = Math.min(minY, p.y1, p.y2);
+        maxY = Math.max(maxY, p.y1, p.y2);
+    });
+
+    // Margem de segurança (5% do tamanho total)
+    const marginX = (maxX - minX) * 0.05;
+    const marginY = (maxY - minY) * 0.05;
+
+    // Pontos candidatos: próximos às paredes (para extintores) e perto das portas (para placas)
+    const pontosExtintores = [];
+    const pontosPlacas = [];
+
+    // Pontos próximos às extremidades da bounding box
+    const pontosCandidatos = [
+        { x: minX + marginX, y: minY + marginY },
+        { x: maxX - marginX, y: minY + marginY },
+        { x: minX + marginX, y: maxY - marginY },
+        { x: maxX - marginX, y: maxY - marginY }
+    ];
+
+    // Centros de cada ambiente (piso)
+    pisos.forEach(p => {
+        if (p.pontos && p.pontos.length > 0) {
+            const cx = p.pontos.reduce((s, pt) => s + pt.x, 0) / p.pontos.length;
+            const cy = p.pontos.reduce((s, pt) => s + pt.y, 0) / p.pontos.length;
+            // Ponto próximo a uma parede do ambiente
+            const pontoProximo = { x: cx + (minX - cx) * 0.1, y: cy + (minY - cy) * 0.1 };
+            pontosCandidatos.push(pontoProximo);
+        }
+    });
+
+    // Pontos próximos às portas (para placas de saída)
+    portas.forEach(p => {
+        pontosPlacas.push({ x: p.x - 0.3 * PIXELS_POR_METRO, y: p.y - 0.3 * PIXELS_POR_METRO });
+        pontosPlacas.push({ x: p.x + 0.3 * PIXELS_POR_METRO, y: p.y + 0.3 * PIXELS_POR_METRO });
+    });
+
+    // --- 5. ADICIONAR EXTINTORES ---
+    let adicionados = 0;
+    for (let i = 0; i < pontosCandidatos.length && adicionados < extintoresParaAdicionar; i++) {
+        const pt = pontosCandidatos[i];
+        // Verificar se não há outro objeto muito próximo
+        const muitoProximo = objetos.some(o => 
+            Math.hypot(o.x - pt.x, o.y - pt.y) < 0.5 * PIXELS_POR_METRO
+        );
+        if (!muitoProximo) {
+            objetos.push({
+                id: idCounter++,
+                tipo: 'extintor',
+                x: pt.x,
+                y: pt.y,
+                angulo: 0,
+                corHex: null
+            });
+            adicionados++;
+        }
+    }
+
+    // Se ainda faltarem extintores, colocar nos cantos dos pisos
+    if (adicionados < extintoresParaAdicionar) {
+        pisos.forEach(p => {
+            if (adicionados >= extintoresParaAdicionar) return;
+            if (p.pontos && p.pontos.length > 0) {
+                const pt = p.pontos[0];
+                const muitoProximo = objetos.some(o => 
+                    Math.hypot(o.x - pt.x, o.y - pt.y) < 0.5 * PIXELS_POR_METRO
+                );
+                if (!muitoProximo) {
+                    objetos.push({
+                        id: idCounter++,
+                        tipo: 'extintor',
+                        x: pt.x,
+                        y: pt.y,
+                        angulo: 0,
+                        corHex: null
+                    });
+                    adicionados++;
+                }
+            }
+        });
+    }
+
+    // --- 6. ADICIONAR PLACAS DE SAÍDA ---
+    let placasAdicionadas = 0;
+    for (let i = 0; i < pontosPlacas.length && placasAdicionadas < placasParaAdicionar; i++) {
+        const pt = pontosPlacas[i];
+        const muitoProximo = objetos.some(o => 
+            Math.hypot(o.x - pt.x, o.y - pt.y) < 0.5 * PIXELS_POR_METRO
+        );
+        if (!muitoProximo) {
+            // Calcular ângulo da placa apontando para a porta mais próxima
+            let portaProx = null;
+            let menorDist = Infinity;
+            portas.forEach(p => {
+                const d = Math.hypot(p.x - pt.x, p.y - pt.y);
+                if (d < menorDist) { menorDist = d; portaProx = p; }
+            });
+            const angulo = portaProx ? Math.atan2(portaProx.y - pt.y, portaProx.x - pt.x) : 0;
+
+            objetos.push({
+                id: idCounter++,
+                tipo: 'placa',
+                x: pt.x,
+                y: pt.y,
+                angulo: angulo,
+                corHex: null
+            });
+            placasAdicionadas++;
+        }
+    }
+
+    // Se ainda faltarem placas, colocar perto das portas
+    if (placasAdicionadas < placasParaAdicionar) {
+        portas.forEach(p => {
+            if (placasAdicionadas >= placasParaAdicionar) return;
+            const pt = { x: p.x + 0.5 * PIXELS_POR_METRO, y: p.y + 0.5 * PIXELS_POR_METRO };
+            const muitoProximo = objetos.some(o => 
+                Math.hypot(o.x - pt.x, o.y - pt.y) < 0.5 * PIXELS_POR_METRO
+            );
+            if (!muitoProximo) {
+                objetos.push({
+                    id: idCounter++,
+                    tipo: 'placa',
+                    x: pt.x,
+                    y: pt.y,
+                    angulo: Math.atan2(p.y - pt.y, p.x - pt.x),
+                    corHex: null
+                });
+                placasAdicionadas++;
+            }
+        });
+    }
+
+    // --- 7. RESUMO ---
+    const mensagem = [
+        `🔒 Recomendação de Segurança Aplicada!`,
+        ``,
+        `📐 Área total: ${areaTotalM2.toFixed(1)} m²`,
+`🧯 Extintores: ${adicionados} adicionado(s) (${extintoresExistentes} existentes + ${adicionados} novos = ${extintoresExistentes + adicionados} total)`,
+        `🪧 Placas de saída: ${placasAdicionadas} adicionada(s) (${placasExistentes} existentes + ${placasAdicionadas} novas = ${placasExistentes + placasAdicionadas} total)`,
+        ``,
+        `Baseado na NR-23 (Proteção Contra Incêndios) e NR-26 (Sinalização de Segurança).`,
+        `Você pode ajustar as posições manualmente com a ferramenta de seleção.`
+    ].join('\n');
+
+    alert(mensagem);
+
+    setTool('select');
+    atualizarPainel();
+    redesenharCena();
+    marcarSujo();
+}
 
 // ============================================
 // INICIALIZAR

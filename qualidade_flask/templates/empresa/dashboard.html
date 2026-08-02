@@ -154,13 +154,13 @@
     <!-- GATILHOS AUTOMÁTICOS PDCA -->
     <!-- ============================================ -->
     <div class="card border-0 shadow-sm mb-4" id="card-gatilhos">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">
-                <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>
+        <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-warning-emphasis">
+                <i class="bi bi-lightning-charge-fill me-2 text-dark"></i>
                 Gatilhos PDCA
                 <span class="badge bg-warning text-dark ms-2" id="total-sugestoes">0</span>
             </h5>
-            <button class="btn btn-outline-warning btn-sm" onclick="verificarGatilhos()">
+            <button class="btn btn-warning btn-sm" onclick="verificarGatilhos()">
                 <i class="bi bi-arrow-clockwise me-1"></i>Verificar Agora
             </button>
         </div>
@@ -176,8 +176,8 @@
     <!-- RELATÓRIO EXECUTIVO DE CONFORMIDADE -->
     <!-- ============================================ -->
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Relatório Executivo de Conformidade</h5>
+        <div class="card-header bg-primary bg-opacity-10 border-bottom border-primary py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-primary-emphasis"><i class="bi bi-bar-chart-fill me-2 text-dark"></i>Relatório Executivo de Conformidade</h5>
             <a href="{{ url_for('empresa.relatorio', id=empresa.id) }}" class="btn btn-primary btn-sm" target="_blank">
                 <i class="bi bi-file-earmark-text me-1"></i>Gerar Relatório Consolidado
             </a>
@@ -241,9 +241,9 @@
         <div class="col-lg-7">
             <!-- NRs Aplicáveis -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-info"></i>NRs Aplicáveis</h6>
-                    <a href="{{ url_for('nr.lista_nrs') }}" class="btn btn-outline-info btn-sm">
+                <div class="card-header bg-info bg-opacity-10 border-bottom border-info py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-info-emphasis"><i class="bi bi-shield-check me-2 text-dark"></i>NRs Aplicáveis</h6>
+                    <a href="{{ url_for('nr.lista_nrs') }}" class="btn btn-info btn-sm">
                         <i class="bi bi-plus-circle me-1"></i>Ver Todas
                     </a>
                 </div>
@@ -286,11 +286,11 @@
                                     </td>
                                     <td class="text-end">
                                         {% if nr.tem_checklist %}
-                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id, empresa_id=empresa.id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         {% else %}
-                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id) }}" class="btn btn-sm btn-outline-success">
+                                        <a href="{{ url_for('nr.checklist_nr', id=nr.id, empresa_id=empresa.id) }}" class="btn btn-sm btn-outline-success">
                                             <i class="bi bi-plus"></i>Responder
                                         </a>
                                         {% endif %}
@@ -305,9 +305,9 @@
 
             <!-- ISOs Avaliadas -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-globe me-2 text-success"></i>Normas ISO</h6>
-                    <a href="{{ url_for('iso.lista_isos') }}" class="btn btn-outline-success btn-sm">
+                <div class="card-header bg-success bg-opacity-10 border-bottom border-success py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-success-emphasis"><i class="bi bi-globe me-2 text-dark"></i>Normas ISO</h6>
+                    <a href="{{ url_for('iso.lista_isos') }}" class="btn btn-success btn-sm">
                         <i class="bi bi-plus-circle me-1"></i>Ver Todas
                     </a>
                 </div>
@@ -350,11 +350,11 @@
                                     </td>
                                     <td class="text-end">
                                         {% if iso.tem_checklist %}
-                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id, empresa_id=empresa.id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         {% else %}
-                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id) if iso.checklist_id else '#' }}" class="btn btn-sm btn-outline-success">
+                                        <a href="{{ url_for('iso.checklist_iso', id=iso.checklist_id, empresa_id=empresa.id) if iso.checklist_id else url_for('iso.lista_isos') }}" class="btn btn-sm btn-outline-success">
                                             <i class="bi bi-plus"></i>Avaliar
                                         </a>
                                         {% endif %}
@@ -372,9 +372,9 @@
         <div class="col-lg-5">
             <!-- Plantas Baixas -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-warning"></i>Plantas Baixas</h6>
-                    <a href="{{ url_for('planta_baixa.nova') }}" class="btn btn-outline-warning btn-sm">
+                <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-warning-emphasis"><i class="bi bi-building me-2 text-dark"></i>Plantas Baixas</h6>
+                    <a href="{{ url_for('planta_baixa.nova') }}" class="btn btn-warning btn-sm">
                         <i class="bi bi-plus-circle me-1"></i>Nova
                     </a>
                 </div>
@@ -423,11 +423,11 @@
                 {% endif %}
             </div>
 
-            <!-- Projetos PDCA -->
+            <!-- Projetos -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Projetos PDCA</h6>
-                    <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-outline-primary btn-sm">
+                <div class="card-header bg-primary bg-opacity-10 border-bottom border-primary py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-primary-emphasis"><i class="bi bi-folder2-open me-2 text-dark"></i>Projetos</h6>
+                    <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-primary btn-sm">
                         <i class="bi bi-plus-circle me-1"></i>Novo
                     </a>
                 </div>
@@ -438,31 +438,46 @@
                         {% for proj in projetos %}
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                <a href="{{ url_for('projects.projeto_pdca', id=proj.id) }}" class="fw-bold text-decoration-none">{{ proj.nome }}</a>
+                                <a href="{% if proj.tipo == 'pdca' %}{{ url_for('projects.projeto_pdca', id=proj.id) }}{% else %}{{ url_for('projects.detalhe_projeto', id=proj.id) }}{% endif %}" class="fw-bold text-decoration-none">{{ proj.nome }}</a>
                                 <div class="d-flex gap-2 mt-1">
+                                    {% if proj.tipo == 'pdca' %}
+                                    <span class="badge bg-info rounded-pill" style="font-size:0.65rem;">
+                                        <i class="bi bi-arrow-repeat me-1"></i>PDCA
+                                    </span>
                                     <span class="badge bg-{{ fases_cores.get(proj.fase_atual, 'secondary') }} rounded-pill" style="font-size:0.65rem;">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Ciclo #{{ proj.ciclo_atual }}
+                                        Ciclo #{{ proj.ciclo_atual }}
                                     </span>
                                     <span class="badge bg-{{ fases_cores.get(proj.fase_atual, 'secondary') }} text-uppercase" style="font-size:0.65rem;">
                                         {{ proj.fase_atual }}
                                     </span>
+                                    {% else %}
+                                    <span class="badge bg-primary rounded-pill" style="font-size:0.65rem;">
+                                        <i class="bi bi-tools me-1"></i>Normal
+                                    </span>
+                                    {% endif %}
                                 </div>
                                 <div class="text-muted small mt-1">
                                     {{ proj.ferramentas|length }} ferramenta(s) · {{ proj.data_criacao.strftime('%d/%m/%Y') }}
                                 </div>
                             </div>
                             <div class="text-end">
-                                <a href="{{ url_for('projects.projeto_pdca', id=proj.id) }}" class="btn btn-sm btn-outline-dark">
+                                {% if proj.tipo == 'pdca' %}
+                                <a href="{{ url_for('projects.projeto_pdca', id=proj.id) }}" class="btn btn-sm btn-outline-info">
                                     <i class="bi bi-arrow-repeat"></i> PDCA
                                 </a>
+                                {% else %}
+                                <a href="{{ url_for('projects.detalhe_projeto', id=proj.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-folder2-open"></i> Abrir
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                     {% else %}
                     <div class="p-4 text-center text-muted">
-                        <i class="bi bi-arrow-repeat fs-2 d-block mb-2"></i>
-                        <small>Nenhum projeto PDCA vinculado.</small>
+                        <i class="bi bi-folder2-open fs-2 d-block mb-2"></i>
+                        <small>Nenhum projeto vinculado.</small>
                         <div class="mt-2">
                             <a href="{{ url_for('projects.lista_projetos') }}" class="btn btn-sm btn-primary">
                                 <i class="bi bi-plus-circle me-1"></i>Criar Projeto

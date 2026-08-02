@@ -74,24 +74,24 @@
                     <!-- Info Tags -->
                     <div class="d-flex gap-2 flex-wrap mb-2 small">
                         {% if planta.tipo_ambiente %}
-                        <span class="badge bg-dark bg-opacity-10 text-dark">{{ planta.tipo_ambiente }}</span>
+                        <span class="badge bg-dark bg-opacity-25 text-dark-emphasis fw-semibold">{{ planta.tipo_ambiente }}</span>
                         {% endif %}
                         {% if stats.total > 0 %}
-                        <span class="badge bg-primary bg-opacity-10 text-primary">{{ stats.total }} itens</span>
+                        <span class="badge bg-primary bg-opacity-25 text-primary-emphasis fw-semibold">{{ stats.total }} itens</span>
                         {% endif %}
                         {% if planta.area_total_m2 > 0 %}
-                        <span class="badge bg-info bg-opacity-10 text-info">{{ planta.area_total_m2 }} m²</span>
+                        <span class="badge bg-info bg-opacity-25 text-info-emphasis fw-semibold">{{ planta.area_total_m2 }} m²</span>
                         {% endif %}
                     </div>
                     
                     <!-- Ícones de objetos -->
                     <div class="d-flex gap-2 flex-wrap mb-3 small">
-                        {% if stats.paredes > 0 %}<span class="badge bg-dark bg-opacity-10 text-dark">🧱 {{ stats.paredes }}</span>{% endif %}
-                        {% if stats.portas > 0 %}<span class="badge bg-dark bg-opacity-10 text-dark">🚪 {{ stats.portas }}</span>{% endif %}
-                        {% if stats.extintores > 0 %}<span class="badge bg-danger bg-opacity-10 text-danger">🧯 {{ stats.extintores }}</span>{% endif %}
-                        {% if stats.saidas > 0 %}<span class="badge bg-success bg-opacity-10 text-success">🆘 {{ stats.saidas }}</span>{% endif %}
-                        {% if stats.maquinas > 0 %}<span class="badge bg-warning bg-opacity-10 text-warning">⚙️ {{ stats.maquinas }}</span>{% endif %}
-                        {% if stats.mesas > 0 %}<span class="badge bg-orange bg-opacity-10 text-orange">🪑 {{ stats.mesas }}</span>{% endif %}
+                        {% if stats.paredes > 0 %}<span class="badge bg-dark bg-opacity-25 text-dark-emphasis fw-semibold">🧱 {{ stats.paredes }}</span>{% endif %}
+                        {% if stats.portas > 0 %}<span class="badge bg-dark bg-opacity-25 text-dark-emphasis fw-semibold">🚪 {{ stats.portas }}</span>{% endif %}
+                        {% if stats.extintores > 0 %}<span class="badge bg-danger bg-opacity-25 text-danger-emphasis fw-semibold">🧯 {{ stats.extintores }}</span>{% endif %}
+                        {% if stats.saidas > 0 %}<span class="badge bg-success bg-opacity-25 text-success-emphasis fw-semibold">🆘 {{ stats.saidas }}</span>{% endif %}
+                        {% if stats.maquinas > 0 %}<span class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-semibold">⚙️ {{ stats.maquinas }}</span>{% endif %}
+                        {% if stats.mesas > 0 %}<span class="badge bg-orange bg-opacity-25 text-orange-emphasis fw-semibold">🪑 {{ stats.mesas }}</span>{% endif %}
                     </div>
                     
                     <!-- Data -->
@@ -149,7 +149,7 @@
     .transition { transition: all 0.3s ease; }
     .bg-orange { background-color: #fd7e14; }
     .text-orange { color: #fd7e14; }
-    .bg-opacity-10 { opacity: 0.1; }
+    .text-orange-emphasis { color: #cc5500; }
 </style>
 {% endblock %}
 

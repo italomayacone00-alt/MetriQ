@@ -150,6 +150,10 @@ def vincular_dados(id):
             item = ChecklistISO.query.get(item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
+        elif tipo == 'projeto':
+            item = Projeto.query.get(item_id)
+            if item and item.user_id == current_user.id:
+                item.empresa_id = id
         
         db.session.commit()
         return jsonify({'sucesso': True, 'mensagem': 'Vinculado com sucesso!'})
@@ -175,18 +179,26 @@ def dashboard(id):
     # NRs aplicáveis sugeridas
     nrs_aplicaveis = empresa.get_nrs_aplicaveis()
     
-    # Detalhamento das NRs com checklists
-    # Primeiro: checklists vinculados a esta empresa
-    # Segundo: checklists do usuário sem empresa (fallback)
+# Detalhamento das NRs com checklists VINCULADOS À EMPRESA
     nrs_detalhes = []
     normas_db = NormaRegulamentadora.query.filter(NormaRegulamentadora.numero.in_(nrs_aplicaveis)).all()
     for nr in normas_db:
-        # Tenta checklist vinculado à empresa
+        # Apenas checklists vinculados a esta empresa
         checklist = ChecklistNR.query.filter_by(
             norma_id=nr.id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            empresa_id=id
         ).first()
-        vinculo = 'usuario'
+        vinculo = 'empresa' if checklist else 'usuario'
+        
+        # Se não tem checklist vinculado à empresa, verifica se existe checklist geral (sem empresa)
+        if not checklist:
+            checklist = ChecklistNR.query.filter(
+                ChecklistNR.norma_id == nr.id,
+                ChecklistNR.user_id == current_user.id,
+                ChecklistNR.empresa_id == None
+            ).first()
+            vinculo = 'usuario' if checklist else 'usuario'
         
         pct = checklist.calcular_conformidade() if checklist else 0
         nrs_detalhes.append({
@@ -199,16 +211,26 @@ def dashboard(id):
             'vinculo': vinculo
         })
     
-    # Detalhamento das ISOs
+    # Detalhamento das ISOs VINCULADAS À EMPRESA
     isos_detalhes = []
     normas_iso = NormaISO.query.all()
     for iso in normas_iso:
-        # Tenta ISO vinculado à empresa
+        # Apenas checklists vinculados a esta empresa
         checklist = ChecklistISO.query.filter_by(
             norma_id=iso.id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            empresa_id=id
         ).first()
-        vinculo = 'usuario'
+        vinculo = 'empresa' if checklist else 'usuario'
+        
+        # Se não tem checklist vinculado à empresa, verifica se existe checklist geral
+        if not checklist:
+            checklist = ChecklistISO.query.filter(
+                ChecklistISO.norma_id == iso.id,
+                ChecklistISO.user_id == current_user.id,
+                ChecklistISO.empresa_id == None
+            ).first()
+            vinculo = 'usuario' if checklist else 'usuario'
         
         maturidade = checklist.calcular_maturidade_percentual() if checklist else 0
         isos_detalhes.append({
@@ -220,10 +242,17 @@ def dashboard(id):
             'vinculo': vinculo
         })
     
-    # Plantas baixas
-    plantas = PlantaBaixa.query.filter_by(user_id=current_user.id).all()
+    # Plantas baixas - apenas vinculadas à empresa
+    plantas = PlantaBaixa.query.filter_by(
+        user_id=current_user.id,
+        empresa_id=id
+    ).all()
     
-    plantas_sem_vinculo = []
+    # Plantas sem vínculo para opção de vincular
+    plantas_sem_vinculo = PlantaBaixa.query.filter(
+        PlantaBaixa.user_id == current_user.id,
+        (PlantaBaixa.empresa_id == None) | (PlantaBaixa.empresa_id == 0)
+    ).all()
     
     plantas_dados = []
     for p in plantas:
@@ -236,10 +265,17 @@ def dashboard(id):
             'vinculado': True
         })
     
-    # Projetos (vinculados + sem vínculo)
-    projetos = Projeto.query.filter_by(user_id=current_user.id).all()
+    # Projetos - apenas vinculados à empresa
+    projetos = Projeto.query.filter_by(
+        user_id=current_user.id,
+        empresa_id=id
+    ).all()
     
-    projetos_sem_vinculo = []
+    # Projetos sem vínculo para opção de vincular
+    projetos_sem_vinculo = Projeto.query.filter(
+        Projeto.user_id == current_user.id,
+        (Projeto.empresa_id == None) | (Projeto.empresa_id == 0)
+    ).all()
     
     return render_template('empresa/dashboard.html',
                           empresa=empresa,
@@ -362,7 +398,7 @@ def relatorio(id):
             'respondidas': len(checklist.respostas) if checklist and checklist.respostas else 0
         })
     
-    # Dados de plantas com checklist detalhado
+    # Dados de plantas com checklist detalhado e dados do canvas
     plantas_detalhadas = []
     labels_planta = []
     dados_planta = []
@@ -379,8 +415,11 @@ def relatorio(id):
             'conformidade': pct,
             'stats': stats,
             'objetos': p.contar_objetos(),
+            'canvas_data': p.canvas_data or {},
             'checklist': p.checklist_conformidade or {},
-            'observacoes': p.observacoes_conformidade or {}
+            'observacoes': p.observacoes_conformidade or {},
+            'largura_real': p.largura_real,
+            'altura_real': p.altura_real
         })
     
     # Projetos detalhados

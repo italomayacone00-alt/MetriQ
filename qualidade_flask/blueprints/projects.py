@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
-from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, db
+from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Empresa, db
 from groq import Groq
 
 projects = Blueprint('projects', __name__)
@@ -482,7 +482,8 @@ def lista_projetos():
             query = query.filter_by(tipo=tipo_filtro)
         
         meus_projetos = query.order_by(Projeto.data_criacao.desc()).all()
-        return render_template('projetos/lista.html', projetos=meus_projetos)
+        empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()
+        return render_template('projetos/lista.html', projetos=meus_projetos, empresas=empresas)
     except Exception as e:
         import traceback
         print(f"ERRO em lista_projetos: {str(e)}")
@@ -496,6 +497,7 @@ def novo_projeto():
     nome = request.form.get('nome')
     objetivo = request.form.get('objetivo')
     tipo = request.form.get('tipo', 'normal')  # padrão normal
+    empresa_id = request.form.get('empresa_id', '').strip()
     
     if not nome or not objetivo:
         flash('Nome e objetivo são obrigatórios!', 'danger')
@@ -505,7 +507,8 @@ def novo_projeto():
         nome=nome, 
         objetivo=objetivo, 
         user_id=current_user.id,
-        tipo=tipo
+        tipo=tipo,
+        empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None
     )
     db.session.add(novo)
     db.session.commit()
@@ -549,22 +552,10 @@ def abrir_ferramenta_projeto(id, tipo):
     # Verificar se já existe ferramenta deste tipo
     ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()
     
-    # Se não existir, verificar se a IA pode gerar dados automaticamente
-    if not ferramenta:
-        sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
-        
-        # Se a IA sugeriu esta ferramenta com dados preenchidos, criar automaticamente
-        if (sugestao.get('ferramenta_sugerida') == tipo and 
-            sugestao.get('dados_preenchidos')):
-            
-            ferramenta = ProjetoFerramenta(
-                projeto_id=id,
-                tipo=tipo,
-                dados=sugestao['dados_preenchidos'],
-                analise_ia=sugestao.get('analise')
-            )
-            db.session.add(ferramenta)
-            db.session.commit()
+    # NOTA: NÃO criar automaticamente ferramentas com IA.
+    # O usuário deve clicar em "Preencher com IA" para autorizar o preenchimento.
+    # A ferramenta será criada apenas quando o usuário salvar manualmente
+    # ou quando usar o botão "Preencher com IA" (endpoint separado).
     
     # Mapeamento de templates
     templates = {
@@ -587,6 +578,54 @@ def abrir_ferramenta_projeto(id, tipo):
         ferramenta=ferramenta,
         dados_projeto=ferramenta.dados if ferramenta else None
     )
+
+
+# ==========================================
+# ENDPOINT PARA PREENCHER COM IA (Sob Autorização)
+# ==========================================
+@projects.route('/projeto/<int:id>/ferramenta/<tipo>/preencher-ia', methods=['POST'])
+@login_required
+def preencher_ferramenta_ia(id, tipo):
+    """
+    Preenche uma ferramenta com dados gerados pela IA, apenas quando o usuário
+    clica explicitamente no botão 'Preencher com IA'.
+    """
+    projeto = Projeto.query.get_or_404(id)
+    if projeto.user_id != current_user.id:
+        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    
+    # Buscar sugestão da IA com dados preenchidos
+    sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
+    
+    # Verificar se a IA sugeriu esta ferramenta com dados preenchidos
+    if (sugestao.get('ferramenta_sugerida') != tipo):
+        return jsonify({
+            "status": "error", 
+            "message": f"A IA sugere usar '{sugestao.get('nome_ferramenta', sugestao.get('ferramenta_sugerida'))}' em vez de '{tipo}'. Deseja ir para a ferramenta sugerida?"
+        }), 400
+    
+    if not sugestao.get('dados_preenchidos'):
+        return jsonify({
+            "status": "error", 
+            "message": "A IA não conseguiu gerar dados suficientes para preencher esta ferramenta automaticamente. Preencha manualmente."
+        }), 400
+    
+    # Criar ou atualizar a ferramenta com os dados da IA
+    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()
+    if not ferramenta:
+        ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)
+        db.session.add(ferramenta)
+    
+    ferramenta.dados = sugestao['dados_preenchidos']
+    ferramenta.analise_ia = sugestao.get('analise', '')
+    db.session.commit()
+    
+    return jsonify({
+        "status": "success",
+        "message": "Ferramenta preenchida com IA!",
+        "dados": sugestao['dados_preenchidos']
+    })
+
 
 # ==========================================
 # ROTAS ESPECÍFICAS POR FERRAMENTA (LEGADO)
@@ -773,7 +812,8 @@ def salvar_ferramenta_projeto(id):
     dados = request.json
     tipo = dados.get('tipo')
     conteudo = dados.get('dados')
-    auto_generate = dados.get('auto_generate', False)
+    # NOTA: auto_generate removido - a IA só preenche ferramentas quando o usuário
+    # clica explicitamente em "Preencher com IA" no endpoint separado.
     
     ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()
     
@@ -794,35 +834,10 @@ def salvar_ferramenta_projeto(id):
         ferramenta.analise_ia = None
     
     db.session.commit()
-
-    # Se auto_generate for True, a IA gera a PRÓXIMA ferramenta automaticamente
-    proxima_ferramenta_info = None
-    if auto_generate:
-        # Busca sugestão e dados preenchidos pela IA
-        sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
-        
-        if sugestao.get('dados_preenchidos') and sugestao.get('ferramenta_sugerida'):
-            tipo_sugerido = sugestao['ferramenta_sugerida']
-            dados_sugeridos = sugestao['dados_preenchidos']
-            
-            # Verifica se já existe, senão cria
-            proxima = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo_sugerido).first()
-            if not proxima:
-                proxima = ProjetoFerramenta(projeto_id=id, tipo=tipo_sugerido)
-                db.session.add(proxima)
-            
-            proxima.dados = dados_sugeridos
-            proxima.analise_ia = sugestao.get('analise')
-            db.session.commit()
-            proxima_ferramenta_info = {
-                "tipo": tipo_sugerido,
-                "nome": sugestao.get('nome_ferramenta')
-            }
     
     return jsonify({
         "status": "success", 
-        "message": "Ferramenta salva!",
-        "proxima_gerada": proxima_ferramenta_info
+        "message": "Ferramenta salva com sucesso!"
     })
 
 @projects.route('/projeto/<int:id>/relatorio')
@@ -1113,11 +1128,13 @@ def excluir_ferramenta_projeto(id, ferramenta_id):
     projeto = Projeto.query.get_or_404(id)
     
     if projeto.user_id != current_user.id or ferramenta.projeto_id != id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('projects.detalhe_projeto', id=id))
     
     db.session.delete(ferramenta)
     db.session.commit()
-    return jsonify({"status": "success", "message": "Ferramenta excluída!"})
+    flash('Ferramenta excluída com sucesso!', 'success')
+    return redirect(url_for('projects.detalhe_projeto', id=id))
 
 # ==========================================
 # ROTAS DO CICLO PDCA COMPLETO
