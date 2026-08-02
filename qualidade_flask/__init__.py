@@ -112,7 +112,7 @@ def create_app():
         # POPULAÇÃO AUTOMÁTICA - Primeira execução
         # ==================================================
         # Verifica se o banco já tem dados
-        from .commands import iso_9001_data, iso_14001_data, iso_45001_data, nrs_basicas_data
+        from .seed_data import iso_9001_data, iso_14001_data, iso_45001_data, nrs_basicas_data
         
         # Popula ISOs automaticamente se não existirem
         if NormaISO.query.count() == 0:
@@ -147,7 +147,7 @@ def create_app():
             print(f"⚠️ Erro na migração automática (ignorado): {e}")
 
     # Registrar comandos CLI personalizados
-    from .commands import register_commands
+    from .seed_data import register_commands
     register_commands(app)
 
     return app
