@@ -1,23 +1,14 @@
 from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime
 from flask_login import login_required, current_user
-from .. import db
+from .. import db, limiter
 from ..models import Analise
+from ..utils.sanitize import sanitizar_html
 import os
 import copy
-from groq import Groq
+from ..utils.ai_client import gerar_analise, gerar_analise_json, get_cliente_groq, get_cliente_google
 
 main = Blueprint('main', __name__)
-
-def get_client_groq():
-    # O Python vai buscar a chave direto na memória do computador/servidor
-    api_key = os.environ.get("GROQ_API_KEY")
-    
-    if not api_key:
-        print("ERRO: Chave não encontrada no sistema!")
-        return None
-        
-    return Groq(api_key=api_key)
 
 # ==================================================
 # 1. PROMPTS ESPECIALIZADOS POR FERRAMENTA
@@ -119,19 +110,24 @@ REGRAS:
 # ============================================
 # FUNÇÕES AUXILIARES
 # ============================================
-def get_client_groq():
-    api_key = os.environ.get("GROQ_API_KEY")
-    return Groq(api_key=api_key) if api_key else None
-
 def limpar_dados_para_ia(dados_json):
-    """Remove imagens e trunca textos longos."""
+    """
+    Remove imagens, análises anteriores da IA e trunca textos longos.
+
+    IMPORTANTE: remove o campo 'analise_ia' (e equivalentes) para que o modelo
+    NUNCA receba o conteúdo de análises/warnings anteriores como dado de entrada.
+    Caso contrário, a IA pode "refletir" mensagens antigas (ex: aviso de chave
+    não configurada) na nova resposta gerada.
+    """
     try:
         dados_limpos = copy.deepcopy(dados_json)
         if isinstance(dados_limpos, dict):
-            for key in ['grafico', 'imagem', 'imgBase64']:
+            for key in ['grafico', 'imagem', 'imgBase64', 'analise_ia', 'analise_geral', 'conclusao_geral']:
                 dados_limpos.pop(key, None)
             if 'dados' in dados_limpos and isinstance(dados_limpos['dados'], dict):
-                dados_limpos['dados'].pop('grafico', None)
+                nested = dados_limpos['dados']
+                for key in ['grafico', 'imagem', 'imgBase64', 'analise_ia', 'analise_geral']:
+                    nested.pop(key, None)
         
         texto = str(dados_limpos)
         if len(texto) > 25000:
@@ -145,13 +141,28 @@ def limpar_resposta_ia(texto):
     if not texto: return ""
     return texto.replace('```html', '').replace('```', '')
 
+def gerar_aviso_ia_indisponivel(motivo=""):
+    """Gera um HTML de aviso amigável quando a IA não está disponível."""
+    return f"""
+    <div class="consultoria-report">
+        <div class="p-3 bg-warning bg-opacity-10 border border-warning rounded">
+            <h6 class="text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Análise por IA indisponível</h6>
+            <p class="mb-1 small text-secondary">
+                {motivo or "Não foi possível gerar a análise automática por IA."}
+            </p>
+<p class="mb-0 small text-secondary">
+                Configure a chave <code>GROQ_API_KEY</code> (ou <code>GOOGLE_API_KEY</code>) no arquivo <code>.env</code>
+                para habilitar as análises por IA. Veja o arquivo <code>.env.example</code>.
+            </p>
+        </div>
+    </div>
+    """
+
 # ============================================
 # CÉREBRO 1: GERAÇÃO DE ANÁLISE INDIVIDUAL
 # ============================================
 def gerar_analise_ia(tipo_ferramenta, dados_json):
-    client = get_client_groq()
-    if not client: return None 
-
+    # Tenta Groq primeiro, depois Google (fallback automático)
     try:
         dados_texto = limpar_dados_para_ia(dados_json)
         
@@ -168,6 +179,12 @@ def gerar_analise_ia(tipo_ferramenta, dados_json):
         
         Gere um RELATÓRIO TÉCNICO EXECUTIVO em HTML (Bootstrap).
         NÃO use blocos de código markdown (```). Retorne apenas o HTML cru.
+        
+        REGRAS CRÍTICAS:
+        - Analise EXCLUSIVAMENTE os dados brutos fornecidos pelo usuário.
+        - NUNCA mencione configuração de API, chaves, "IA indisponível" ou "falta de configuração".
+        - NUNCA repita textos de aviso que possam estar nos dados de entrada.
+        - Se os dados estiverem incompletos, faça a melhor análise possível com o que foi fornecido.
         
         ESTRUTURA OBRIGATÓRIA DE SAÍDA:
         <div class="consultoria-report">
@@ -200,14 +217,19 @@ def gerar_analise_ia(tipo_ferramenta, dados_json):
         
         prompt_usuario = f"Ferramenta: {tipo_ferramenta}. Dados Brutos: {dados_texto}"
 
-        chat = client.chat.completions.create(
-            messages=[{"role": "system", "content": prompt_sistema}, {"role": "user", "content": prompt_usuario}],
-            model="llama-3.3-70b-versatile", 
-            temperature=0.3, 
-            max_tokens=2000
-        )
-        # --- LIMPEZA DE MARKDOWN AQUI ---
-        return limpar_resposta_ia(chat.choices[0].message.content)
+        messages = [
+            {"role": "system", "content": prompt_sistema},
+            {"role": "user", "content": prompt_usuario}
+        ]
+
+        texto, provider = gerar_analise(messages, temperature=0.3, max_tokens=2000)
+        if not texto:
+            return None
+
+        # Se veio do Google, o modelo costuma ser melhor em HTML, mas precisa
+        # garantir que não retornou markdown
+        print(f"IA Individual gerada com provider: {provider}")
+        return limpar_resposta_ia(texto)
 
     except Exception as e:
         print(f"Erro IA Individual: {e}")
@@ -217,8 +239,7 @@ def gerar_analise_ia(tipo_ferramenta, dados_json):
 # CÉREBRO 2: GERAÇÃO DE ANÁLISE GERAL
 # ============================================
 def gerar_conclusao_geral(itens_db):
-    client = get_client_groq()
-    if not client or not itens_db: return None
+    if not itens_db: return None
 
     try:
         resumo_global = "DOSSIÊ TÉCNICO COMPLETO:\n\n"
@@ -229,17 +250,17 @@ def gerar_conclusao_geral(itens_db):
                 analise_limpa = item.dados['analise_ia'].replace('<div>', '').replace('</div>', '')
                 resumo_global += f"DIAGNÓSTICO PRÉVIO: {analise_limpa[:600]}...\n\n"
 
-        chat = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": PROMPT_ANALISE_GERAL},
-                {"role": "user", "content": resumo_global}
-            ],
-            model="llama-3.3-70b-versatile", 
-            temperature=0.4, 
-            max_tokens=3000
-        )
-        # --- LIMPEZA DE MARKDOWN AQUI ---
-        return limpar_resposta_ia(chat.choices[0].message.content)
+        messages = [
+            {"role": "system", "content": PROMPT_ANALISE_GERAL},
+            {"role": "user", "content": resumo_global}
+        ]
+
+        texto, provider = gerar_analise(messages, temperature=0.4, max_tokens=3000)
+        if not texto:
+            return None
+
+        print(f"IA Geral gerada com provider: {provider}")
+        return limpar_resposta_ia(texto)
 
     except Exception as e:
         print(f"Erro IA Geral: {e}")
@@ -267,6 +288,7 @@ def index():
 
 @main.route('/salvar', methods=['POST'])
 @login_required
+@limiter.limit("30 per minute")
 def salvar():
     conteudo = request.json
     if not conteudo: return jsonify({'erro': 'Dados inválidos'}), 400
@@ -275,9 +297,15 @@ def salvar():
         if conteudo.get('dados'):
             ia_texto = gerar_analise_ia(conteudo['tipo'], conteudo.get('dados'))
             if ia_texto and "ERRO_IA" not in ia_texto:
-                conteudo['dados']['analise_ia'] = ia_texto
+                # Sanitiza o HTML gerado pela IA para prevenir XSS
+                conteudo['dados']['analise_ia'] = sanitizar_html(ia_texto)
+            else:
+                # IA indisponível (chave inválida/ausente). Salva um aviso amigável.
+                conteudo['dados']['analise_ia'] = gerar_aviso_ia_indisponivel()
     except Exception as e:
         print(f"Aviso IA: {e}")
+        if conteudo.get('dados'):
+            conteudo['dados']['analise_ia'] = gerar_aviso_ia_indisponivel()
 
     try:
         nova = Analise(
@@ -323,12 +351,14 @@ def relatorio():
 
     itens_db = Analise.query.filter(Analise.id.in_(ids), Analise.user_id == current_user.id).all()
     
-    # 1. Inteligência Retroativa
+# 1. Inteligência Retroativa
     precisa_salvar = False
     for item in itens_db:
         texto = item.dados.get('analise_ia', '')
-        # Regera se: vazio, erro, ou modelo antigo, ou SE TIVER O LIXO ```html
-        if not texto or "ERRO" in texto or "consultoria-report" not in texto or "```" in texto:
+        # Detecta se o texto atual é um aviso de "IA indisponível" (não é uma análise real)
+        eh_aviso_indisponivel = ("IA indisponível" in texto or "não foi possível gerar" in texto.lower() or "configure a chave" in texto.lower())
+        # Regera se: vazio, erro, aviso de indisponibilidade, modelo antigo, ou tiver lixo ```html
+        if not texto or "ERRO" in texto or eh_aviso_indisponivel or "consultoria-report" not in texto or "```" in texto:
             print(f"-> Corrigindo IA para ID {item.id}...")
             nova_ia = gerar_analise_ia(item.tipo, item.dados)
             if nova_ia and "ERRO_IA" not in nova_ia:
@@ -336,13 +366,22 @@ def relatorio():
                 d['analise_ia'] = nova_ia
                 item.dados = d
                 precisa_salvar = True
+            else:
+                # IA indisponível: garante que o usuário veja o aviso, não uma seção vazia
+                if not item.dados.get('analise_ia') or eh_aviso_indisponivel:
+                    d = dict(item.dados)
+                    d['analise_ia'] = gerar_aviso_ia_indisponivel()
+                    item.dados = d
+                    precisa_salvar = True
 
     if precisa_salvar: db.session.commit()
 
-    # 2. Inteligência Geral
+# 2. Inteligência Geral
     analise_geral = gerar_conclusao_geral(itens_db)
+    if analise_geral:
+        analise_geral = sanitizar_html(analise_geral)
 
-    return render_template('relatorio.html', 
+    return render_template('relatorio.html',
                            itens=itens_db, 
                            analise_geral=analise_geral, 
                            hoje=datetime.now(), 

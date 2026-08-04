@@ -291,6 +291,276 @@
                         {% endfor %}
                     </div>
 
+                {% elif f.tipo == 'fluxograma' %}
+                    {% if f.dados and (f.dados.grafico or f.dados.imagem) %}
+                        <div class="chart-box text-center mb-4 p-2 border rounded bg-white">
+                            <img src="{{ f.dados.grafico or f.dados.imagem }}" class="img-fluid" style="max-height: 280px;">
+                        </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.etapas %}
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="w-5">#</th>
+                                <th class="w-50">Etapa</th>
+                                <th>Tipo</th>
+                                <th>Conectado em</th>
+                                <th>Condição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in f.dados.etapas %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td class="fw-500">{{ e.texto }}</td>
+                                <td><span class="badge bg-secondary text-uppercase">{{ e.tipo }}</span></td>
+                                <td>
+                                    {% if e.paiId and f.dados.etapas|selectattr("id","equalto",e.paiId)|list %}
+                                        {{ f.dados.etapas|selectattr("id","equalto",e.paiId)|map(attribute="texto")|first }}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>{{ e.setaTexto or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% elif f.dados and f.dados.processos %}
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr><th>Processo</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in f.dados.processos %}<tr><td>{{ p }}</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="bg-light p-3 rounded border">
+                        <pre class="mb-0 small text-muted">{{ f.dados | tojson(indent=2) }}</pre>
+                    </div>
+                    {% endif %}
+
+                {% elif f.tipo == 'folha_verificacao' %}
+                    {% if f.dados and f.dados.grafico %}
+                        <div class="chart-box text-center mb-4 p-2 border rounded bg-white">
+                            <img src="{{ f.dados.grafico }}" class="img-fluid" style="max-height: 280px;">
+                        </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.itens %}
+                    <div class="mb-3 d-flex gap-3">
+                        <span class="badge bg-info text-dark p-2">Total de Observações: {{ f.dados.total or f.dados.itens|sum(attribute='valor') }}</span>
+                        <span class="badge bg-light text-dark border p-2">Itens: {{ f.dados.itens|length }}</span>
+                    </div>
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="w-5">#</th>
+                                <th>Item / Evento</th>
+                                <th class="text-center">Contagem</th>
+                                <th class="text-center">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_folha = f.dados.total|default(f.dados.itens|sum(attribute='valor'), true) %}
+                            {% for item in f.dados.itens %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td class="fw-500">{{ item.label or item.descricao }}</td>
+                                <td class="text-center fw-bold">{{ item.valor or item.contagem }}</td>
+                                <td class="text-center">
+                                    {% if total_folha and total_folha|float > 0 %}
+                                        {{ "%.1f"|format((item.valor or 0) / total_folha * 100) }}%
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="bg-light p-3 rounded border">
+                        <pre class="mb-0 small text-muted">{{ f.dados | tojson(indent=2) }}</pre>
+                    </div>
+                    {% endif %}
+
+                {% elif f.tipo == 'histograma' %}
+                    {% if f.dados and f.dados.grafico %}
+                        <div class="chart-box text-center mb-4 p-2 border rounded bg-white">
+                            <img src="{{ f.dados.grafico }}" class="img-fluid" style="max-height: 280px;">
+                        </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.config %}
+                    <div class="row g-3 mb-4">
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Amostras</small>
+                                <strong class="fs-5">{{ f.dados.dados_brutos|length if f.dados.dados_brutos is defined else '-' }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Média</small>
+                                <strong class="fs-5">{{ "%.3f"|format(f.dados.config.media) if f.dados.config.media is defined else '-' }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Mínimo</small>
+                                <strong class="fs-5">{{ f.dados.config.min or '-' }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Máximo</small>
+                                <strong class="fs-5">{{ f.dados.config.max or '-' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.histograma %}
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Intervalo de Classe</th>
+                                <th class="text-center">Limite Inf.</th>
+                                <th class="text-center">Limite Sup.</th>
+                                <th class="text-center">Frequência</th>
+                                <th class="text-center">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in f.dados.histograma %}
+                            <tr>
+                                <td>{{ h.label }}</td>
+                                <td class="text-center">{{ h.limInf }}</td>
+                                <td class="text-center">{{ h.limSup }}</td>
+                                <td class="text-center fw-bold">{{ h.freq }}</td>
+                                <td class="text-center">{{ "%.1f"|format(h.perc) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                {% elif f.tipo == 'dispersao' %}
+                    {% if f.dados and f.dados.grafico %}
+                        <div class="chart-box text-center mb-4 p-2 border rounded bg-white">
+                            <img src="{{ f.dados.grafico }}" class="img-fluid" style="max-height: 280px;">
+                        </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.stats %}
+                    <div class="row g-3 mb-4">
+                        <div class="col-4">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Correlação (r)</small>
+                                <strong class="fs-5 {% if (f.dados.stats.r|abs) > 0.7 %}text-success{% elif (f.dados.stats.r|abs) < 0.3 %}text-danger{% else %}text-warning{% endif %}">
+                                    {{ f.dados.stats.r }}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Equação da Reta</small>
+                                <strong class="fs-6">y = {{ f.dados.stats.a }}x + {{ f.dados.stats.b }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Pontos</small>
+                                <strong class="fs-5">{{ f.dados.pontos|length if f.dados.pontos is defined else '-' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.pontos %}
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="w-5">#</th>
+                                <th>Variável X {{ ('(' ~ f.dados.config.labelX ~ ')') if f.dados.config and f.dados.config.labelX }}</th>
+                                <th>Variável Y {{ ('(' ~ f.dados.config.labelY ~ ')') if f.dados.config and f.dados.config.labelY }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in f.dados.pontos[:30] %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ p.x }}</td>
+                                <td>{{ p.y }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if f.dados.pontos|length > 30 %}
+                            <tr><td colspan="3" class="text-muted text-center">... mais {{ f.dados.pontos|length - 30 }} pontos ...</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                {% elif f.tipo == 'cep' %}
+                    {% if f.dados and f.dados.grafico %}
+                        <div class="chart-box text-center mb-4 p-2 border rounded bg-white">
+                            <img src="{{ f.dados.grafico }}" class="img-fluid" style="max-height: 280px;">
+                        </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.estatisticas %}
+                    <div class="row g-3 mb-4">
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Média</small>
+                                <strong class="fs-5">{{ "%.3f"|format(f.dados.estatisticas.media) }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Desvio</small>
+                                <strong class="fs-5">{{ "%.3f"|format(f.dados.estatisticas.desvio) }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">LSE (+3σ)</small>
+                                <strong class="fs-5 text-danger">{{ "%.3f"|format(f.dados.estatisticas.lse) }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">LIE (-3σ)</small>
+                                <strong class="fs-5 text-danger">{% if f.dados.estatisticas.lie < 0 %}0.000 / {{ "%.3f"|format(f.dados.estatisticas.lie) }}{% else %}{{ "%.3f"|format(f.dados.estatisticas.lie) }}{% endif %}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if f.dados and f.dados.itens %}
+                    <table class="table table-sm table-hover border-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="w-5">#</th>
+                                <th>Amostra</th>
+                                <th class="text-center">Valor</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set lse = f.dados.estatisticas.lse if f.dados.estatisticas else none %}
+                            {% set lie = f.dados.estatisticas.lie if f.dados.estatisticas else none %}
+                            {% set lie_real = 0 if lie and lie < 0 else lie %}
+                            {% for it in f.dados.itens %}
+                            {% set fora = lse is not none and (it.value > lse or (lie_real is not none and it.value < lie_real)) %}
+                            <tr class="{{ 'table-danger' if fora else '' }}">
+                                <td>{{ loop.index }}</td>
+                                <td class="fw-500">{{ it.label }}</td>
+                                <td class="text-center fw-bold">{{ "%.3f"|format(it.value) }}</td>
+                                <td class="text-center">
+                                    {% if fora %}
+                                    <span class="badge bg-danger">FORA DE CONTROLE</span>
+                                    {% else %}
+                                    <span class="badge bg-success">OK</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
                 {% else %}
                     <div class="bg-light p-3 rounded border">
                         <pre class="mb-0 small text-muted">{{ f.dados | tojson(indent=2) }}</pre>

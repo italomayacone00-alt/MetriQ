@@ -2,7 +2,140 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from ..models import Empresa, PlantaBaixa, Projeto, ProjetoFerramenta, ChecklistNR, ChecklistISO, NormaRegulamentadora, NormaISO
 from .. import db
+from ..utils.ai_client import gerar_analise
+from ..utils.sanitize import sanitizar_html
 from datetime import datetime
+import json
+import markdown
+
+# ============================================
+# PARECER TÉCNICO CONSOLIDADO (IA) DA EMPRESA
+# ============================================
+def gerar_parecer_ia_empresa(empresa, metricas, nrs_detalhadas, isos_detalhadas, plantas_detalhadas, projetos_detalhados):
+    """
+    Gera um parecer técnico consolidado usando IA, cruzando os dados de
+    NRs, ISOs, plantas baixas e projetos da empresa.
+    Retorna o texto gerado, ou None se a IA não estiver disponível.
+    """
+    try:
+        # ----- Montar resumo dos dados para a IA -----
+        resumo = {
+            'empresa': {
+                'razao_social': empresa.razao_social,
+                'grau_risco': empresa.grau_risco,
+                'num_funcionarios': empresa.num_funcionarios,
+                'cnae': empresa.cnae,
+                'ramo_atividade': empresa.ramo_atividade
+            },
+            'metricas': {
+                'conformidade_nr_media': metricas.get('conformidade_nr_media', 0),
+                'maturidade_iso_media': metricas.get('maturidade_iso_media', 0),
+                'conformidade_planta_media': metricas.get('conformidade_planta_media', 0),
+                'total_projetos': metricas.get('total_projetos', 0),
+                'projetos_ativos': metricas.get('projetos_ativos', 0)
+            },
+            'nrs': [],
+            'isos': [],
+            'plantas': [],
+            'projetos': []
+        }
+
+        # NRs com pior desempenho
+        for nr in nrs_detalhadas:
+            if nr.get('tem_checklist'):
+                resumo['nrs'].append({
+                    'numero': nr.get('numero'),
+                    'titulo': nr.get('titulo'),
+                    'conformidade': nr.get('conformidade', 0),
+                    'respondidas': nr.get('respondidas', 0),
+                    'total': nr.get('total_perguntas', 0)
+                })
+
+        # ISOs com pior maturidade
+        for iso in isos_detalhadas:
+            if iso.get('tem_checklist'):
+                resumo['isos'].append({
+                    'numero': iso.get('numero'),
+                    'titulo': iso.get('titulo'),
+                    'maturidade': iso.get('maturidade', 0),
+                    'respondidas': iso.get('respondidas', 0),
+                    'total': iso.get('total_perguntas', 0)
+                })
+
+        # Plantas
+        for p in plantas_detalhadas:
+            resumo['plantas'].append({
+                'nome': p.get('nome'),
+                'conformidade': p.get('conformidade', 0),
+                'objetos': p.get('objetos', {}).get('total', 0)
+            })
+
+        # Projetos
+        for proj in projetos_detalhados:
+            resumo['projetos'].append({
+                'nome': proj.get('nome'),
+                'total_ferramentas': proj.get('total_ferramentas', 0)
+            })
+
+        # Ordenar por pior desempenho para priorizar correções
+        resumo['nrs'].sort(key=lambda x: x['conformidade'])
+        resumo['isos'].sort(key=lambda x: x['maturidade'])
+        resumo['plantas'].sort(key=lambda x: x['conformidade'])
+
+        prompt = f"""
+Atue como Consultor Master Black Belt em Excelência Organizacional e Segurança do Trabalho.
+
+Analise de forma consolidada os dados de conformidade da empresa abaixo e elabore um PARECER EXECUTIVO.
+
+DADOS DA EMPRESA:
+{json.dumps(resumo, ensure_ascii=False, indent=2)}
+
+Escreva um parecer em Markdown profissional com exatamente estas seções:
+1. **Diagnóstico Geral**: Qual a situação consolidada da empresa (NRs, ISOs, plantas e projetos)?
+2. **Prioridades Críticas**: Liste as 3 áreas com pior desempenho que exigem atenção imediata, citando o número da norma/nome (ex.: NR-12, ISO 9001, planta X).
+3. **Recomendações Estratégicas**: Ações concretas e priorizadas que a diretoria deve tomar.
+4. **Veredito Final**: Conclusão executiva sobre a maturidade em segurança e qualidade.
+
+Mantenha o tom sério, técnico e focado em resultados de negócio. Seja objetivo e direto.
+"""
+
+        texto, provider = gerar_analise(
+            [{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=1200
+        )
+
+        if not texto:
+            return None
+
+        print(f"Parecer IA da empresa gerado com provider: {provider}")
+        return texto
+
+    except Exception as e:
+        print(f"Erro ao gerar parecer IA da empresa: {e}")
+        return None
+
+
+def md_para_html(texto):
+    """
+    Converte texto Markdown em HTML (com sanitização anti-XSS).
+    Usada para renderizar o parecer da IA de forma consistente,
+    sem depender de bibliotecas JavaScript do lado do cliente.
+    """
+    if not texto:
+        return texto
+    try:
+        # Converte Markdown -> HTML (com suporte a tabelas)
+        html = markdown.markdown(
+            texto,
+            extensions=['extra', 'sane_lists', 'nl2br'],
+            output_format='html5'
+        )
+        # Sanitiza para remover qualquer script/link perigoso
+        return sanitizar_html(html)
+    except Exception as e:
+        print(f"Erro ao converter Markdown para HTML: {e}")
+        return texto
 
 empresa = Blueprint('empresa', __name__)
 
@@ -443,6 +576,22 @@ def relatorio(id):
             'total_ferramentas': len(proj.ferramentas)
         })
     
+    # Gera parecer técnico consolidado com IA (cruzando NRs, ISOs, plantas e projetos)
+    parecer_ia = None
+    tem_dados_para_ia = (
+        any(nr.get('tem_checklist') for nr in nrs_detalhadas) or
+        any(iso.get('tem_checklist') for iso in isos_detalhadas) or
+        len(plantas_detalhadas) > 0 or
+        len(projetos_detalhados) > 0
+    )
+    if tem_dados_para_ia:
+        parecer_ia = gerar_parecer_ia_empresa(
+            empresa, metricas, nrs_detalhadas,
+            isos_detalhadas, plantas_detalhadas, projetos_detalhados
+        )
+        # Converte o Markdown gerado pela IA em HTML seguro (server-side)
+        parecer_ia = md_para_html(parecer_ia)
+    
     return render_template('empresa/relatorio.html',
                           empresa=empresa,
                           metricas=metricas,
@@ -456,6 +605,7 @@ def relatorio(id):
                           isos_detalhadas=isos_detalhadas,
                           plantas_detalhadas=plantas_detalhadas,
                           projetos_detalhados=projetos_detalhados,
+                          parecer_ia=parecer_ia,
                           hoje=datetime.now())
 
 

@@ -1,34 +1,81 @@
 import os
+import secrets
+import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Configura logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Inicializa as extensões fora da função para serem globais
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address)
 
 def create_app():
     app = Flask(__name__)
     
     # ==================================================
-    # 1. CONFIGURAÇÕES
+    # 1. CONFIGURAÇÕES DE SEGURANÇA
     # ==================================================
-    # Chave secreta (Tenta pegar do Render, senão usa a padrão)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave_desenvolvimento_123')
+    # Chave secreta: OBRIGATÓRIO usar variável de ambiente em produção
+    # Em desenvolvimento, gera uma chave aleatória persistente via arquivo
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        # Tenta carregar chave de um arquivo local (para persistir entre reinícios)
+        key_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), '.secret_key')
+        if os.path.exists(key_file):
+            with open(key_file, 'r') as f:
+                secret_key = f.read().strip()
+        else:
+            # Gera nova chave aleatória
+            secret_key = secrets.token_hex(32)
+            with open(key_file, 'w') as f:
+                f.write(secret_key)
+            logger.warning("⚠️ SECRET_KEY não configurada. Gerada chave aleatória local.")
+            logger.warning("⚠️ Em produção, defina a variável de ambiente SECRET_KEY.")
     
-    # Segurança de Cookies (Só ativa se estiver no Render/Produção)
-    if os.environ.get('RENDER'):
+    app.config['SECRET_KEY'] = secret_key
+    
+    # Configuração de sessão
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['REMEMBER_COOKIE_DURATION'] = 30 * 24 * 3600  # 30 dias
+    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+    app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
+    
+    # HTTPS/Segurança (ativa em produção quando tem RENDER ou URL definido)
+    is_production = bool(os.environ.get('RENDER') or os.environ.get('DATABASE_URL'))
+    if is_production:
         app.config['SESSION_COOKIE_SECURE'] = True
         app.config['SESSION_COOKIE_HTTPONLY'] = True
         app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
         # Força HTTPS
-        Talisman(app, content_security_policy=None)
+        Talisman(app, content_security_policy=None, force_https=True)
+        logger.info("🔒 Modo PRODUÇÃO: HTTPS e Talisman ativos.")
+    else:
+        logger.info("🔓 Modo DESENVOLVIMENTO: segurança simplificada.")
+    
+    # ==================================================
+    # CONFIGURAÇÃO DE E-MAIL (para confirmação/recuperação)
+    # ==================================================
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
+    app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'nao-responda@metriq.com.br')
 
     # ==================================================
-    # ALTERAÇÃO AQUI: Lógica Inteligente de Banco de Dados
+    # BANCO DE DADOS
     # ==================================================
     database_url = os.environ.get('DATABASE_URL')
 
@@ -46,15 +93,28 @@ def create_app():
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # ==================================================
+# ==================================================
     # 2. INICIALIZAÇÃO DAS EXTENSÕES
     # ==================================================
     db.init_app(app)
     login_manager.init_app(app)
-    csrf.init_app(app) # Proteção contra ataques de formulário
+    csrf.init_app(app)  # Proteção CSRF em formulários
+    limiter.init_app(app)  # Rate limiting
     
-    # Define qual é a rota de login (para onde ir se não estiver logado)
-    # 'auth.login' significa: Blueprint 'auth', função 'login'
+# ==================================================
+    # OAuth (Google Login)
+    # ==================================================
+    from .utils.oauth import configurar_oauth, google
+    oauth_configurado = configurar_oauth(app)
+    if oauth_configurado:
+        app.logger.info("✅ Google OAuth configurado com sucesso!")
+    else:
+        app.logger.warning(
+            "⚠️ Google OAuth não configurado. "
+            "Defina GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no ambiente."
+        )
+    
+    # Define qual é a rota de login
     login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, faça login para acessar o sistema."
     login_manager.login_message_category = "warning"

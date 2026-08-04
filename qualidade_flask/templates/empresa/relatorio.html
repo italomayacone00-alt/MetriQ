@@ -13,6 +13,22 @@
         </button>
     </div>
 
+<!-- Parecer Técnico Consolidado (IA) -->
+    {% if parecer_ia %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white border-0 py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-cpu me-2"></i>Parecer Técnico Consolidado <span class="badge bg-info text-dark ms-2">IA</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="report-markdown text-justify">
+                {{ parecer_ia | safe }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Dados da Empresa -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
@@ -849,6 +865,23 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+.report-markdown { line-height: 1.7; }
+.report-markdown h1, .report-markdown h2, .report-markdown h3, .report-markdown h4,
+.report-markdown h5, .report-markdown h6 { margin-top: 1.2em; margin-bottom: 0.6em; font-weight: 700; color: #0f172a; }
+.report-markdown h1 { font-size: 1.5rem; border-bottom: 2px solid #2563eb; padding-bottom: 0.3em; }
+.report-markdown h2 { font-size: 1.3rem; }
+.report-markdown h3 { font-size: 1.1rem; }
+.report-markdown p { margin-bottom: 0.8em; }
+.report-markdown ul, .report-markdown ol { padding-left: 1.5em; margin-bottom: 0.8em; }
+.report-markdown strong { color: #0f172a; }
+.report-markdown blockquote { border-left: 4px solid #2563eb; background: #f1f5f9; padding: 0.6em 1em; margin: 0.8em 0; border-radius: 0 6px 6px 0; }
+.report-markdown code { background: #f1f5f9; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; color: #d6336c; }
+.report-markdown pre { background: #0f172a; color: #e2e8f0; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 0.8em; }
+.report-markdown pre code { background: transparent; color: inherit; padding: 0; }
+.report-markdown table { width: 100%; border-collapse: collapse; margin-bottom: 0.8em; }
+.report-markdown th, .report-markdown td { border: 1px solid #cbd5e1; padding: 0.5em 0.7em; text-align: left; }
+.report-markdown th { background: #f1f5f9; }
+.report-markdown hr { border: none; border-top: 1px solid #e2e8f0; margin: 1.2em 0; }
 @media print {
     .no-print { display: none !important; }
     .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }

@@ -17,10 +17,20 @@
                 <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 2.2rem;">
                     <i class="bi bi-person-fill text-white"></i>
                 </div>
-                <div class="flex-grow-1">
+<div class="flex-grow-1">
                     <h3 class="fw-bold mb-1 text-white">{{ user.nome_completo or user.username }}</h3>
                     <div class="text-white-50 d-flex flex-wrap gap-3 small">
                         <span><i class="bi bi-person-badge me-1"></i>@{{ user.username }}</span>
+                        {% if user.plano == 'free' %}
+                        <span class="badge bg-success bg-opacity-75 text-white border border-white"><i class="bi bi-gift me-1"></i>Plano Gratuito</span>
+                        {% elif user.plano == 'pro' %}
+                        <span class="badge bg-warning text-dark border border-white"><i class="bi bi-star-fill me-1"></i>Plano Pro</span>
+                        {% endif %}
+                        {% if user.email_confirmado %}
+                        <span class="badge bg-info bg-opacity-75 text-white border border-white"><i class="bi bi-check-circle me-1"></i>E-mail Confirmado</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark border border-white"><i class="bi bi-exclamation-circle me-1"></i>E-mail não confirmado</span>
+                        {% endif %}
                         {% if user.cargo %}<span><i class="bi bi-briefcase me-1"></i>{{ user.cargo }}</span>{% endif %}
                         {% if user.email %}<span><i class="bi bi-envelope me-1"></i>{{ user.email }}</span>{% endif %}
                         {% if user.data_cadastro %}<span><i class="bi bi-calendar-check me-1"></i>Desde {{ user.data_cadastro.strftime('%d/%m/%Y') }}</span>{% endif %}
@@ -39,9 +49,14 @@
                         <i class="bi bi-person-lines-fill me-1"></i> Meus Dados
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
+<li class="nav-item" role="presentation">
                     <button class="nav-link" id="senha-tab" data-bs-toggle="tab" data-bs-target="#senha" type="button" role="tab">
                         <i class="bi bi-shield-lock me-1"></i> Alterar Senha
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="excluir-tab" data-bs-toggle="tab" data-bs-target="#excluir" type="button" role="tab">
+                        <i class="bi bi-trash me-1"></i> Excluir Conta
                     </button>
                 </li>
             </ul>
@@ -131,9 +146,63 @@
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-end mt-4">
+<div class="d-flex justify-content-end mt-4">
                                     <button type="submit" class="btn btn-warning fw-bold">
                                         <i class="bi bi-shield-check me-1"></i> Alterar Senha
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA: EXCLUIR CONTA -->
+                <div class="tab-pane fade" id="excluir" role="tabpanel">
+                    <div class="card border-0 shadow-sm border-danger">
+                        <div class="card-header bg-danger text-white py-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Zona de Perigo</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Ao excluir sua conta, <strong>todos os seus dados</strong> serão removidos permanentemente,
+                                incluindo:
+                            </p>
+                            <ul class="text-muted small">
+                                <li>Análises (Ferramentas da Qualidade)</li>
+                                <li>Projetos e ciclos PDCA</li>
+                                <li>Empresas cadastradas</li>
+                                <li>Plantas baixas e checklists (NR/ISO)</li>
+                            </ul>
+                            <div class="alert alert-danger small">
+                                <i class="bi bi-shield-x me-1"></i>
+                                <strong>Esta ação é irreversível</strong> e não pode ser desfeita.
+                            </div>
+
+                            <form method="POST" action="{{ url_for('auth.excluir_conta') }}" id="formExcluirConta"
+                                  onsubmit="return confirmarExclusao()">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+<div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted">Digite EXCLUIR para confirmar</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-exclamation-triangle"></i></span>
+                                        <input type="text" name="confirmacao" class="form-control" placeholder="EXCLUIR" required autocomplete="off">
+                                    </div>
+                                    <div class="form-text text-danger small">
+                                        Digite a palavra <strong>EXCLUIR</strong> para confirmar a exclusão da sua conta.
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="confirmarExcluir" required>
+                                    <label class="form-check-label small text-muted" for="confirmarExcluir">
+                                        Eu entendi que esta ação é permanente e desejo excluir minha conta.
+                                    </label>
+                                </div>
+
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="submit" class="btn btn-danger fw-bold">
+                                        <i class="bi bi-trash me-1"></i> Excluir Minha Conta
                                     </button>
                                 </div>
                             </form>
@@ -197,5 +266,21 @@
     .card-header.bg-white { color: #2c3e50 !important; }
     .card-header.bg-white h5 { color: #2c3e50 !important; }
 </style>
+
+<script>
+function confirmarExclusao() {
+    const checkbox = document.getElementById('confirmarExcluir');
+    if (!checkbox.checked) {
+        alert('Você precisa marcar a caixa para confirmar que deseja excluir sua conta.');
+        return false;
+    }
+const confirmacao = document.querySelector('#formExcluirConta input[name="confirmacao"]').value;
+    if (!confirmacao || confirmacao.trim().toUpperCase() !== 'EXCLUIR') {
+        alert('Digite a palavra EXCLUIR para confirmar a exclusão da sua conta.');
+        return false;
+    }
+    return confirm('⚠️ ATENÇÃO: Esta ação irá excluir permanentemente sua conta e TODOS os seus dados (análises, projetos, empresas, plantas, checklists). \n\nEsta ação NÃO pode ser desfeita. \n\nDeseja realmente continuar?');
+}
+</script>
 {% endblock %}
 

@@ -7,7 +7,9 @@ Colunas cobertas:
 - planta_baixa:   empresa_id
 - checklist_nr:   empresa_id
 - checklist_iso:  empresa_id
-- user:           nome_completo, email, telefone, cargo, data_cadastro
+- user:           nome_completo, email, telefone, cargo, data_cadastro,
+                  plano, status, email_confirmado, ultimo_login,
+                  tentativas_login, bloqueio_ate
 
 Uso: python -c "from qualidade_flask.migrate_projeto_columns import run_migration; run_migration()"
 """
@@ -69,7 +71,7 @@ TABELAS_COLUNAS = {
             'postgresql': "INTEGER"
         }
     },
-    'user': {
+'user': {
         'nome_completo': {
             'sqlite': "VARCHAR(200) DEFAULT ''",
             'postgresql': "VARCHAR(200) DEFAULT ''"
@@ -87,6 +89,30 @@ TABELAS_COLUNAS = {
             'postgresql': "VARCHAR(100) DEFAULT ''"
         },
         'data_cadastro': {
+            'sqlite': "DATETIME",
+            'postgresql': "TIMESTAMP"
+        },
+        'plano': {
+            'sqlite': "VARCHAR(20) DEFAULT 'free'",
+            'postgresql': "VARCHAR(20) DEFAULT 'free'"
+        },
+        'status': {
+            'sqlite': "VARCHAR(20) DEFAULT 'ativo'",
+            'postgresql': "VARCHAR(20) DEFAULT 'ativo'"
+        },
+        'email_confirmado': {
+            'sqlite': "BOOLEAN DEFAULT 0",
+            'postgresql': "BOOLEAN DEFAULT FALSE"
+        },
+        'ultimo_login': {
+            'sqlite': "DATETIME",
+            'postgresql': "TIMESTAMP"
+        },
+        'tentativas_login': {
+            'sqlite': "INTEGER DEFAULT 0",
+            'postgresql': "INTEGER DEFAULT 0"
+        },
+        'bloqueio_ate': {
             'sqlite': "DATETIME",
             'postgresql': "TIMESTAMP"
         }

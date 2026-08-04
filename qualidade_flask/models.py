@@ -9,10 +9,26 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=False)
     nome_completo = db.Column(db.String(200), default='')
-    email = db.Column(db.String(150), default='')
+    email = db.Column(db.String(150), unique=True, default='')
     telefone = db.Column(db.String(20), default='')
     cargo = db.Column(db.String(100), default='')
     data_cadastro = db.Column(db.DateTime, default=datetime.now)
+    # ==========================================
+    # NOVOS CAMPOS DE SEGURANÇA E PLANO
+    # ==========================================
+    # Plano: 'free' (grátis) ou 'pro' (pago - futuro)
+    plano = db.Column(db.String(20), default='free')
+    # Status da conta: 'ativo', 'inativo', 'bloqueado'
+    status = db.Column(db.String(20), default='ativo')
+    # Confirmação de e-mail
+    email_confirmado = db.Column(db.Boolean, default=False)
+    # Último login (para auditoria)
+    ultimo_login = db.Column(db.DateTime, nullable=True)
+    # Tentativas de login falhas (para bloqueio temporário)
+    tentativas_login = db.Column(db.Integer, default=0)
+    # Bloqueio temporário até (para anti-força-bruta)
+    bloqueio_ate = db.Column(db.DateTime, nullable=True)
+    # ==========================================
     # Cria a relação: Um usuário tem várias análises
     analises = db.relationship('Analise', backref='dono', lazy=True)
     # Relacionamento com empresas

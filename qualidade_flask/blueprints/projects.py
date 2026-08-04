@@ -4,30 +4,16 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Empresa, db
-from groq import Groq
+from ..utils.ai_client import (
+    gerar_analise, gerar_analise_json
+)
 
 projects = Blueprint('projects', __name__)
-
-# --- Configuração do Cliente Groq ---
-def get_client_groq():
-    # Tentar obter da variável de ambiente
-    api_key = os.environ.get("GROQ_API_KEY")
-    
-    if not api_key:
-        print("ERRO: Chave GROQ_API_KEY não encontrada!")
-        return None
-    return Groq(api_key=api_key)
-
-client = get_client_groq()
 
 def get_ai_suggestion(projeto_nome, projeto_objetivo, ferramentas_existentes=None):
     # Ajuste de segurança: inicializa lista vazia se for None
     if ferramentas_existentes is None:
         ferramentas_existentes = []
-
-    if not client:
-        # Fallback para lógica determinística sem IA
-        return get_suggestion_for_new_project(projeto_nome, projeto_objetivo)
 
     ferramentas_info = []
     for f in ferramentas_existentes:
@@ -60,20 +46,20 @@ Responda apenas JSON:
 }}"""
     
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "Você é um assistente especialista em gestão da qualidade que responde estritamente em JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.4
-        )
-        
-        return json.loads(response.choices[0].message.content)
+        messages = [
+            {"role": "system", "content": "Você é um assistente especialista em gestão da qualidade que responde estritamente em JSON."},
+            {"role": "user", "content": prompt}
+        ]
+
+        resultado, provider = gerar_analise_json(messages, temperature=0.4)
+        if not resultado:
+            # Fallback para lógica determinística sem IA
+            return get_suggestion_for_new_project(projeto_nome, projeto_objetivo)
+
+        return resultado
 
     except Exception as e:
-        print(f"Erro na IA (Groq): {e}")
+        print(f"Erro na IA: {e}")
         return {
             "analise": "Não foi possível gerar uma análise automática no momento.",
             "ferramenta_sugerida": "pareto",
@@ -174,6 +160,7 @@ def get_suggestion_for_existing_project(projeto_nome, projeto_objetivo, ferramen
             "dados_preenchidos": None
         }
     
+    
     elif 'fluxograma' in tipos_existentes and 'histograma' not in tipos_existentes:
         # Após Fluxograma, sugerir Histograma
         return {
@@ -183,15 +170,7 @@ def get_suggestion_for_existing_project(projeto_nome, projeto_objetivo, ferramen
             "dados_preenchidos": None
         }
     
-    # Fallback para lógica simples se não houver sequência clara ou IA não disponível
-    if not client:
-        return {
-            "analise": f"Continue adicionando ferramentas para análise completa do projeto.",
-            "ferramenta_sugerida": "pareto",
-            "nome_ferramenta": "Pareto",
-            "dados_preenchidos": None
-        }
-    
+    # Fallback para lógica simples se não houver sequência clara
     return get_suggestion_from_ai(projeto_nome, projeto_objetivo, ferramentas_existentes)
 
 def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
@@ -316,22 +295,24 @@ Responda APENAS em JSON:
     "analise": "Análise detalhada do porquê esta ferramenta é a próxima mais adequada",
     "ferramenta_sugerida": "slug_da_ferramenta",
     "nome_ferramenta": "Nome da Ferramenta",
-    "dados_preenchidos": {{...dados completos se houver informações suficientes...}} ou null se não houver dados
+"dados_preenchidos": {{...dados completos se houver informações suficientes...}} ou null se não houver dados
 }}"""
     
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "Você é um consultor de gestão da qualidade experiente que analisa projetos completos e sugere a próxima ferramenta com dados preenchidos quando possível. Responda estritamente em JSON válido."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.6
-        )
-        
-        resultado = json.loads(response.choices[0].message.content)
-        
+        messages = [
+            {"role": "system", "content": "Você é um consultor de gestão da qualidade experiente que analisa projetos completos e sugere a próxima ferramenta com dados preenchidos quando possível. Responda estritamente em JSON válido."},
+            {"role": "user", "content": prompt}
+        ]
+
+        resultado, provider = gerar_analise_json(messages, temperature=0.6)
+        if not resultado:
+            return {
+                "analise": "Não foi possível gerar uma análise automática no momento.",
+                "ferramenta_sugerida": "pareto",
+                "nome_ferramenta": "Pareto",
+                "dados_preenchidos": None
+            }
+
         # Validação adicional dos dados preenchidos
         if resultado.get("dados_preenchidos"):
             resultado["dados_preenchidos"] = validar_dados_ferramenta(
@@ -342,7 +323,7 @@ Responda APENAS em JSON:
         return resultado
 
     except Exception as e:
-        print(f"Erro na IA (Groq): {e}")
+        print(f"Erro na IA: {e}")
         return {
             "analise": "Não foi possível gerar uma análise automática no momento.",
             "ferramenta_sugerida": "pareto",
@@ -851,19 +832,26 @@ def relatorio_projeto(id):
     # 1. Prepara os dados das ferramentas e gera análises individuais se faltarem
     analises_ferramentas = []
     
-    # Tenta obter cliente Groq (pode ser None se a chave falhar)
-    client_local = get_client_groq()
-
     for f in projeto.ferramentas:
         # Se já tem análise salva no banco, usa ela. Se não, tenta gerar.
         analise_texto = f.analise_ia
         
-        if not analise_texto and client_local:
-            # Gera análise individual sob demanda se não existir
-            analise_texto = gerar_analise_ia_individual(client_local, f.tipo, f.dados, projeto.objetivo)
+        # Detecta análises inválidas (erro/indisponibilidade salva em execuções
+        # anteriores com chave inválida) e regenera com a chave atual.
+        texto_lower = (analise_texto or '').lower()
+        eh_invalida = analise_texto is None or (
+            "indisponível" in texto_lower or "indisponive" in texto_lower
+        )
+        
+        if not analise_texto:
+            eh_invalida = True
+        
+        if eh_invalida:
+            print(f"-> Regenerando análise da ferramenta '{f.tipo}' (conteúdo inválido/indisponível)...")
+            analise_texto = gerar_analise_ferramenta(f.tipo, f.dados, projeto.objetivo)
             
-            # Salva no banco para não gastar API na próxima vez
-            if analise_texto:
+            # Salva no banco para não gastar API na próxima vez (apenas se válida)
+            if analise_texto and "indisponível" not in analise_texto.lower() and "indisponive" not in analise_texto.lower():
                 f.analise_ia = analise_texto
                 db.session.commit()
 
@@ -877,8 +865,8 @@ def relatorio_projeto(id):
     
     # 2. Gera a Conclusão Geral do Projeto
     conclusao_geral = ""
-    if analises_ferramentas and client_local:
-        conclusao_geral = gerar_conclusao_geral_ia(client_local, projeto.nome, projeto.objetivo, analises_ferramentas)
+    if analises_ferramentas:
+        conclusao_geral = gerar_conclusao_geral_ia(projeto.nome, projeto.objetivo, analises_ferramentas)
 
     return render_template('projetos/relatorio_completo.html', 
                         projeto=projeto, 
@@ -898,7 +886,7 @@ def get_nome_ferramenta(tipo):
     }
     return nomes.get(tipo, tipo.replace('_', ' ').title())
 
-def gerar_analise_ia_individual(client, tipo, dados, objetivo):
+def gerar_analise_ia_individual(tipo, dados, objetivo):
     """Gera um insight rápido para uma ferramenta específica (OTIMIZADO)"""
     try:
         # 1. OTIMIZAÇÃO: Filtrar apenas os dados essenciais para cada ferramenta
@@ -929,46 +917,58 @@ def gerar_analise_ia_individual(client, tipo, dados, objetivo):
             }
             
         elif tipo == 'fluxograma':
-            # Para Fluxograma, focamos nos principais processos e gargalos
+            # Fluxograma salva: {etapas: [{id, texto, tipo, paiId, setaTexto}], conexoes: [{origem, destino, texto}], imagem}
+            etapas = dados.get('etapas', []) or []
+            conexoes = dados.get('conexoes', []) or []
             dados_limpos = {
-                'processos': dados.get('processos', [])[:8],  # Limita processos
-                'gargalos': dados.get('gargalos', []),
-                'objetivo_fluxo': dados.get('objetivo')
+                'titulo': dados.get('titulo'),
+                'etapas': [{'texto': e.get('texto'), 'tipo': e.get('tipo')} for e in etapas[:12]],
+                'total_etapas': len(etapas),
+                'conexoes': [{ 'origem': c.get('origem'), 'destino': c.get('destino'), 'texto': c.get('texto') } for c in conexoes[:10]]
             }
             
         elif tipo == 'folha_verificacao':
-            # Para Folha de Verificação, focamos nos dados de contagem
+            # Folha salva: {itens: [{label, valor}], total, grafico}
+            itens = dados.get('itens', []) or []
             dados_limpos = {
-                'itens_verificados': dados.get('itens', [])[:15],  # Limita itens
+                'itens_verificados': [{'item': i.get('label'), 'contagem': i.get('valor', 0)} for i in itens[:15]],
                 'total_observacoes': dados.get('total'),
-                'padrao_esperado': dados.get('padrao')
+                'numero_de_itens': len(itens)
             }
             
         elif tipo == 'histograma':
-            # Para Histograma, focamos na distribuição e estatísticas
+            # Histograma salva: {dados_brutos: [...], histograma: [{label, limInf, limSup, freq, perc}], config}
+            config = dados.get('config', {}) or {}
             dados_limpos = {
-                'dados_distribuicao': dados.get('dados', [])[:20],  # Limita pontos
-                'media': dados.get('media'),
-                'desvio_padrao': dados.get('desvio_padrao'),
-                'limites': dados.get('limites')
+                'classes_de_frequencia': dados.get('histograma', [])[:20],
+                'media': config.get('media'),
+                'minimo': config.get('min'),
+                'maximo': config.get('max'),
+                'total_amostras': len(dados.get('dados_brutos', []) or [])
             }
             
         elif tipo == 'dispersao':
-            # Para Gráfico de Dispersão, focamos na correlação
+            # Dispersão salva: {pontos: [{x, y}], stats: {r, a, b}, config: {labelX, labelY}, grafico}
+            stats = dados.get('stats', {}) or {}
             dados_limpos = {
-                'pontos_correlacao': dados.get('pontos', [])[:25],  # Limita pontos
-                'variavel_x': dados.get('variavel_x'),
-                'variavel_y': dados.get('variavel_y'),
-                'tendencia': dados.get('tendencia')
+                'pontos_correlacao': dados.get('pontos', [])[:25],
+                'coeficiente_correlacao_r': stats.get('r'),
+                'coeficientes_tendencia': {'a': stats.get('a'), 'b': stats.get('b')},
+                'rotulos_eixos': dados.get('config', {})
             }
             
         elif tipo == 'cep':
-            # Para CEP, focamos nos limites de controle
+            # CEP salva: {itens: [{label, value}], estatisticas: {media, desvio, lse, lie}, config, grafico}
+            itens_cep = dados.get('itens', []) or []
+            estat = dados.get('estatisticas', {}) or {}
+            lse = estat.get('lse', 0)
+            lie_real = max(estat.get('lie', 0), 0)
+            fora = sum(1 for i in itens_cep if i.get('value', 0) > lse or i.get('value', 0) < lie_real)
             dados_limpos = {
-                'limites_controle': dados.get('limites'),
-                'pontos_fora_controle': dados.get('pontos_fora', [])[:10],
-                'media_processo': dados.get('media'),
-                'capacidade': dados.get('capacidade')
+                'amostras': itens_cep[:20],
+                'estatisticas': estat,
+                'pontos_fora_de_controle': fora,
+                'total_amostras': len(itens_cep)
             }
             
         else:
@@ -988,31 +988,26 @@ def gerar_analise_ia_individual(client, tipo, dados, objetivo):
         Seja direto. Sem introduções. Foco na causa raiz ou ação principal.
         """
         
-        # 3. Chamada à API com modelo mais leve se possível
-        try:
-            # Tenta modelo padrão
-            resp = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.5,
-                max_tokens=250 # Limita resposta
-            )
-        except Exception:
-            # Se falhar (cota/tamanho), tenta modelo instantâneo (mais barato e rápido)
-            resp = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.5,
-                max_tokens=250
-            )
-            
-        return resp.choices[0].message.content
+        # 3. Chamada à API usando o cliente centralizado (Groq + fallback Google)
+        messages = [{"role": "user", "content": prompt}]
+        texto, provider = gerar_analise(messages, temperature=0.5, max_tokens=250)
+        
+        if not texto:
+            # Retorna None em vez de mensagem de erro, para que o relatório
+            # possa detectar e tentar regenerar depois com a chave válida.
+            return None
+        
+        print(f"IA Individual ({tipo}) gerada com provider: {provider}")
+        return texto
 
     except Exception as e:
         print(f"Erro IA Individual (Tratado): {e}")
-        return "Análise automática indisponível no momento. Verifique os dados no gráfico acima."
+        # Retorna None em vez de uma mensagem de erro, para que o relatório
+        # não polua o banco com textos de erro e a "Inteligência Retroativa"
+        # possa tentar regenerar a análise depois.
+        return None
 
-def gerar_conclusao_geral_ia(client, nome_proj, objetivo, ferramentas):
+def gerar_conclusao_geral_ia(nome_proj, objetivo, ferramentas):
     """Gera o parecer executivo final"""
     try:
         # Cria um resumo leve dos dados para não estourar o limite da API
@@ -1038,28 +1033,15 @@ def gerar_conclusao_geral_ia(client, nome_proj, objetivo, ferramentas):
         Mantenha o tom sério, técnico e focado em resultados de negócio.
         """
 
-        # Tenta com modelo principal primeiro
-        try:
-            resp = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=1000
-            )
-            return resp.choices[0].message.content
-        except Exception as e:
-            if "rate_limit" in str(e).lower() or "429" in str(e):
-                print("Rate limit atingido, usando modelo mais leve para conclusão geral...")
-                # Fallback para modelo mais leve
-                resp = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=800
-                )
-                return resp.choices[0].message.content
-            else:
-                raise e
+        # Usa o cliente centralizado (Groq + fallback Google)
+        messages = [{"role": "user", "content": prompt}]
+        texto, provider = gerar_analise(messages, temperature=0.7, max_tokens=1000)
+        
+        if not texto:
+            return "Nota: A análise consolidada por IA está temporariamente indisponível. Consulte as análises individuais acima."
+        
+        print(f"Conclusão Geral gerada com provider: {provider}")
+        return texto
                 
     except Exception as e:
         print(f"Erro IA Geral: {e}")
@@ -1072,19 +1054,10 @@ def gerar_analise_ferramenta(tipo, dados, objetivo_projeto):
     if not dados or not isinstance(dados, dict):
         return f"Análise de {get_nome_ferramenta(tipo)} indisponível - dados inválidos."
     
-    # Inicializar cliente Groq
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        return f"Análise de {get_nome_ferramenta(tipo)} indisponível - API key não configurada."
-    
-    client_local = Groq(api_key=api_key)
-    
-    if not client_local:
-        return f"Análise de {get_nome_ferramenta(tipo)} indisponível no momento."
-    
     try:
-        # Usa a mesma função otimizada para consistência
-        return gerar_analise_ia_individual(client_local, tipo, dados, objetivo_projeto)
+        # Usa a mesma função otimizada para consistência.
+        # Esta função usa o cliente centralizado (Groq + fallback Google).
+        return gerar_analise_ia_individual(tipo, dados, objetivo_projeto)
                 
     except Exception as e:
         print(f"Erro na análise de {tipo}: {e}")
@@ -1410,16 +1383,29 @@ def relatorio_ciclo_pdca(id):
         'progresso_pct': round((fases_info[projeto.fase_atual]['ordem'] / 4) * 100)
     }
     
-    # Análise IA consolidada (se disponível)
-    client_local = get_client_groq()
+# Análise IA consolidada (usa cliente centralizado Groq + fallback Google)
     conclusao_geral = ""
-    if total_ferramentas > 0 and client_local:
+    if total_ferramentas > 0:
         analises = []
         for f in projeto.ferramentas:
-            if f.analise_ia:
+            # Gera análise individual sob demanda se não existir ou for inválida
+            analise_texto = f.analise_ia
+            texto_lower = (analise_texto or '').lower()
+            eh_invalida = (
+                not analise_texto or
+                "indisponível" in texto_lower or "indisponive" in texto_lower
+            )
+            
+            if eh_invalida:
+                analise_texto = gerar_analise_ferramenta(f.tipo, f.dados, projeto.objetivo)
+                if analise_texto and "indisponível" not in analise_texto.lower() and "indisponive" not in analise_texto.lower():
+                    f.analise_ia = analise_texto
+                    db.session.commit()
+            
+            if analise_texto:
                 analises.append({
                     'ferramenta': get_nome_ferramenta(f.tipo),
-                    'analise': f.analise_ia
+                    'analise': analise_texto
                 })
         
         if analises:
@@ -1438,13 +1424,11 @@ def relatorio_ciclo_pdca(id):
                 3. **Recomendações**: Próximos passos
                 """
                 
-                resp = client_local.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.5,
-                    max_tokens=600
-                )
-                conclusao_geral = resp.choices[0].message.content
+                messages = [{"role": "user", "content": prompt}]
+                texto, provider = gerar_analise(messages, temperature=0.5, max_tokens=600)
+                conclusao_geral = texto or "Análise consolidada temporariamente indisponível."
+                if texto:
+                    print(f"Análise do ciclo gerada com provider: {provider}")
             except Exception as e:
                 print(f"Erro ao gerar análise do ciclo: {e}")
                 conclusao_geral = "Análise consolidada temporariamente indisponível."
