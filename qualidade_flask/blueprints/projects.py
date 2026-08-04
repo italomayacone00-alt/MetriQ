@@ -1,5 +1,6 @@
 import os
 import json
+import markdown
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
@@ -7,6 +8,21 @@ from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Em
 from ..utils.ai_client import (
     gerar_analise, gerar_analise_json
 )
+from ..utils.sanitize import sanitizar_html
+
+
+def html_para_relatorio(texto_markdown):
+    """Converte o texto gerado pela IA (Markdown) em HTML estilizado,
+    enquanto remove tags perigosas (XSS)."""
+    if not texto_markdown:
+        return ""
+    # Converte Markdown -> HTML
+    html = markdown.markdown(
+        texto_markdown,
+        extensions=['extra', 'sane_lists', 'nl2br']
+    )
+    # Sanitiza para remover scripts/eventos maliciosos
+    return sanitizar_html(html)
 
 projects = Blueprint('projects', __name__)
 
@@ -175,7 +191,8 @@ def get_suggestion_for_existing_project(projeto_nome, projeto_objetivo, ferramen
 
 def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
     """
-    Gera Ishikawa com base nos dados do Pareto
+    Gera Ishikawa com base nos dados REAIS do Pareto, usando a IA para
+    criar causas específicas e contextuais (em vez de genéricas fixas).
     """
     if not pareto_data or not pareto_data.get('itens'):
         return {
@@ -185,24 +202,114 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
             "dados_preenchidos": None
         }
     
-    # Extrair os principais problemas do Pareto
-    principais_problemas = [item['label'] for item in pareto_data['itens'][:3]]
+    # Extrair os principais problemas do Pareto (top 5, com valores)
+    itens = pareto_data.get('itens', [])
+    principais_problemas = []
+    for item in itens[:5]:
+        principais_problemas.append({
+            'label': item.get('label', ''),
+            'value': item.get('value', 0)
+        })
+    
+    # ----- 1. TENTATIVA COM IA (causas específicas baseadas nos dados reais) -----
+    try:
+        # Monta um dossiê enxuto dos dados reais do Pareto
+        pareto_resumo = {
+            'titulo': pareto_data.get('titulo', ''),
+            'problemas_priorizados': principais_problemas
+        }
+        
+        prompt = f"""
+        Você é um especialista em Análise de Causa Raiz (Lean Six Sigma).
+        
+        Objetivo do projeto: "{projeto_objetivo}"
+        
+        Dados REAIS do Diagrama de Pareto (problemas priorizados com frequência):
+        {json.dumps(pareto_resumo, ensure_ascii=False, default=str)}
+        
+        Tarefa: Com base EXCLUSIVAMENTE nos problemas e frequências acima,
+        crie um Diagrama de Ishikawa (6M) com causas raiz ESPECÍFICAS e contextuais
+        para cada categoria. As causas devem ser coerentes com os problemas reais
+        listados, NÃO genéricas.
+
+        Responda APENAS em JSON com esta estrutura exata:
+        {{
+            "problema": "O problema principal (o item de maior frequência do Pareto)",
+            "diagrama": {{
+                "maquina": ["Causa específica de máquina", "Outra causa específica"],
+                "metodo": ["Causa específica de método", "Outra causa específica"],
+                "material": ["Causa específica de material", "Outra causa específica"],
+                "mao_obra": ["Causa específica de mão de obra", "Outra causa específica"],
+                "medida": ["Causa específica de medida", "Outra causa específica"],
+                "meio_ambiente": ["Causa específica de meio ambiente", "Outra causa específica"]
+            }}
+        }}
+
+        Regras:
+        - Cada categoria deve ter entre 1 e 3 causas.
+        - As causas devem mencionar/relacionar os problemas reais do Pareto.
+        - Não invente problemas que não estejam listados.
+        """
+        
+        messages = [
+            {"role": "system", "content": "Você é um especialista em Lean Six Sigma que responde estritamente em JSON."},
+            {"role": "user", "content": prompt}
+        ]
+        resultado, provider = gerar_analise_json(messages, temperature=0.5)
+        
+        if resultado and resultado.get('diagrama'):
+            # Valida a estrutura do diagrama antes de usar
+            categorias_validas = ["maquina", "metodo", "material", "mao_obra", "medida", "meio_ambiente"]
+            diagrama_validado = {}
+            for cat in categorias_validas:
+                causas = resultado.get('diagrama', {}).get(cat, [])
+                if isinstance(causas, list):
+                    diagrama_validado[cat] = [str(c)[:60] for c in causas if c]
+                else:
+                    diagrama_validado[cat] = []
+            
+            problema_ia = str(resultado.get('problema', '') or principais_problemas[0]['label'] if principais_problemas else 'Problema identificado')
+            
+            dados_ishikawa = {
+                "titulo": f"Análise de Causa Raiz - {projeto_objetivo}",
+                "problema": problema_ia[:200],
+                "diagrama": diagrama_validado
+            }
+            
+            print(f"Ishikawa gerado por IA (provider: {provider}) - causas específicas")
+            return {
+                "analise": f"Baseado nos problemas reais do Pareto ({', '.join([p['label'] for p in principais_problemas[:2]])}), o Ishikawa foi preenchido com causas raiz específicas e contextuais.",
+                "ferramenta_sugerida": "ishikawa",
+                "nome_ferramenta": "Ishikawa",
+                "dados_preenchidos": dados_ishikawa
+            }
+    except Exception as e:
+        print(f"Erro ao gerar Ishikawa com IA: {e}")
+    
+    # ----- 2. FALLBACK DETERMINÍSTICO (baseado nas labels reais do Pareto) -----
+    # Usa os problemas reais para gerar causas contextuais, mesmo sem IA
+    labels = [p['label'] for p in principais_problemas]
+    problema_principal = labels[0] if labels else "Problema identificado no Pareto"
+    
+    # Gera causas que referenciam os problemas reais
+    def _causa(prefixo, sufixo):
+        return f"{prefixo} - {problema_principal}" if problema_principal else sufixo
     
     dados_ishikawa = {
         "titulo": f"Análise de Causa Raiz - {projeto_objetivo}",
-        "problema": principais_problemas[0] if principais_problemas else "Problemas identificados no Pareto",
+        "problema": problema_principal,
         "diagrama": {
-            "maquina": ["Falta de manutenção", "Equipamento obsoleto", "Configuração incorreta"],
-            "metodo": ["Processo inadequado", "Falta de padrão", "Treinamento insuficiente"],
-            "material": ["Matéria-prima com defeito", "Especificação incorreta", "Fornecedores não qualificados"],
-            "mao_obra": ["Falta de capacitação", "Comunicação ineficaz", "Falta de motivação"],
-            "medida": ["Métodos de medição", "Calibração inadequada", "Ferramentas inadequadas"],
-            "meio_ambiente": ["Temperatura inadequada", "Umidade excessiva", "Layout ineficiente"]
+            "maquina": [_causa("Falha de equipamento", "Equipamento obsoleto"), "Manutenção preventiva ausente"],
+            "metodo": [_causa("Processo sem padronização", "Procedimento inadequado"), "Falta de instrução de trabalho"],
+            "material": [_causa("Insumo com variação", "Matéria-prima fora do padrão"), "Fornecedor sem qualificação"],
+            "mao_obra": [_causa("Falta de treinamento", "Operador sem capacitação"), "Comunicação ineficaz"],
+            "medida": [_causa("Medição sem calibração", "Instrumento descalibrado"), "Critério de inspeção inadequado"],
+            "meio_ambiente": [_causa("Condição ambiente inadequada", "Layout ineficiente"), "Falta de 5S no local"]
         }
     }
     
     return {
-        "analise": f"Baseado nos principais problemas do Pareto ({', '.join(principais_problemas[:2])}), o Ishikawa investigará as causas raiz nas 6 categorias clássicas.",
+        "analise": f"Baseado nos problemas reais do Pareto ({', '.join(labels[:2])}), o Ishikawa investiga as causas raiz nas 6 categorias clássicas.",
         "ferramenta_sugerida": "ishikawa",
         "nome_ferramenta": "Ishikawa",
         "dados_preenchidos": dados_ishikawa
@@ -210,7 +317,8 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
 
 def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
     """
-    Gera 5W2H com base nos dados do Ishikawa
+    Gera 5W2H com base nos dados REAIS do Ishikawa, usando a IA para
+    criar ações específicas e contextuais (em vez de genéricas fixas).
     """
     if not ishikawa_data or not ishikawa_data.get('diagrama'):
         return {
@@ -222,22 +330,104 @@ def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
     
     # Extrair causas principais do Ishikawa
     diagrama = ishikawa_data['diagrama']
+    problema = ishikawa_data.get('problema', 'Problema identificado')
     causas_principais = []
     
     for categoria, causas in diagrama.items():
         if causas and len(causas) > 0:
             causas_principais.extend(causas[:2])  # Pegar até 2 causas por categoria
     
-    # Gerar ações 5W2H baseadas nas causas
+    # ----- 1. TENTATIVA COM IA (ações específicas baseadas nas causas reais) -----
+    try:
+        ishikawa_resumo = {
+            'problema': problema,
+            'causas_por_categoria': {
+                cat: causas[:3] for cat, causas in diagrama.items() if causas
+            }
+        }
+        
+        prompt = f"""
+        Você é um Gerente de Projetos Sênior especialista em planos de ação.
+        
+        Objetivo do projeto: "{projeto_objetivo}"
+        
+        Dados REAIS do Diagrama de Ishikawa (problema e causas raiz identificadas):
+        {json.dumps(ishikawa_resumo, ensure_ascii=False, default=str)}
+        
+        Tarefa: Com base EXCLUSIVAMENTE nas causas raiz reais acima, crie um Plano
+        de Ação 5W2H com ações ESPECÍFICAS e objetivas que eliminem cada causa.
+        As ações devem ser coerentes com as causas reais listadas, NÃO genéricas.
+
+        Responda APENAS em JSON com esta estrutura exata:
+        {{
+            "titulo": "Título do plano de ação",
+            "acoes": [
+                {{
+                    "what": "Ação específica para eliminar/tratar a causa",
+                    "why": "Por que - relacionado à causa raiz real",
+                    "who": "Responsável (cargo/departamento)",
+                    "when": "YYYY-MM-DD",
+                    "where": "Local",
+                    "how": "Como implementar - passo a passo objetivo",
+                    "how_much": 0
+                }}
+            ]
+        }}
+
+        Regras:
+        - Crie entre 3 e 6 ações, uma para cada causa raiz principal.
+        - O campo "why" deve citar a causa raiz real do Ishikawa.
+        - Seja específico e prático, não genérico.
+        """
+        
+        messages = [
+            {"role": "system", "content": "Você é um Gerente de Projetos Sênior que responde estritamente em JSON."},
+            {"role": "user", "content": prompt}
+        ]
+        resultado, provider = gerar_analise_json(messages, temperature=0.5)
+        
+        if resultado and resultado.get('acoes'):
+            acoes_validas = []
+            for acao in resultado.get('acoes', []):
+                if isinstance(acao, dict) and acao.get('what'):
+                    acoes_validas.append({
+                        "what": str(acao.get('what', ''))[:100],
+                        "why": str(acao.get('why', ''))[:200],
+                        "who": str(acao.get('who', ''))[:50],
+                        "when": str(acao.get('when', ''))[:10] or "2025-01-01",
+                        "where": str(acao.get('where', ''))[:100],
+                        "how": str(acao.get('how', ''))[:300],
+                        "how_much": float(acao.get('how_much', 0) or 0)
+                    })
+            
+            if acoes_validas:
+                dados_5w2h = {
+                    "titulo": str(resultado.get('titulo', f"Plano de Ação - {projeto_objetivo}"))[:100],
+                    "acoes": acoes_validas[:20]
+                }
+                
+                print(f"5W2H gerado por IA (provider: {provider}) - ações específicas")
+                return {
+                    "analise": f"Baseado nas causas raiz reais do Ishikawa ('{problema}'), o 5W2H estrutura um plano de ação com {len(acoes_validas)} ações específicas.",
+                    "ferramenta_sugerida": "5w2h",
+                    "nome_ferramenta": "5W2H",
+                    "dados_preenchidos": dados_5w2h
+                }
+    except Exception as e:
+        print(f"Erro ao gerar 5W2H com IA: {e}")
+    
+    # ----- 2. FALLBACK DETERMINÍSTICO (baseado nas causas reais do Ishikawa) -----
     acoes = []
-    for i, causa in enumerate(causas_principais[:5]):  # Limitar a 5 ações principais
+    # Gera ações que referenciam as causas reais
+    for causa in causas_principais[:5]:
+        causa_curta = str(causa)[:60]
         acoes.append({
-            "what": f"Corrigir: {causa}",
-            "why": "Eliminar causa raiz identificada",
+            "what": f"Corrigir: {causa_curta}",
+            "why": f"Eliminar a causa raiz '{causa_curta}' identificada no Ishikawa",
             "who": "Equipe de Melhoria",
-            "when": "2025-02-01",
-            "where": "Área de Produção",
-            "how": "Implementar solução técnica e treinamento",
+            "when": "2025-01-15",
+            "where": "Área do processo afetado",
+            "how": f"Implementar ação corretiva direcionada à causa '{causa_curta}' com acompanhamento e verificação",
             "how_much": 5000
         })
     
@@ -247,7 +437,7 @@ def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
     }
     
     return {
-        "analise": f"Baseado nas {len(causas_principais)} causas raiz identificadas, o 5W2H estrutura um plano de ação com {len(acoes)} ações prioritárias.",
+        "analise": f"Baseado nas {len(causas_principais)} causas raiz reais do Ishikawa ('{problema}'), o 5W2H estrutura um plano de ação com {len(acoes)} ações prioritárias.",
         "ferramenta_sugerida": "5w2h",
         "nome_ferramenta": "5W2H",
         "dados_preenchidos": dados_5w2h
@@ -804,10 +994,12 @@ def salvar_ferramenta_projeto(id):
     
     ferramenta.dados = conteudo
     
-    # Gerar análise individual da IA para esta ferramenta
+# Gerar análise individual da IA para esta ferramenta (com contexto do PDCA)
     try:
         print(f"DEBUG: Gerando análise individual para {tipo}")
-        analise_ia = gerar_analise_ferramenta(tipo, conteudo, projeto.objetivo)
+        analise_ia = gerar_analise_ferramenta(tipo, conteudo, projeto.objetivo,
+                                              fase=getattr(projeto, 'fase_atual', None),
+                                              projeto=projeto.nome)
         ferramenta.analise_ia = analise_ia
         print(f"DEBUG: Análise individual gerada para {tipo}")
     except Exception as e:
@@ -848,7 +1040,9 @@ def relatorio_projeto(id):
         
         if eh_invalida:
             print(f"-> Regenerando análise da ferramenta '{f.tipo}' (conteúdo inválido/indisponível)...")
-            analise_texto = gerar_analise_ferramenta(f.tipo, f.dados, projeto.objetivo)
+            analise_texto = gerar_analise_ferramenta(f.tipo, f.dados, projeto.objetivo,
+                                                     fase=getattr(projeto, 'fase_atual', None),
+                                                     projeto=projeto.nome)
             
             # Salva no banco para não gastar API na próxima vez (apenas se válida)
             if analise_texto and "indisponível" not in analise_texto.lower() and "indisponive" not in analise_texto.lower():
@@ -886,8 +1080,31 @@ def get_nome_ferramenta(tipo):
     }
     return nomes.get(tipo, tipo.replace('_', ' ').title())
 
-def gerar_analise_ia_individual(tipo, dados, objetivo):
-    """Gera um insight rápido para uma ferramenta específica (OTIMIZADO)"""
+def limpar_dados_para_ia(dados_json, limite=6000):
+    """Gera um dossiê textual enxuto e legível dos dados reais de uma ferramenta,
+    mantendo apenas os campos que importam para a IA citar números concretos."""
+    import copy
+    if not dados_json:
+        return "Sem dados preenchidos."
+    try:
+        dados_limpos = copy.deepcopy(dados_json)
+        if isinstance(dados_limpos, dict):
+            # Remove campos pesados/imagens que não ajudam a IA
+            for chave in ['grafico', 'imagem', 'imgBase64', 'thumbnail', 'canvas']:
+                dados_limpos.pop(chave, None)
+            if 'dados' in dados_limpos and isinstance(dados_limpos['dados'], dict):
+                dados_limpos['dados'].pop('grafico', None)
+        texto = json.dumps(dados_limpos, ensure_ascii=False, default=str)
+        if len(texto) > limite:
+            return texto[:limite] + "... (dados truncados)"
+        return texto
+    except Exception:
+        return "Resumo de dados indisponível."
+
+
+def gerar_analise_ia_individual(tipo, dados, objetivo, fase=None, projeto=None):
+    """Gera um insight técnico objetivo para uma ferramenta específica,
+    citando os valores reais dos dados e considerando a fase do PDCA."""
     try:
         # 1. OTIMIZAÇÃO: Filtrar apenas os dados essenciais para cada ferramenta
         dados_limpos = {}
@@ -978,19 +1195,30 @@ def gerar_analise_ia_individual(tipo, dados, objetivo):
                 dados_str = dados_str[:2000] + "... (dados truncados)"
             dados_limpos = dados_str
 
-        # 2. Criação do Prompt Otimizado
+# 2. Criação do Prompt Otimizado (foco em dados concretos + fase do PDCA)
+        contexto_fase = ""
+        if fase:
+            contexto_fase = f"\nFase atual do ciclo PDCA: {fase.upper()}."
+        if projeto:
+            contexto_fase += f"\nNome do projeto: {projeto}."
+
         prompt = f"""
-        Você é um especialista em qualidade. Analise estes dados resumidos do {tipo}.
+        Você é um especialista em qualidade. Analise os dados reais da ferramenta {tipo}.
         Objetivo do Projeto: "{objetivo}"
-        Dados Relevantes: {json.dumps(dados_limpos, ensure_ascii=False)}
-        
-        Tarefa: Escreva UM parágrafo curto (máx 3 frases) com o principal insight técnico.
-        Seja direto. Sem introduções. Foco na causa raiz ou ação principal.
+        {contexto_fase}
+        Dados Reais da Ferramenta: {json.dumps(dados_limpos, ensure_ascii=False)}
+
+        Tarefa: Escreva um diagnóstico técnico CONCRETO (máx 4 frases) que:
+        1. CITE os valores e número reais dos dados (não seja genérico - use os números fornecidos).
+        2. Aponte o principal ponto crítico / causa raiz mais provável com base nos dados.
+        3. Dê UMA ação concreta e específica recomendada para a próxima fase do PDCA.
+
+        Regras: Seja direto, sem introduções. Use os números reais. Não invente dados que não estão listados.
         """
         
-        # 3. Chamada à API usando o cliente centralizado (Groq + fallback Google)
+# 3. Chamada à API usando o cliente centralizado (Groq + fallback Google)
         messages = [{"role": "user", "content": prompt}]
-        texto, provider = gerar_analise(messages, temperature=0.5, max_tokens=250)
+        texto, provider = gerar_analise(messages, temperature=0.5, max_tokens=400)
         
         if not texto:
             # Retorna None em vez de mensagem de erro, para que o relatório
@@ -998,7 +1226,8 @@ def gerar_analise_ia_individual(tipo, dados, objetivo):
             return None
         
         print(f"IA Individual ({tipo}) gerada com provider: {provider}")
-        return texto
+        # Converte o Markdown gerado pela IA em HTML estilizado e seguro
+        return html_para_relatorio(texto)
 
     except Exception as e:
         print(f"Erro IA Individual (Tratado): {e}")
@@ -1007,57 +1236,67 @@ def gerar_analise_ia_individual(tipo, dados, objetivo):
         # possa tentar regenerar a análise depois.
         return None
 
-def gerar_conclusao_geral_ia(nome_proj, objetivo, ferramentas):
-    """Gera o parecer executivo final"""
+def gerar_conclusao_geral_ia(nome_proj, objetivo, ferramentas, fase=None, ciclo=None):
+    """Gera o parecer executivo final considerando os dados REAIS das ferramentas."""
     try:
-        # Cria um resumo leve dos dados para não estourar o limite da API
+        # Cria um dossiê com os dados REAIS (não só o texto prévio) para a IA citar números
         resumo = []
         for f in ferramentas:
             resumo.append({
                 "ferramenta": f['nome_ferramenta'],
-                "insight_previo": f['analise'] if f['analise'] else "Sem análise prévia"
+                "dados_reais": limpar_dados_para_ia(f.get('dados')),
+                "insight_previo": f.get('analise') or "Sem análise prévia"
             })
+
+        contexto_pdca = ""
+        if fase:
+            contexto_pdca = f"\nFase atual do ciclo PDCA: {fase.upper()}."
+        if ciclo:
+            contexto_pdca += f"\nCiclo PDCA número: {ciclo}."
 
         prompt = f"""
         Atue como Consultor Master Black Belt. Escreva um RELATÓRIO EXECUTIVO FINAL para o projeto.
-        
         Projeto: {nome_proj}
         Objetivo: {objetivo}
-        Ferramentas Aplicadas: {json.dumps(resumo, ensure_ascii=False)}
-        
-        Estruture a resposta em Markdown profissional:
-        1. **Diagnóstico**: Qual a situação atual baseada nas ferramentas?
-        2. **Conexão**: Como os resultados do Ishikawa/Pareto/5W2H se conectam?
-        3. **Recomendação Estratégica**: O que a diretoria deve fazer agora?
-        
-        Mantenha o tom sério, técnico e focado em resultados de negócio.
+        {contexto_pdca}
+
+        Dossiê com os DADOS REAIS de cada ferramenta aplicada:
+        {json.dumps(resumo, ensure_ascii=False, default=str)}
+
+        Escreva o relatório em Markdown profissional, SEMPRE citando os números/valores reais
+        dos dados acima (não seja genérico). Estruture em:
+        1. **Diagnóstico**: Situação atual baseada nos números reais das ferramentas.
+        2. **Conexão**: Como os resultados do Pareto/Ishikawa/5W2H se conectam (cite os dados).
+        3. **Recomendação Estratégica**: O que a diretoria deve fazer agora, com ações concretas e específicas.
+
+Regras: Use os números reais fornecidos. Não invente dados. Seja direto e executivo.
         """
 
         # Usa o cliente centralizado (Groq + fallback Google)
         messages = [{"role": "user", "content": prompt}]
-        texto, provider = gerar_analise(messages, temperature=0.7, max_tokens=1000)
+        texto, provider = gerar_analise(messages, temperature=0.7, max_tokens=1200)
         
         if not texto:
             return "Nota: A análise consolidada por IA está temporariamente indisponível. Consulte as análises individuais acima."
         
         print(f"Conclusão Geral gerada com provider: {provider}")
-        return texto
+        # Converte o Markdown gerado pela IA em HTML estilizado e seguro
+        return html_para_relatorio(texto)
                 
     except Exception as e:
         print(f"Erro IA Geral: {e}")
         return "Nota: A análise consolidada por IA está temporariamente indisponível. Consulte as análises individuais acima."
 
-def gerar_analise_ferramenta(tipo, dados, objetivo_projeto):
-    """Gera análise detalhada para uma ferramenta específica (OTIMIZADO)"""
+def gerar_analise_ferramenta(tipo, dados, objetivo_projeto, fase=None, projeto=None):
+    """Gera análise detalhada para uma ferramenta específica (com contexto do PDCA)"""
     
     # Validar dados
     if not dados or not isinstance(dados, dict):
         return f"Análise de {get_nome_ferramenta(tipo)} indisponível - dados inválidos."
     
     try:
-        # Usa a mesma função otimizada para consistência.
-        # Esta função usa o cliente centralizado (Groq + fallback Google).
-        return gerar_analise_ia_individual(tipo, dados, objetivo_projeto)
+        # Usa a mesma função otimizada para consistência (cliente centralizado Groq + fallback Google).
+        return gerar_analise_ia_individual(tipo, dados, objetivo_projeto, fase=fase, projeto=projeto)
                 
     except Exception as e:
         print(f"Erro na análise de {tipo}: {e}")
@@ -1422,13 +1661,15 @@ def relatorio_ciclo_pdca(id):
                 1. **Status do Ciclo**: Progresso e fase atual
                 2. **Principais Descobertas**: Insights das ferramentas
                 3. **Recomendações**: Próximos passos
-                """
+"""
                 
                 messages = [{"role": "user", "content": prompt}]
                 texto, provider = gerar_analise(messages, temperature=0.5, max_tokens=600)
-                conclusao_geral = texto or "Análise consolidada temporariamente indisponível."
                 if texto:
+                    conclusao_geral = html_para_relatorio(texto)
                     print(f"Análise do ciclo gerada com provider: {provider}")
+                else:
+                    conclusao_geral = "Análise consolidada temporariamente indisponível."
             except Exception as e:
                 print(f"Erro ao gerar análise do ciclo: {e}")
                 conclusao_geral = "Análise consolidada temporariamente indisponível."
