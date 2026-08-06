@@ -273,7 +273,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="{{ url_for('static', filename='js/pareto.js') }}"></script>
-{% if modo_projeto %}
+{% if modo_projeto or modo_visualizacao %}
 <script>
     // Carregar dados se existirem
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
@@ -292,7 +292,7 @@
                 dadosIniciais.itens.forEach(item => {
                     dados.push({
                         label: item.label || item.categoria,
-                        value: parseFloat(item.value || item.valor)
+value: parseFloat(item.value || item.valor)
                     });
                 });
                 atualizarFerramenta();
@@ -300,6 +300,7 @@
         }
     });
 
+    {% if modo_projeto %}
     function salvarNoProjeto(tipo) {
         const canvas = document.getElementById('paretoChart');
         const graficoImg = canvas.toDataURL('image/png');
@@ -341,11 +342,12 @@
                 btn.disabled = false;
             }
         })
-        .catch(error => {
+.catch(error => {
             console.error('Erro:', error);
             alert('Erro de conexão ao salvar.');
         });
     }
+    {% endif %}
 </script>
 {% endif %}
 {% endblock %}

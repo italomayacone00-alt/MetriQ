@@ -381,7 +381,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/fluxograma.js') }}?v={{ range(1, 10000) | random }}"></script>
-{% if modo_projeto %}
+{% if modo_projeto or modo_visualizacao %}
 <script>
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
     
@@ -425,8 +425,8 @@
                 atualizarTudo();
             }, 100);
         }
-    });
-
+});
+    {% if modo_projeto %}
     function salvarNoProjeto(tipo) {
         const diagramaContainer = document.getElementById('diagramaContainer');
         
@@ -468,7 +468,7 @@ alert('Salvo com sucesso!');
                     btn.disabled = false;
                 }
             })
-            .catch(error => {
+.catch(error => {
                 console.error('Erro:', error);
                 alert('Erro de conexão ao salvar.');
                 btn.innerHTML = originalText;
@@ -476,6 +476,7 @@ alert('Salvo com sucesso!');
             });
         });
     }
+    {% endif %}
 </script>
 {% endif %}
 {% endblock %}

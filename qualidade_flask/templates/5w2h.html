@@ -281,20 +281,23 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/5w2h.js') }}"></script>
-{% if modo_projeto %}
+{% if modo_projeto or modo_visualizacao %}
 <script>
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
     
-    window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
         if (dadosIniciais) {
             if (dadosIniciais.titulo) document.getElementById('nomeProjeto').value = dadosIniciais.titulo;
-            if (dadosIniciais.acoes && Array.isArray(dadosIniciais.acoes)) {
-                acoes = dadosIniciais.acoes;
+            // Os dados podem estar salvos em 'acoes' (projeto) ou em 'itens' (dashboard/www salvarNoBanco)
+            const acoesSalvas = dadosIniciais.acoes || dadosIniciais.itens;
+            if (acoesSalvas && Array.isArray(acoesSalvas)) {
+                acoes = acoesSalvas;
                 atualizarTabela();
             }
         }
     });
 
+    {% if modo_projeto %}
     function preencherComIA() {
         if (!confirm("Deseja que a IA preencha automaticamente este 5W2H com base nos dados do projeto?")) {
             return;
@@ -331,14 +334,16 @@
                 btn.disabled = false;
             }
         })
-        .catch(error => {
+.catch(error => {
             console.error('Erro:', error);
             alert('Erro de conexao ao gerar dados com IA.');
             btn.innerHTML = originalText;
             btn.disabled = false;
         });
     }
+    {% endif %}
 
+    {% if modo_projeto %}
     function salvarNoProjeto(tipo) {
         const dadosParaSalvar = {
             titulo: document.getElementById('nomeProjeto').value,
@@ -366,13 +371,14 @@
             if (data.status === 'success') {
                 alert('Salvo com sucesso!');
                 window.location.href = "{{ url_for('projects.detalhe_projeto', id=projeto.id) }}";
-            } else {
+} else {
                 alert('Erro ao salvar.');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         });
     }
+    {% endif %}
 </script>
 {% endif %}
 {% endblock %}

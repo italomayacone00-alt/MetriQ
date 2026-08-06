@@ -340,8 +340,23 @@ def visualizar(id):
         'pareto': 'pareto.html', 'ishikawa': 'ishikawa.html', '5w2h': '5w2h.html',
         'folha_verificacao': 'folha_verificacao.html', 'cep': 'cep.html', 
         'histograma': 'histograma.html', 'dispersao': 'dispersao.html', 'fluxograma': 'fluxograma.html'
-    }
-    return render_template(mapa.get(item.tipo, 'index.html'), dados=item.dados, analise_id=item.id)
+}
+# Garante que o título da análise salva seja carregado na visualização.
+    # O título fica em item.titulo (e não dentro de item.dados), então o
+    # injetamos no dict passado ao template para que os campos sejam preenchidos.
+    dados_projeto = item.dados
+    if dados_projeto and isinstance(dados_projeto, dict):
+        if not dados_projeto.get('titulo') and item.titulo:
+            dados_projeto = dict(dados_projeto)
+            dados_projeto['titulo'] = item.titulo
+
+    return render_template(
+        mapa.get(item.tipo, 'index.html'),
+        dados=item.dados,
+        dados_projeto=dados_projeto,
+        modo_visualizacao=True,
+        analise_id=item.id
+    )
 
 @main.route('/relatorio', methods=['POST'])
 @login_required

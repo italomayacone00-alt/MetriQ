@@ -322,7 +322,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script src="{{ url_for('static', filename='js/cep.js') }}"></script>
-{% if modo_projeto %}
+{% if modo_projeto or modo_visualizacao %}
 <script>
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
     
@@ -350,7 +350,7 @@
                 dadosIniciais.pontos.forEach(ponto => {
                     adicionarPontoManual(ponto.amostra, ponto.valor);
                 });
-            } else if (dadosIniciais.itens && Array.isArray(dadosIniciais.itens)) {
+} else if (dadosIniciais.itens && Array.isArray(dadosIniciais.itens)) {
                 dadosIniciais.itens.forEach(item => {
                     adicionarPontoManual(item.label, item.value);
                 });
@@ -358,6 +358,7 @@
         }
     });
 
+    {% if modo_projeto %}
     function salvarNoProjeto(tipo) {
         const canvas = document.getElementById('cepChart');
         const graficoImg = canvas.toDataURL('image/png');
@@ -399,13 +400,14 @@
                 btn.disabled = false;
             }
         })
-        .catch(error => {
+.catch(error => {
             console.error('Erro:', error);
             alert('Erro de conexão ao salvar.');
             btn.innerHTML = originalText;
             btn.disabled = false;
         });
     }
+    {% endif %}
 </script>
 {% endif %}
 {% endblock %}

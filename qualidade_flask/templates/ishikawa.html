@@ -337,7 +337,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/ishikawa.js') }}"></script>
-{% if modo_projeto %}
+{% if modo_projeto or modo_visualizacao %}
 <script>
     const dadosIniciais = {{ dados_projeto | tojson | safe if dados_projeto else 'null' }};
     
@@ -360,6 +360,7 @@
         }
     });
 
+{% if modo_projeto %}
     /**
      * Preenche o Ishikawa com dados gerados pela IA.
      * Chamado apenas quando o usuário clica no botão "Preencher com IA".
@@ -466,10 +467,11 @@
         .catch(error => {
             console.error('Erro:', error);
             alert('Erro de conexão ou erro interno ao salvar.');
-            btn.innerHTML = originalText;
+btn.innerHTML = originalText;
             btn.disabled = false;
         });
     }
+    {% endif %}
 </script>
 {% endif %}
 {% endblock %}
