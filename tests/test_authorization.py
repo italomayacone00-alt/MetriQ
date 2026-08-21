@@ -1,6 +1,6 @@
 import pytest
 from qualidade_flask import create_app, db
-from qualidade_flask.models import User, Empresa, Projeto
+from qualidade_flask.models import User, Empresa, Projeto, PlantaBaixa
 from werkzeug.security import generate_password_hash
 
 
@@ -71,3 +71,54 @@ def test_user_cannot_delete_other_users_project():
         assert resp2.status_code in (404, 403, 302)
         # Project still exists
         assert db.session.get(Projeto, proj_b.id) is not None
+
+
+def test_plant_analysis_route_handles_missing_area_metric():
+    app = make_app()
+    client = app.test_client()
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        user = User(username='planta_user', password=generate_password_hash('plantapass'))
+        db.session.add(user)
+        db.session.commit()
+
+        planta = PlantaBaixa(
+            nome='Planta Teste',
+            user_id=user.id,
+            area_total_m2=350.0,
+            canvas_data={'objects': [{'objectType': 'extintor'}]},
+            checklist_conformidade={'1': 'conforme'}
+        )
+        db.session.add(planta)
+        db.session.commit()
+
+        login = client.post('/login', data={'username': 'planta_user', 'password': 'plantapass'}, follow_redirects=True)
+        assert login.status_code == 200
+
+        resp = client.get(f'/planta-baixa/{planta.id}/analise', follow_redirects=True)
+        assert resp.status_code == 200
+        assert b'Analise' in resp.data or b'analise' in resp.data.lower() or b'An\xc3\xa1lise' in resp.data
+
+
+def test_empresa_vincular_dados_invalid_payload_returns_400():
+    app = make_app()
+    client = app.test_client()
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        user = User(username='empresa_user', password=generate_password_hash('empresapass'))
+        db.session.add(user)
+        db.session.commit()
+
+        empresa = Empresa(razao_social='Empresa Teste', user_id=user.id)
+        db.session.add(empresa)
+        db.session.commit()
+
+        login = client.post('/login', data={'username': 'empresa_user', 'password': 'empresapass'}, follow_redirects=True)
+        assert login.status_code == 200
+
+        resp = client.post(f'/empresa/{empresa.id}/vincular-dados', json={'tipo': 'projeto'})
+        assert resp.status_code == 400

@@ -208,7 +208,12 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
         }
     
     # Extrair os principais problemas do Pareto
-    principais_problemas = [item['label'] for item in pareto_data['itens'][:3]]
+    itens = pareto_data.get('itens') or []
+    principais_problemas = [
+        str(item.get('label', 'Problema'))
+        for item in (itens[:3] if isinstance(itens, list) else [])
+        if isinstance(item, dict)
+    ]
     
     dados_ishikawa = {
         "titulo": f"Análise de Causa Raiz - {projeto_objetivo}",
@@ -243,11 +248,11 @@ def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
         }
     
     # Extrair causas principais do Ishikawa
-    diagrama = ishikawa_data['diagrama']
+    diagrama = ishikawa_data.get('diagrama') or {}
     causas_principais = []
     
     for categoria, causas in diagrama.items():
-        if causas and len(causas) > 0:
+        if isinstance(causas, list) and causas:
             causas_principais.extend(causas[:2])  # Pegar até 2 causas por categoria
     
     # Gerar ações 5W2H baseadas nas causas

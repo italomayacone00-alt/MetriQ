@@ -392,6 +392,7 @@ def analise(id):
     
     # Dados dos objetos do canvas
     objetos = planta.contar_objetos()
+    objetos.setdefault('area_m2', float(planta.area_total_m2 or 0))
     
     dados_analise = {
         'normas': {

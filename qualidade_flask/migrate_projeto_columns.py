@@ -100,14 +100,14 @@ def migrar_tabela(engine, inspector, dialect, tabela, colunas_necessarias):
 
     # Verificar se a tabela existe
     if tabela not in inspector.get_table_names():
-        print(f"  ⏭️  Tabela '{tabela}' não existe. Será criada pelo db.create_all().")
+        print(f"Tabela '{tabela}' nao existe. Será criada pelo db.create_all().")
         return colunas_adicionadas
 
     try:
         colunas_existentes = [col['name'] for col in inspector.get_columns(tabela)]
-        print(f"📋 Colunas existentes em '{tabela}': {colunas_existentes}")
+        print(f"Colunas existentes em '{tabela}': {colunas_existentes}")
     except Exception as e:
-        print(f"❌ Erro ao inspecionar tabela '{tabela}': {e}")
+        print(f"Erro ao inspecionar tabela '{tabela}': {e}")
         return colunas_adicionadas
 
     for col_name, col_types in colunas_necessarias.items():
@@ -120,12 +120,12 @@ def migrar_tabela(engine, inspector, dialect, tabela, colunas_necessarias):
                     alter_sql = f'ALTER TABLE "{tabela}" ADD COLUMN "{col_name}" {col_type}'
                     conn.execute(text(alter_sql))
                     conn.commit()
-                print(f"  ✅ Coluna '{col_name}' ({col_type}) ADICIONADA em '{tabela}'!")
+                print(f"Coluna '{col_name}' ({col_type}) adicionada em '{tabela}'!")
                 colunas_adicionadas.append(f"{tabela}.{col_name}")
             except Exception as e:
-                print(f"  ❌ Erro ao adicionar coluna '{col_name}' em '{tabela}': {e}")
+                print(f"Erro ao adicionar coluna '{col_name}' em '{tabela}': {e}")
         else:
-            print(f"  ⏭️  Coluna '{tabela}.{col_name}' já existe.")
+            print(f"Coluna '{tabela}.{col_name}' ja existe.")
 
     return colunas_adicionadas
 
@@ -143,7 +143,7 @@ def run_migration():
 
         # Descobrir o dialeto do banco (sqlite, postgresql, etc)
         dialect = engine.dialect.name
-        print(f"🔍 Banco detectado: {dialect}")
+        print(f"Banco detectado: {dialect}")
 
         # ==========================================
         # 1. VERIFICAR COLUNAS EXISTENTES NAS TABELAS
@@ -151,7 +151,7 @@ def run_migration():
         colunas_adicionadas = []
 
         for tabela, colunas in TABELAS_COLUNAS.items():
-            print(f"\n🔎 Processando tabela '{tabela}'...")
+            print(f"\nProcessando tabela '{tabela}'...")
             colunas_adicionadas.extend(migrar_tabela(engine, inspector, dialect, tabela, colunas))
 
         # ==========================================
@@ -160,33 +160,33 @@ def run_migration():
         try:
             tabelas = inspector.get_table_names()
             if 'ciclo_historico' not in tabelas:
-                print("\n📋 Criando tabela 'ciclo_historico'...")
+                print("\nCriando tabela 'ciclo_historico'...")
                 # Criar usando SQLAlchemy metadata / create_all
                 from qualidade_flask.models import CicloHistorico
                 db.create_all()  # create_all é idempotente, só cria tabelas que não existem
-                print("  ✅ Tabela 'ciclo_historico' CRIADA!")
+                print("Tabela 'ciclo_historico' criada!")
             else:
                 # Verificar colunas da ciclo_historico
                 colunas_ch = [col['name'] for col in inspector.get_columns('ciclo_historico')]
-                print(f"\n  ⏭️  Tabela 'ciclo_historico' já existe. Colunas: {colunas_ch}")
+                print(f"\nTabela 'ciclo_historico' ja existe. Colunas: {colunas_ch}")
         except Exception as e:
-            print(f"  ❌ Erro ao verificar/criar 'ciclo_historico': {e}")
+            print(f"Erro ao verificar/criar 'ciclo_historico': {e}")
 
         # ==========================================
         # 3. RESUMO FINAL
         # ==========================================
         if colunas_adicionadas:
-            print(f"\n✅ Migração concluída! Colunas adicionadas: {colunas_adicionadas}")
+            print(f"\nMigracao concluida! Colunas adicionadas: {colunas_adicionadas}")
         else:
-            print(f"\n✅ Nenhuma coluna nova necessária. Schema já está atualizado.")
+            print(f"\nNenhuma coluna nova necessaria. Schema ja estah atualizado.")
 
         # Verificar schema final
         for tabela in TABELAS_COLUNAS:
             try:
                 colunas_atuais = [col['name'] for col in inspector.get_columns(tabela)]
-                print(f"\n📋 Schema final da tabela '{tabela}': {colunas_atuais}")
+                print(f"\nSchema final da tabela '{tabela}': {colunas_atuais}")
             except Exception as e:
-                print(f"  ❌ Erro ao verificar schema final de '{tabela}': {e}")
+                print(f"Erro ao verificar schema final de '{tabela}': {e}")
 
         return colunas_adicionadas
 
@@ -219,7 +219,7 @@ def run_migration_auto():
             if not colunas_faltando:
                 continue
 
-            print(f"📝 Migração automática: adicionando colunas {colunas_faltando} em '{tabela}'...")
+            print(f"Migracao automatica: adicionando colunas {colunas_faltando} em '{tabela}'...")
 
             with engine.connect() as conn:
                 for col_name in colunas_faltando:
@@ -228,20 +228,20 @@ def run_migration_auto():
                         try:
                             # Aspas duplas: 'user' é palavra reservada no PostgreSQL
                             conn.execute(text(f'ALTER TABLE "{tabela}" ADD COLUMN "{col_name}" {col_type}'))
-                            print(f"  ✅ Coluna '{col_name}' adicionada em '{tabela}'")
+                            print(f"Coluna '{col_name}' adicionada em '{tabela}'")
                             colunas_adicionadas.append(f"{tabela}.{col_name}")
                         except Exception as e:
-                            print(f"  ⚠️ Erro ao adicionar '{tabela}.{col_name}': {e}")
+                            print(f"Erro ao adicionar '{tabela}.{col_name}': {e}")
                 conn.commit()
 
         db.create_all()  # Garante que ciclo_historico e tabelas novas existam
         if colunas_adicionadas:
-            print(f"✅ Migração automática concluída! Colunas adicionadas: {colunas_adicionadas}")
+            print(f"Migracao automatica concluida! Colunas adicionadas: {colunas_adicionadas}")
         else:
-            print("✅ Migração automática: schema já está atualizado.")
+            print("Migracao automatica: schema ja estah atualizado.")
 
     except Exception as e:
-        print(f"⚠️ Migração automática ignorada: {e}")
+        print(f"Migracao automatica ignorada: {e}")
     finally:
         _migration_running = False
 

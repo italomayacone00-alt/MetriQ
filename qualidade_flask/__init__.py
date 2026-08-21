@@ -116,25 +116,25 @@ def create_app():
         
         # Popula ISOs automaticamente se não existirem
         if NormaISO.query.count() == 0:
-            print("📝 Populando ISOs automaticamente...")
+            print("Populando ISOs automaticamente...")
             for iso_data in [iso_9001_data, iso_14001_data, iso_45001_data]:
                 existing = NormaISO.query.filter_by(numero=iso_data['numero']).first()
                 if not existing:
                     new_iso = NormaISO(**iso_data)
                     db.session.add(new_iso)
             db.session.commit()
-            print(f"✅ {NormaISO.query.count()} ISOs populadas automaticamente!")
+            print(f"{NormaISO.query.count()} ISOs populadas automaticamente!")
         
         # Popula NRs automaticamente se não existirem
         if NormaRegulamentadora.query.count() == 0:
-            print("📝 Populando NRs automaticamente...")
+            print("Populando NRs automaticamente...")
             for nr_data in nrs_basicas_data:
                 existing = NormaRegulamentadora.query.filter_by(numero=nr_data['numero']).first()
                 if not existing:
                     new_nr = NormaRegulamentadora(**nr_data)
                     db.session.add(new_nr)
             db.session.commit()
-            print(f"✅ {NormaRegulamentadora.query.count()} NRs populadas automaticamente!")
+            print(f"{NormaRegulamentadora.query.count()} NRs populadas automaticamente!")
 
         # ==================================================
         # 5. MIGRAÇÃO AUTOMÁTICA DO BANCO DE DADOS
@@ -144,7 +144,7 @@ def create_app():
             from .migrate_projeto_columns import run_migration_auto
             run_migration_auto()
         except Exception as e:
-            print(f"⚠️ Erro na migração automática (ignorado): {e}")
+            print(f"Erro na migração automática (ignorado): {e}")
 
     # Registrar comandos CLI personalizados
     from .seed_data import register_commands

@@ -126,9 +126,14 @@ def vincular_dados(id):
     """Vincula dados existentes (sem empresa_id) à empresa"""
     empresa = get_owned_or_404(Empresa, id)
     
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     tipo = data.get('tipo', '')
-    item_id = data.get('item_id', 0)
+    item_id = data.get('item_id')
+
+    try:
+        item_id = int(item_id)
+    except (TypeError, ValueError):
+        return jsonify({'erro': 'item_id inválido'}), 400
     
     try:
         if tipo == 'planta':
@@ -147,6 +152,8 @@ def vincular_dados(id):
             item = db.session.get(Projeto, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
+        else:
+            return jsonify({'erro': 'tipo inválido'}), 400
         
         db.session.commit()
         return jsonify({'sucesso': True, 'mensagem': 'Vinculado com sucesso!'})
