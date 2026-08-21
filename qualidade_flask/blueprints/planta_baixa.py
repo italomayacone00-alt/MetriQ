@@ -364,89 +364,121 @@ def analise(id):
         flash('Acesso negado.', 'danger')
         return redirect(url_for('planta_baixa.lista'))
     
-    # Dados do checklist
-    percentual, stats = planta.calcular_conformidade()
-    
-    # Análise por seção
-    secoes = {}
-    if planta.checklist_conformidade:
-        for pergunta in PERGUNTAS_CHECKLIST:
-            secao = pergunta['secao']
-            pergunta_id = str(pergunta['id'])
-            if secao not in secoes:
-                secoes[secao] = {'conforme': 0, 'nao_conforme': 0, 'nao_aplicavel': 0, 'total': 0}
-            secoes[secao]['total'] += 1
-            resposta = planta.checklist_conformidade.get(pergunta_id, 'nao_conforme')
-            if resposta in secoes[secao]:
-                secoes[secao][resposta] += 1
-    
-    # Calcular percentual por seção
-    resultado_secoes = {}
-    for secao, dados in secoes.items():
-        total_aplicaveis = dados['total'] - dados['nao_aplicavel']
-        pct = round((dados['conforme'] / total_aplicaveis) * 100, 1) if total_aplicaveis > 0 else 0
-        resultado_secoes[secao] = {
-            **dados,
-            'percentual': pct
-        }
-    
-    # Dados dos objetos do canvas
-    objetos = planta.contar_objetos()
-    objetos.setdefault('area_m2', float(planta.area_total_m2 or 0))
-    
-    dados_analise = {
-        'normas': {
-            'NR-23': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-26': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-12': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-17': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-32': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-10': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-35': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-25': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-20': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-5': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
-            'NR-7': {'total': 0, 'conforme': 0, 'nao_conforme': 0}
-        }
-    }
-    
-    if planta.checklist_conformidade:
-        for pergunta in PERGUNTAS_CHECKLIST:
-            norma = pergunta['norma']
-            pergunta_id = str(pergunta['id'])
-            if norma in dados_analise['normas']:
-                dados_analise['normas'][norma]['total'] += 1
+    try:
+        # Dados do checklist
+        percentual, stats = planta.calcular_conformidade()
+
+        # Análise por seção
+        secoes = {}
+        if planta.checklist_conformidade:
+            for pergunta in PERGUNTAS_CHECKLIST:
+                secao = pergunta['secao']
+                pergunta_id = str(pergunta['id'])
+                if secao not in secoes:
+                    secoes[secao] = {'conforme': 0, 'nao_conforme': 0, 'nao_aplicavel': 0, 'total': 0}
+                secoes[secao]['total'] += 1
                 resposta = planta.checklist_conformidade.get(pergunta_id, 'nao_conforme')
-                if resposta == 'conforme':
-                    dados_analise['normas'][norma]['conforme'] += 1
-                elif resposta == 'nao_conforme':
-                    dados_analise['normas'][norma]['nao_conforme'] += 1
-    
-    # Recomendações automáticas baseadas nos objetos
-    recomendacoes = []
-    if objetos['extintores'] == 0 and objetos['total'] > 5:
-        recomendacoes.append('❌ Nenhum extintor identificado no layout. NR-23 exige extintores conforme risco.')
-    if objetos['saidas'] == 0 and objetos['total'] > 5:
-        recomendacoes.append('❌ Nenhuma saída de emergência identificada. NR-23 exige rotas de fuga.')
-    if objetos['extintores'] == 1 and objetos['area_m2'] > 200:
-        recomendacoes.append('⚠️ Apenas 1 extintor para área grande. Verifique NR-23 sobre quantidade.')
-    if objetos['lava_olhos'] == 0:
-        recomendacoes.append('⚠️ Nenhum lava-olhos identificado. Recomendado em áreas com risco químico.')
-    if objetos['sinalizacao'] == 0 and objetos['total'] > 3:
-        recomendacoes.append('⚠️ Nenhuma sinalização de segurança. NR-26 exige sinalização adequada.')
-    if objetos['portas'] == 0 and objetos['paredes'] > 0:
-        recomendacoes.append('⚠️ Paredes sem portas. Verifique acessibilidade do layout.')
-    
-    objetos['area_m2'] = planta.area_total_m2
-    
-    return render_template('planta_baixa/analise.html',
-                          planta=planta,
-                          stats=stats,
-                          secoes=resultado_secoes,
-                          dados_analise=dados_analise,
-                          objetos=objetos,
-                          recomendacoes=recomendacoes,
-                          perguntas=PERGUNTAS_CHECKLIST)
+                if resposta in secoes[secao]:
+                    secoes[secao][resposta] += 1
+
+        # Calcular percentual por seção
+        resultado_secoes = {}
+        for secao, dados in secoes.items():
+            total_aplicaveis = dados['total'] - dados['nao_aplicavel']
+            pct = round((dados['conforme'] / total_aplicaveis) * 100, 1) if total_aplicaveis > 0 else 0
+            resultado_secoes[secao] = {
+                **dados,
+                'percentual': pct
+            }
+
+        # Dados dos objetos do canvas
+        objetos = planta.contar_objetos() or {}
+        # Garantir campos mínimos para evitar KeyError
+        if not isinstance(objetos, dict):
+            objetos = {}
+        objetos.setdefault('total', 0)
+        objetos.setdefault('extintores', 0)
+        objetos.setdefault('saidas', 0)
+        objetos.setdefault('lava_olhos', 0)
+        objetos.setdefault('sinalizacao', 0)
+        objetos.setdefault('paredes', 0)
+        objetos.setdefault('portas', 0)
+        objetos.setdefault('area_m2', float(planta.area_total_m2 or 0))
+
+        dados_analise = {
+            'normas': {
+                'NR-23': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-26': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-12': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-17': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-32': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-10': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-35': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-25': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-20': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-5': {'total': 0, 'conforme': 0, 'nao_conforme': 0},
+                'NR-7': {'total': 0, 'conforme': 0, 'nao_conforme': 0}
+            }
+        }
+
+        if planta.checklist_conformidade:
+            for pergunta in PERGUNTAS_CHECKLIST:
+                norma = pergunta['norma']
+                pergunta_id = str(pergunta['id'])
+                if norma in dados_analise['normas']:
+                    dados_analise['normas'][norma]['total'] += 1
+                    resposta = planta.checklist_conformidade.get(pergunta_id, 'nao_conforme')
+                    if resposta == 'conforme':
+                        dados_analise['normas'][norma]['conforme'] += 1
+                    elif resposta == 'nao_conforme':
+                        dados_analise['normas'][norma]['nao_conforme'] += 1
+
+        # Recomendações automáticas baseadas nos objetos
+        recomendacoes = []
+        try:
+            if int(objetos.get('extintores', 0)) == 0 and int(objetos.get('total', 0)) > 5:
+                recomendacoes.append('❌ Nenhum extintor identificado no layout. NR-23 exige extintores conforme risco.')
+            if int(objetos.get('saidas', 0)) == 0 and int(objetos.get('total', 0)) > 5:
+                recomendacoes.append('❌ Nenhuma saída de emergência identificada. NR-23 exige rotas de fuga.')
+            if int(objetos.get('extintores', 0)) == 1 and float(objetos.get('area_m2', 0)) > 200:
+                recomendacoes.append('⚠️ Apenas 1 extintor para área grande. Verifique NR-23 sobre quantidade.')
+            if int(objetos.get('lava_olhos', 0)) == 0:
+                recomendacoes.append('⚠️ Nenhum lava-olhos identificado. Recomendado em áreas com risco químico.')
+            if int(objetos.get('sinalizacao', 0)) == 0 and int(objetos.get('total', 0)) > 3:
+                recomendacoes.append('⚠️ Nenhuma sinalização de segurança. NR-26 exige sinalização adequada.')
+            if int(objetos.get('portas', 0)) == 0 and int(objetos.get('paredes', 0)) > 0:
+                recomendacoes.append('⚠️ Paredes sem portas. Verifique acessibilidade do layout.')
+        except Exception:
+            # Não permitir que uma falha na lógica de recomendações quebre a rota
+            recomendacoes.append('Erro ao gerar recomendações automáticas. Revise os dados do canvas.')
+
+        objetos['area_m2'] = float(planta.area_total_m2 or 0)
+
+        return render_template('planta_baixa/analise.html',
+                              planta=planta,
+                              stats=stats,
+                              secoes=resultado_secoes,
+                              dados_analise=dados_analise,
+                              objetos=objetos,
+                              recomendacoes=recomendacoes,
+                              perguntas=PERGUNTAS_CHECKLIST)
+
+    except Exception as e:
+        # Log detalhado para investigação em produção e evitar 500 para o usuário
+        import traceback
+        current_app.logger.exception('Erro ao gerar análise da planta: %s', e)
+        current_app.logger.error('Canvas data (trunc): %s', str(planta.canvas_data)[:2000])
+        # Retornar uma página de análise com mensagem amigável e sem falhar com 500
+        recomendacoes = ['Não foi possível gerar a análise automática. Os dados do layout podem estar incompletos ou inválidos.']
+        return render_template('planta_baixa/analise.html',
+                              planta=planta,
+                              stats={},
+                              secoes={},
+                              dados_analise={},
+                              objetos={'total': 0, 'area_m2': float(planta.area_total_m2 or 0)},
+                              recomendacoes=recomendacoes,
+                              perguntas=PERGUNTAS_CHECKLIST), 200
+
 
 @planta_baixa.route('/planta-baixa/<int:id>/atualizar-dimensoes', methods=['POST'])
 @login_required
