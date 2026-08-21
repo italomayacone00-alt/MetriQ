@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from ..models import PlantaBaixa, Empresa
 from .. import db
+from qualidade_flask.authz import get_owned_or_404
 from datetime import datetime
 
 planta_baixa = Blueprint('planta_baixa', __name__)
@@ -223,19 +224,14 @@ def nova():
 @login_required
 def construtor(id):
     """Abre o construtor/editor da planta"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    planta = get_owned_or_404(PlantaBaixa, id)
     return render_template('planta_baixa/construtor.html', planta=planta)
 
 @planta_baixa.route('/planta-baixa/<int:id>/salvar', methods=['POST'])
 @login_required
 def salvar(id):
     """Salva o canvas JSON de uma planta"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    planta = get_owned_or_404(PlantaBaixa, id)
     data = request.get_json()
     if not data:
         return jsonify({'erro': 'Dados inválidos'}), 400
@@ -264,9 +260,7 @@ def salvar(id):
 @login_required
 def carregar(id):
     """Carrega os dados do canvas de uma planta"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    planta = get_owned_or_404(PlantaBaixa, id)
     return jsonify({
         'id': planta.id,
         'nome': planta.nome,
@@ -287,10 +281,7 @@ def carregar(id):
 @login_required
 def excluir(id):
     """Exclui uma planta"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    planta = get_owned_or_404(PlantaBaixa, id)
     nome = planta.nome
     db.session.delete(planta)
     db.session.commit()
@@ -301,10 +292,7 @@ def excluir(id):
 @login_required
 def duplicar(id):
     """Duplica uma planta"""
-    original = PlantaBaixa.query.get_or_404(id)
-    if original.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    original = get_owned_or_404(PlantaBaixa, id)
     nova = PlantaBaixa(
         nome=f'{original.nome} (cópia)',
         descricao=original.descricao,
