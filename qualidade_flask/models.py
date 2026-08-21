@@ -360,7 +360,7 @@ class PlantaBaixa(db.Model):
 
     def contar_objetos(self):
         default = {'total': 0, 'paredes': 0, 'portas': 0, 'janelas': 0, 'extintores': 0, 'saidas': 0, 'maquinas': 0,
-                   'mesas': 0, 'cadeiras': 0, 'lava_olhos': 0, 'sinalizacao': 0, 'colunas': 0, 'escadas': 0}
+                   'mesas': 0, 'cadeiras': 0, 'lava_olhos': 0, 'sinalizacao': 0, 'colunas': 0, 'escadas': 0, 'area_m2': 0}
         if not self.canvas_data or not isinstance(self.canvas_data, dict):
             return default
         objetos = self.canvas_data.get('objects', [])
@@ -380,7 +380,8 @@ class PlantaBaixa(db.Model):
             'lava_olhos': sum(1 for o in objetos if o.get('objectType') == 'lava_olhos'),
             'sinalizacao': sum(1 for o in objetos if o.get('objectType') == 'sinalizacao'),
             'colunas': sum(1 for o in objetos if o.get('objectType') == 'coluna'),
-            'escadas': sum(1 for o in objetos if o.get('objectType') == 'escada')
+            'escadas': sum(1 for o in objetos if o.get('objectType') == 'escada'),
+            'area_m2': float(self.area_total_m2 or 0)
         }
 
     def calcular_conformidade(self):
