@@ -132,19 +132,19 @@ def vincular_dados(id):
     
     try:
         if tipo == 'planta':
-            item = PlantaBaixa.query.get(item_id)
+            item = db.session.get(PlantaBaixa, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'checklist_nr':
-            item = ChecklistNR.query.get(item_id)
+            item = db.session.get(ChecklistNR, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'checklist_iso':
-            item = ChecklistISO.query.get(item_id)
+            item = db.session.get(ChecklistISO, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'projeto':
-            item = Projeto.query.get(item_id)
+            item = db.session.get(Projeto, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         

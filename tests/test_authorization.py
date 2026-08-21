@@ -70,4 +70,4 @@ def test_user_cannot_delete_other_users_project():
         # Should be forbidden: 404 (not found for non-owner) or 403 or redirect
         assert resp2.status_code in (404, 403, 302)
         # Project still exists
-        assert Projeto.query.get(proj_b.id) is not None
+        assert db.session.get(Projeto, proj_b.id) is not None

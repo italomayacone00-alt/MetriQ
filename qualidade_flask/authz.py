@@ -24,11 +24,16 @@ def require_owner(model, id_arg='id', owner_field='user_id'):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            id_value = kwargs.get(id_arg) or request.view_args.get(id_arg)
-            obj = model.query.filter_by(id=id_value, **{owner_field: current_user.id}).first()
-            if not obj:
+            id_value = kwargs.get(id_arg)
+            if id_value is None and request.view_args:
+                id_value = request.view_args.get(id_arg)
+            if id_value is None:
                 abort(404)
-            # inject
+
+            obj = model.query.filter_by(id=id_value, **{owner_field: current_user.id}).first()
+            if obj is None:
+                abort(404)
+
             kwargs[model.__name__.lower()] = obj
             return f(*args, **kwargs)
         return wrapped
