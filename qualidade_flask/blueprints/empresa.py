@@ -2,12 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from ..models import Empresa, PlantaBaixa, Projeto, ProjetoFerramenta, ChecklistNR, ChecklistISO, NormaRegulamentadora, NormaISO
 from .. import db
-<<<<<<< HEAD
 from ..utils.ai_client import gerar_analise
 from ..utils.sanitize import sanitizar_html
-=======
 from qualidade_flask.authz import get_owned_or_404
->>>>>>> feature/authz-helper-and-tests
 from datetime import datetime
 import json
 import markdown
