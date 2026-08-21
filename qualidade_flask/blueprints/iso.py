@@ -59,6 +59,13 @@ def checklist_iso(id):
     # Capturar empresa_id da query string (GET) ou formulário (POST)
     empresa_selecionada = request.args.get('empresa_id', request.form.get('empresa_id', '')).strip()
     empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None
+
+    # Validar que a empresa pertence ao usuário (se fornecida)
+    if empresa_selecionada_id:
+        empresa_obj = Empresa.query.filter_by(id=empresa_selecionada_id, user_id=current_user.id).first()
+        if not empresa_obj:
+            flash('Empresa inválida ou sem acesso', 'danger')
+            return redirect(url_for('iso.detalhe_iso', id=id))
     
     if request.method == 'POST':
         respostas = {}

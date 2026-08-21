@@ -1,0 +1,366 @@
+﻿[
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  79,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Edita uma empresa existente\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027empresa.lista\u0027))\n    \n    if request.method == \u0027POST\u0027:\n        empresa.razao_social = request.form.get(\u0027razao_social\u0027, \u0027\u0027).strip()\n        empresa.nome_fantasia = request.form.get(\u0027nome_fantasia\u0027, \u0027\u0027).strip()\n        empresa.cnpj = request.form.get(\u0027cnpj\u0027, \u0027\u0027).strip()"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  114,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Exclui uma empresa\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027empresa.lista\u0027))\n    \n    nome = empresa.razao_social\n    db.session.delete(empresa)\n    db.session.commit()\n    flash(f\u0027Empresa \"{nome}\" excluída.\u0027, \u0027success\u0027)"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  132,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Vincula dados existentes (sem empresa_id) à empresa\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403\n    \n    data = request.get_json()\n    tipo = data.get(\u0027tipo\u0027, \u0027\u0027)\n    item_id = data.get(\u0027item_id\u0027, 0)\n    \n    try:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  171,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Dashboard principal da empresa com métricas consolidadas\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027empresa.lista\u0027))\n    \n    # Métricas consolidadas (inclui dados vinculados e não vinculados)\n    metricas = empresa.get_metricas_conformidade()\n    \n    # NRs aplicáveis sugeridas"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  298,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Relatório executivo consolidado da empresa\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027empresa.lista\u0027))\n    \n    metricas = empresa.get_metricas_conformidade()\n    \n    # Dados para gráficos\n    nrs_aplicaveis = empresa.get_nrs_aplicaveis()"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  470,
+        "code":  "empresa = Empresa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Verifica automaticamente se a empresa precisa de PDCA baseado em não conformidades\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403\n    \n    sugestoes = []\n    \n    # 1. Verificar NRs com baixa conformidade\n    nrs_aplicaveis = empresa.get_nrs_aplicaveis()\n    normas_nr = NormaRegulamentadora.query.filter(NormaRegulamentadora.numero.in_(nrs_aplicaveis)).all()"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  42,
+        "code":  "norma = NormaISO.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Detalhes de uma Norma ISO específica\"\"\"\n    norma = NormaISO.query.get_or_404(id)\n    # Buscar checklist do usuário atual\n    checklist_usuario = ChecklistISO.query.filter_by(\n        norma_id=id,\n        user_id=current_user.id\n    ).first()\n    return render_template(\u0027iso/detalhe.html\u0027, norma=norma, checklist_usuario=checklist_usuario)\n\n@iso.route(\u0027/iso/\u003cint:id\u003e/checklist\u0027, methods=[\u0027GET\u0027, \u0027POST\u0027])"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  54,
+        "code":  "norma = NormaISO.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Checklist de autoavaliação de maturidade de uma Norma ISO\"\"\"\n    norma = NormaISO.query.get_or_404(id)\n    \n    # Buscar empresas do usuário para seleção\n    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()\n    \n    # Capturar empresa_id da query string (GET) ou formulário (POST)\n    empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()\n    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None\n    "
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  148,
+        "code":  "norma = NormaISO.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Análise detalhada da maturidade de uma Norma ISO\"\"\"\n    norma = NormaISO.query.get_or_404(id)\n    checklist = ChecklistISO.query.filter_by(\n        norma_id=id,\n        user_id=current_user.id\n    ).first()\n    \n    if not checklist or not checklist.respostas:\n        flash(\u0027Preencha a autoavaliação primeiro para ver a análise.\u0027, \u0027warning\u0027)\n        return redirect(url_for(\u0027iso.checklist_iso\u0027, id=id))"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  42,
+        "code":  "norma = NormaRegulamentadora.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Detalhes de uma Norma Regulamentadora específica\"\"\"\n    norma = NormaRegulamentadora.query.get_or_404(id)\n    # Buscar checklist do usuário atual\n    checklist_usuario = ChecklistNR.query.filter_by(\n        norma_id=id,\n        user_id=current_user.id\n    ).first()\n    return render_template(\u0027nr/detalhe.html\u0027, norma=norma, checklist_usuario=checklist_usuario)\n\n@nr.route(\u0027/nr/popular\u0027, methods=[\u0027POST\u0027])"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1133,
+        "code":  "norma = NormaRegulamentadora.query.get_or_404(id)",
+        "ownership_check_found":  false,
+        "snippet":  "    \"\"\"Página para responder checklist de uma NR\"\"\"\n    norma = NormaRegulamentadora.query.get_or_404(id)\n    # Use NR-specific glossary if available, otherwise use default\n    glossario = norma.glossario if norma.glossario else [\n        {\u0027sigla\u0027: \u0027SST\u0027, \u0027significado\u0027: \u0027Segurança e Saúde no Trabalho\u0027},\n        {\u0027sigla\u0027: \u0027PGR\u0027, \u0027significado\u0027: \u0027Programa de Gerenciamento de Riscos\u0027},\n        {\u0027sigla\u0027: \u0027CIPA\u0027, \u0027significado\u0027: \u0027Comissão Interna de Prevenção de Acidentes\u0027},\n        {\u0027sigla\u0027: \u0027PPRA\u0027, \u0027significado\u0027: \u0027Programa de Prevenção de Riscos Ambientais\u0027},\n        {\u0027sigla\u0027: \u0027PCMSO\u0027, \u0027significado\u0027: \u0027Programa de Controle Médico de Saúde Ocupacional\u0027},\n        {\u0027sigla\u0027: \u0027EPI\u0027, \u0027significado\u0027: \u0027Equipamento de Proteção Individual\u0027},"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1255,
+        "code":  "norma = NormaRegulamentadora.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Gera análise com base no checklist respondido\"\"\"\n    norma = NormaRegulamentadora.query.get_or_404(id)\n    \n    # Buscar checklist existente\n    checklist = ChecklistNR.query.filter_by(\n        norma_id=id,\n        user_id=current_user.id\n    ).first_or_404()\n    \n    if not checklist or not checklist.respostas:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1338,
+        "code":  "analise = Analise.query.get_or_404(analise_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Visualiza análise com gráficos\"\"\"\n    analise = Analise.query.get_or_404(analise_id)\n    \n    # Verificar se o usuário é o dono da análise\n    if analise.user_id != current_user.id:\n        flash(\u0027Você não tem permissão para acessar esta análise.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027main.index\u0027))\n    \n    dados = analise.dados or {}\n    return render_template(\u0027nr/analise.html\u0027, analise=analise, dados=dados)"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  226,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Abre o construtor/editor da planta\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    return render_template(\u0027planta_baixa/construtor.html\u0027, planta=planta)\n\n@planta_baixa.route(\u0027/planta-baixa/\u003cint:id\u003e/salvar\u0027, methods=[\u0027POST\u0027])\n@login_required\ndef salvar(id):"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  236,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Salva o canvas JSON de uma planta\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403\n    data = request.get_json()\n    if not data:\n        return jsonify({\u0027erro\u0027: \u0027Dados inválidos\u0027}), 400\n    \n    planta.canvas_data = data.get(\u0027canvas\u0027, {\u0027version\u0027: \u00275.3.1\u0027, \u0027objects\u0027: []})\n    planta.thumbnail = data.get(\u0027thumbnail\u0027, \u0027\u0027)"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  267,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Carrega os dados do canvas de uma planta\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403\n    return jsonify({\n        \u0027id\u0027: planta.id,\n        \u0027nome\u0027: planta.nome,\n        \u0027descricao\u0027: planta.descricao,\n        \u0027tipo_ambiente\u0027: planta.tipo_ambiente,\n        \u0027setor\u0027: planta.setor,"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  290,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Exclui uma planta\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    nome = planta.nome\n    db.session.delete(planta)\n    db.session.commit()\n    flash(f\u0027Planta \"{nome}\" excluída.\u0027, \u0027success\u0027)\n    return redirect(url_for(\u0027planta_baixa.lista\u0027))"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  304,
+        "code":  "original = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Duplica uma planta\"\"\"\n    original = PlantaBaixa.query.get_or_404(id)\n    if original.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    nova = PlantaBaixa(\n        nome=f\u0027{original.nome} (cópia)\u0027,\n        descricao=original.descricao,\n        tipo_ambiente=original.tipo_ambiente,\n        setor=original.setor,"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  335,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Checklist de conformidade normativa do layout\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    \n    if request.method == \u0027POST\u0027:\n        respostas = {}\n        observacoes = {}\n        "
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  374,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Análise de conformidade com gráficos\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    \n    # Dados do checklist\n    percentual, stats = planta.calcular_conformidade()\n    \n    # Análise por seção"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  466,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Atualiza as dimensões reais da planta\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403\n    \n    data = request.get_json()\n    if not data:\n        return jsonify({\u0027erro\u0027: \u0027Dados inválidos\u0027}), 400\n    \n    planta.area_total_m2 = float(data.get(\u0027area_total_m2\u0027, 0))"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  526,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def detalhe_projeto(id):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    # Redirecionar projetos PDCA para a tela unificada do ciclo\n    if projeto.tipo == \u0027pdca\u0027:\n        return redirect(url_for(\u0027projects.projeto_pdca\u0027, id=projeto.id))\n    "
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  547,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def abrir_ferramenta_projeto(id, tipo):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    # Verificar se já existe ferramenta deste tipo\n    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    \n    # NOTA: NÃO criar automaticamente ferramentas com IA."
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  593,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        return jsonify({\"status\": \"error\", \"message\": \"Acesso negado\"}), 403\n    \n    # Buscar sugestão da IA com dados preenchidos\n    sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)\n    \n    # Verificar se a IA sugeriu esta ferramenta com dados preenchidos\n    if (sugestao.get(\u0027ferramenta_sugerida\u0027) != tipo):"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  639,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_fluxograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  646,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027fluxograma\u0027).first()\n\n    return render_template(\u0027fluxograma.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  660,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_ishikawa(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  667,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027ishikawa\u0027).first()\n\n    return render_template(\u0027ishikawa.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  681,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_pareto(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  688,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027pareto\u0027).first()\n\n    return render_template(\u0027pareto.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  702,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_5w2h(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  709,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u00275w2h\u0027).first()\n\n    return render_template(\u00275w2h.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  723,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_folha_verificacao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  730,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027folha_verificacao\u0027).first()\n\n    return render_template(\u0027folha_verificacao.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  744,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_cep(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  751,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027cep\u0027).first()\n\n    return render_template(\u0027cep.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  765,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_histograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  772,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027histograma\u0027).first()\n\n    return render_template(\u0027histograma.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  786,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def nova_ferramenta_dispersao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  793,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027dispersao\u0027).first()\n\n    return render_template(\u0027dispersao.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  808,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def salvar_ferramenta_projeto(id):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        return jsonify({\"status\": \"error\", \"message\": \"Acesso negado\"}), 403\n\n    dados = request.json\n    tipo = dados.get(\u0027tipo\u0027)\n    conteudo = dados.get(\u0027dados\u0027)\n    # NOTA: auto_generate removido - a IA só preenche ferramentas quando o usuário\n    # clica explicitamente em \"Preencher com IA\" no endpoint separado."
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  846,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def relatorio_projeto(id):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    # 1. Prepara os dados das ferramentas e gera análises individuais se faltarem\n    analises_ferramentas = []\n    \n    # Tenta obter cliente Groq (pode ser None se a chave falhar)"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1115,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "def excluir_projeto(id):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        return jsonify({\"status\": \"error\", \"message\": \"Acesso negado\"}), 403\n    \n    db.session.delete(projeto)\n    db.session.commit()\n    flash(\u0027Projeto excluído com sucesso!\u0027, \u0027success\u0027)\n    return redirect(url_for(\u0027projects.lista_projetos\u0027))\n"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1127,
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "ownership_check_found":  true,
+        "snippet":  "def excluir_ferramenta_projeto(id, ferramenta_id):\n    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n    projeto = Projeto.query.get_or_404(id)\n    \n    if projeto.user_id != current_user.id or ferramenta.projeto_id != id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    \n    db.session.delete(ferramenta)\n    db.session.commit()"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1128,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n    projeto = Projeto.query.get_or_404(id)\n    \n    if projeto.user_id != current_user.id or ferramenta.projeto_id != id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    \n    db.session.delete(ferramenta)\n    db.session.commit()\n    flash(\u0027Ferramenta excluída com sucesso!\u0027, \u0027success\u0027)"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1190,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Página principal do ciclo PDCA\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    # Verificar requisitos da fase atual\n    if projeto.fase_atual == \u0027plan\u0027:\n        pode_avancar, requisitos_faltando = verificar_requisitos_plan(projeto)\n    elif projeto.fase_atual == \u0027do\u0027:"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1222,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Avança para a próxima fase do PDCA\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        return jsonify({\"status\": \"error\", \"message\": \"Acesso negado\"}), 403\n    \n    # Verificar se pode avançar\n    if projeto.fase_atual == \u0027plan\u0027:\n        pode, faltas = verificar_requisitos_plan(projeto)\n        if not pode:\n            return jsonify({\"status\": \"error\", \"message\": \"Complete todos os requisitos do PLAN: \" + \"; \".join(faltas)})"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1261,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Inicia um novo ciclo PDCA - salva snapshot do ciclo concluído\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    if projeto.fase_atual != \u0027act\u0027:\n        flash(\u0027Complete a fase ACT antes de iniciar um novo ciclo.\u0027, \u0027warning\u0027)\n        return redirect(url_for(\u0027projects.projeto_pdca\u0027, id=id))\n    "
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1311,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Salva o documento de padronização da fase ACT\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        return jsonify({\"status\": \"error\", \"message\": \"Acesso negado\"}), 403\n    \n    dados = request.json\n    \n    # Validação dos campos obrigatórios\n    if not dados:\n        return jsonify({\"status\": \"error\", \"message\": \"Nenhum dado recebido.\"}), 400"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1346,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Exibe o relatório de padronização do último ciclo ACT\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    if not projeto.documento_padronizacao:\n        flash(\u0027Nenhum documento de padronização para este projeto.\u0027, \u0027warning\u0027)\n        return redirect(url_for(\u0027projects.projeto_pdca\u0027, id=id))\n    "
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1364,
+        "code":  "projeto = Projeto.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Relatório consolidado do ciclo PDCA atual\"\"\"\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    if projeto.tipo != \u0027pdca\u0027:\n        return redirect(url_for(\u0027projects.relatorio_projeto\u0027, id=id))\n    \n    # Preparar dados das fases"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1466,
+        "code":  "planta = PlantaBaixa.query.get_or_404(id)",
+        "ownership_check_found":  true,
+        "snippet":  "    \"\"\"Cria um novo projeto PDCA a partir de não conformidades de uma planta baixa\"\"\"\n    planta = PlantaBaixa.query.get_or_404(id)\n    if planta.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027planta_baixa.lista\u0027))\n    \n    # Calcular não conformidades\n    pct, stats = planta.calcular_conformidade()\n    nao_conformes = planta.checklist_conformidade or {}\n    "
+    }
+]

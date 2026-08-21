@@ -2,8 +2,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from ..models import Empresa, PlantaBaixa, Projeto, ProjetoFerramenta, ChecklistNR, ChecklistISO, NormaRegulamentadora, NormaISO
 from .. import db
+<<<<<<< HEAD
 from ..utils.ai_client import gerar_analise
 from ..utils.sanitize import sanitizar_html
+=======
+from qualidade_flask.authz import get_owned_or_404
+>>>>>>> feature/authz-helper-and-tests
 from datetime import datetime
 import json
 import markdown
@@ -209,10 +213,7 @@ def cadastrar():
 @login_required
 def editar(id):
     """Edita uma empresa existente"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     if request.method == 'POST':
         empresa.razao_social = request.form.get('razao_social', '').strip()
@@ -244,10 +245,7 @@ def editar(id):
 @login_required
 def excluir(id):
     """Exclui uma empresa"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     nome = empresa.razao_social
     db.session.delete(empresa)
@@ -262,31 +260,36 @@ def excluir(id):
 @login_required
 def vincular_dados(id):
     """Vincula dados existentes (sem empresa_id) à empresa"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    empresa = get_owned_or_404(Empresa, id)
     
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     tipo = data.get('tipo', '')
-    item_id = data.get('item_id', 0)
+    item_id = data.get('item_id')
+
+    try:
+        item_id = int(item_id)
+    except (TypeError, ValueError):
+        return jsonify({'erro': 'item_id inválido'}), 400
     
     try:
         if tipo == 'planta':
-            item = PlantaBaixa.query.get(item_id)
+            item = db.session.get(PlantaBaixa, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'checklist_nr':
-            item = ChecklistNR.query.get(item_id)
+            item = db.session.get(ChecklistNR, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'checklist_iso':
-            item = ChecklistISO.query.get(item_id)
+            item = db.session.get(ChecklistISO, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
         elif tipo == 'projeto':
-            item = Projeto.query.get(item_id)
+            item = db.session.get(Projeto, item_id)
             if item and item.user_id == current_user.id:
                 item.empresa_id = id
+        else:
+            return jsonify({'erro': 'tipo inválido'}), 400
         
         db.session.commit()
         return jsonify({'sucesso': True, 'mensagem': 'Vinculado com sucesso!'})
@@ -301,10 +304,7 @@ def vincular_dados(id):
 @login_required
 def dashboard(id):
     """Dashboard principal da empresa com métricas consolidadas"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     # Métricas consolidadas (inclui dados vinculados e não vinculados)
     metricas = empresa.get_metricas_conformidade()

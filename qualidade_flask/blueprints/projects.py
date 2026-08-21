@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Empresa, db
+<<<<<<< HEAD
 from ..utils.ai_client import (
     gerar_analise, gerar_analise_json
 )
@@ -23,6 +24,10 @@ def html_para_relatorio(texto_markdown):
     )
     # Sanitiza para remover scripts/eventos maliciosos
     return sanitizar_html(html)
+=======
+from groq import Groq
+from qualidade_flask.authz import get_owned_or_404, require_owner
+>>>>>>> feature/authz-helper-and-tests
 
 projects = Blueprint('projects', __name__)
 
@@ -202,6 +207,7 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
             "dados_preenchidos": None
         }
     
+<<<<<<< HEAD
     # Extrair os principais problemas do Pareto (top 5, com valores)
     itens = pareto_data.get('itens', [])
     principais_problemas = []
@@ -294,6 +300,15 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
     # Gera causas que referenciam os problemas reais
     def _causa(prefixo, sufixo):
         return f"{prefixo} - {problema_principal}" if problema_principal else sufixo
+=======
+    # Extrair os principais problemas do Pareto
+    itens = pareto_data.get('itens') or []
+    principais_problemas = [
+        str(item.get('label', 'Problema'))
+        for item in (itens[:3] if isinstance(itens, list) else [])
+        if isinstance(item, dict)
+    ]
+>>>>>>> feature/authz-helper-and-tests
     
     dados_ishikawa = {
         "titulo": f"Análise de Causa Raiz - {projeto_objetivo}",
@@ -329,12 +344,16 @@ def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
         }
     
     # Extrair causas principais do Ishikawa
+<<<<<<< HEAD
     diagrama = ishikawa_data['diagrama']
     problema = ishikawa_data.get('problema', 'Problema identificado')
+=======
+    diagrama = ishikawa_data.get('diagrama') or {}
+>>>>>>> feature/authz-helper-and-tests
     causas_principais = []
     
     for categoria, causas in diagrama.items():
-        if causas and len(causas) > 0:
+        if isinstance(causas, list) and causas:
             causas_principais.extend(causas[:2])  # Pegar até 2 causas por categoria
     
     # ----- 1. TENTATIVA COM IA (ações específicas baseadas nas causas reais) -----
@@ -673,13 +692,22 @@ def novo_projeto():
     if not nome or not objetivo:
         flash('Nome e objetivo são obrigatórios!', 'danger')
         return redirect(url_for('projects.lista_projetos'))
-    
+
+    # Validar empresa_id enviado pelo cliente (não confiar no browser)
+    empresa_obj = None
+    empresa_id_int = int(empresa_id) if empresa_id and empresa_id.isdigit() else None
+    if empresa_id_int:
+        empresa_obj = Empresa.query.filter_by(id=empresa_id_int, user_id=current_user.id).first()
+        if not empresa_obj:
+            flash('Empresa inválida ou sem acesso', 'danger')
+            return redirect(url_for('projects.lista_projetos'))
+
     novo = Projeto(
         nome=nome, 
         objetivo=objetivo, 
         user_id=current_user.id,
         tipo=tipo,
-        empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None
+        empresa_id=empresa_obj.id if empresa_obj else None
     )
     db.session.add(novo)
     db.session.commit()
@@ -694,10 +722,7 @@ def novo_projeto():
 @projects.route('/projeto/<int:id>')
 @login_required
 def detalhe_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # Redirecionar projetos PDCA para a tela unificada do ciclo
     if projeto.tipo == 'pdca':
@@ -715,10 +740,7 @@ def detalhe_projeto(id):
 @projects.route('/projeto/<int:id>/ferramenta/<tipo>')
 @login_required
 def abrir_ferramenta_projeto(id, tipo):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # Verificar se já existe ferramenta deste tipo
     ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()
@@ -1324,9 +1346,7 @@ def extrair_pontos_chave(texto):
 @projects.route('/projeto/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
     
     db.session.delete(projeto)
     db.session.commit()
@@ -1337,7 +1357,7 @@ def excluir_projeto(id):
 @login_required
 def excluir_ferramenta_projeto(id, ferramenta_id):
     ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-    projeto = Projeto.query.get_or_404(id)
+    projeto = get_owned_or_404(Projeto, id)
     
     if projeto.user_id != current_user.id or ferramenta.projeto_id != id:
         flash('Acesso negado.', 'danger')
