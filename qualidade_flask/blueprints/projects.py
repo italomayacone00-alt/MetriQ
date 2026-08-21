@@ -5,11 +5,12 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Empresa, db
-<<<<<<< HEAD
 from ..utils.ai_client import (
     gerar_analise, gerar_analise_json
 )
 from ..utils.sanitize import sanitizar_html
+from groq import Groq
+from qualidade_flask.authz import get_owned_or_404, require_owner
 
 
 def html_para_relatorio(texto_markdown):
@@ -24,10 +25,7 @@ def html_para_relatorio(texto_markdown):
     )
     # Sanitiza para remover scripts/eventos maliciosos
     return sanitizar_html(html)
-=======
-from groq import Groq
-from qualidade_flask.authz import get_owned_or_404, require_owner
->>>>>>> feature/authz-helper-and-tests
+
 
 projects = Blueprint('projects', __name__)
 
