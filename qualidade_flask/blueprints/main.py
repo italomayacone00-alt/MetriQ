@@ -290,7 +290,7 @@ def index():
 @login_required
 @limiter.limit("30 per minute")
 def salvar():
-    conteudo = request.json
+    conteudo = request.get_json(silent=True)
     if not conteudo: return jsonify({'erro': 'Dados inválidos'}), 400
     
     try:

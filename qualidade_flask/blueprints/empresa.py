@@ -425,10 +425,7 @@ def dashboard(id):
 @login_required
 def relatorio(id):
     """Relatório executivo consolidado da empresa"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     metricas = empresa.get_metricas_conformidade()
     
@@ -614,9 +611,7 @@ def relatorio(id):
 @login_required
 def verificar_gatilhos_pdca(id):
     """Verifica automaticamente se a empresa precisa de PDCA baseado em não conformidades"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    empresa = get_owned_or_404(Empresa, id)
     
     sugestoes = []
     

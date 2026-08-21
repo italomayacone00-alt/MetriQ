@@ -768,9 +768,7 @@ def preencher_ferramenta_ia(id, tipo):
     Preenche uma ferramenta com dados gerados pela IA, apenas quando o usuário
     clica explicitamente no botão 'Preencher com IA'.
     """
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
     
     # Buscar sugestão da IA com dados preenchidos
     sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)
@@ -814,15 +812,12 @@ def preencher_ferramenta_ia(id, tipo):
 @projects.route('/projeto/<int:id>/fluxograma/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_fluxograma(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -835,16 +830,13 @@ def nova_ferramenta_fluxograma(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/ishikawa/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_ishikawa(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
-            flash('Ferramenta não pertence a este projeto.', 'danger')
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
+            flash('Ferramenta não encontrada ou não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
         ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo='ishikawa').first()
@@ -856,16 +848,13 @@ def nova_ferramenta_ishikawa(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/pareto/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_pareto(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
-            flash('Ferramenta não pertence a este projeto.', 'danger')
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
+            flash('Ferramenta não encontrada ou não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
         ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo='pareto').first()
@@ -877,15 +866,12 @@ def nova_ferramenta_pareto(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/5w2h/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_5w2h(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -898,15 +884,12 @@ def nova_ferramenta_5w2h(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/folha_verificacao/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_folha_verificacao(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -919,15 +902,12 @@ def nova_ferramenta_folha_verificacao(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/cep/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_cep(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -940,15 +920,12 @@ def nova_ferramenta_cep(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/histograma/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_histograma(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -961,15 +938,12 @@ def nova_ferramenta_histograma(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/dispersao/<int:ferramenta_id>', methods=['GET'])
 @login_required
 def nova_ferramenta_dispersao(id, ferramenta_id=None):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
 
     ferramenta = None
     if ferramenta_id:
-        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-        if ferramenta.projeto_id != projeto.id:
+        ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
+        if not ferramenta or ferramenta.projeto_id != projeto.id:
             flash('Ferramenta não pertence a este projeto.', 'danger')
             return redirect(url_for('projects.detalhe_projeto', id=id))
     else:
@@ -983,11 +957,11 @@ def nova_ferramenta_dispersao(id, ferramenta_id=None):
 @projects.route('/projeto/<int:id>/salvar_ferramenta', methods=['POST'])
 @login_required
 def salvar_ferramenta_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
 
-    dados = request.json
+    dados = request.get_json(silent=True)
+    if not dados:
+        return jsonify({"status": "error", "message": "Nenhum dado recebido."}), 400
     tipo = dados.get('tipo')
     conteudo = dados.get('dados')
     # NOTA: auto_generate removido - a IA só preenche ferramentas quando o usuário
@@ -1023,10 +997,7 @@ def salvar_ferramenta_projeto(id):
 @projects.route('/projeto/<int:id>/relatorio')
 @login_required
 def relatorio_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # 1. Prepara os dados das ferramentas e gera análises individuais se faltarem
     analises_ferramentas = []
@@ -1341,11 +1312,11 @@ def excluir_projeto(id):
 @projects.route('/projeto/<int:id>/ferramenta/<int:ferramenta_id>/excluir', methods=['POST'])
 @login_required
 def excluir_ferramenta_projeto(id, ferramenta_id):
-    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
+    ferramenta = db.session.get(ProjetoFerramenta, ferramenta_id)
     projeto = get_owned_or_404(Projeto, id)
     
-    if projeto.user_id != current_user.id or ferramenta.projeto_id != id:
-        flash('Acesso negado.', 'danger')
+    if not ferramenta or ferramenta.projeto_id != id:
+        flash('Ferramenta não encontrada ou não pertence a este projeto.', 'danger')
         return redirect(url_for('projects.detalhe_projeto', id=id))
     
     db.session.delete(ferramenta)
@@ -1404,10 +1375,7 @@ def verificar_requisitos_act(projeto):
 @login_required
 def projeto_pdca(id):
     """Página principal do ciclo PDCA"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # Verificar requisitos da fase atual
     if projeto.fase_atual == 'plan':
@@ -1436,9 +1404,7 @@ def projeto_pdca(id):
 @login_required
 def avancar_fase(id):
     """Avança para a próxima fase do PDCA"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
     
     # Verificar se pode avançar
     if projeto.fase_atual == 'plan':
@@ -1475,10 +1441,7 @@ def avancar_fase(id):
 @login_required
 def novo_ciclo_pdca(id):
     """Inicia um novo ciclo PDCA - salva snapshot do ciclo concluído"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     if projeto.fase_atual != 'act':
         flash('Complete a fase ACT antes de iniciar um novo ciclo.', 'warning')
@@ -1525,11 +1488,9 @@ def novo_ciclo_pdca(id):
 @login_required
 def salvar_padronizacao(id):
     """Salva o documento de padronização da fase ACT"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
     
-    dados = request.json
+    dados = request.get_json(silent=True)
     
     # Validação dos campos obrigatórios
     if not dados:
@@ -1560,10 +1521,7 @@ def salvar_padronizacao(id):
 @login_required
 def relatorio_padronizacao(id):
     """Exibe o relatório de padronização do último ciclo ACT"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     if not projeto.documento_padronizacao:
         flash('Nenhum documento de padronização para este projeto.', 'warning')
@@ -1578,10 +1536,7 @@ def relatorio_padronizacao(id):
 @login_required
 def relatorio_ciclo_pdca(id):
     """Relatório consolidado do ciclo PDCA atual"""
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     if projeto.tipo != 'pdca':
         return redirect(url_for('projects.relatorio_projeto', id=id))
@@ -1693,10 +1648,8 @@ def relatorio_ciclo_pdca(id):
 @login_required
 def criar_pdca_de_planta(id):
     """Cria um novo projeto PDCA a partir de não conformidades de uma planta baixa"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    planta = get_owned_or_404(PlantaBaixa, id)
+    
     
     # Calcular não conformidades
     pct, stats = planta.calcular_conformidade()

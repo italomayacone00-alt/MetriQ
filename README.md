@@ -2,17 +2,18 @@
 
 Este repositório contém o projeto MetriQ (Qualidade Flask).
 
-## Instalação (observação para Windows)
-Se estiver instalando em Windows, a dependência `psycopg2-binary` pode requerer as Ferramentas de Compilação do Visual C++ (Microsoft C++ Build Tools).
+## Instalação
 
-Em ambientes Windows sem essas ferramentas, instale dependências sem o driver Postgres com:
+Instale as dependências usando o arquivo único de requisitos:
 
 ```
 python -m venv .venv
-.\.venv\Scripts\pip.exe install -r requirements-no-db.txt
+.\.venv\Scripts\pip.exe install -r requirements.txt   # Windows
+# ou em Linux/macOS
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-Ou instale as Build Tools antes de executar `pip install -r requirements.txt`.
+Nota (Windows): se a instalação falhar ao compilar `psycopg2-binary`, instale as Microsoft C++ Build Tools ou use WSL/Docker para reproduzir um ambiente Linux.
 
-Em produção (Linux, ex.: Render) use `requirements.txt`.
-
+Em produção (ex.: Render), o `requirements.txt` padrão é o arquivo a ser usado.

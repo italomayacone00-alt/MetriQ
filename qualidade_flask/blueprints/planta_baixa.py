@@ -232,7 +232,7 @@ def construtor(id):
 def salvar(id):
     """Salva o canvas JSON de uma planta"""
     planta = get_owned_or_404(PlantaBaixa, id)
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({'erro': 'Dados inválidos'}), 400
     
@@ -344,10 +344,7 @@ def duplicar(id):
 @login_required
 def checklist(id):
     """Checklist de conformidade normativa do layout"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    planta = get_owned_or_404(PlantaBaixa, id)
     
     if request.method == 'POST':
         respostas = {}
@@ -383,10 +380,7 @@ def checklist(id):
 @login_required
 def analise(id):
     """Análise de conformidade com gráficos"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('planta_baixa.lista'))
+    planta = get_owned_or_404(PlantaBaixa, id)
     
     try:
         # Dados do checklist
@@ -508,11 +502,9 @@ def analise(id):
 @login_required
 def atualizar_dimensoes(id):
     """Atualiza as dimensões reais da planta"""
-    planta = PlantaBaixa.query.get_or_404(id)
-    if planta.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    planta = get_owned_or_404(PlantaBaixa, id)
     
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({'erro': 'Dados inválidos'}), 400
     

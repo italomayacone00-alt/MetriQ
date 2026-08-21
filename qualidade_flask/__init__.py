@@ -25,34 +25,39 @@ def create_app():
     # ==================================================
     # 1. CONFIGURAÇÕES DE SEGURANÇA
     # ==================================================
-    # Chave secreta: OBRIGATÓRIO usar variável de ambiente em produção
-    # Em desenvolvimento, gera uma chave aleatória persistente via arquivo
+    # Detecta se estamos em produção (Render, DATABASE_URL, ou variável explícita)
+    is_production = bool(os.environ.get('RENDER') or os.environ.get('DATABASE_URL') or os.environ.get('ENV') == 'production')
+
+    # Chave secreta: obrigatória em produção. Em desenvolvimento, gera/usa um arquivo local para persistência.
     secret_key = os.environ.get('SECRET_KEY')
+    if is_production and not secret_key:
+        # Em produção, falhar rapidamente para evitar iniciar com segredo fraco ou ausente
+        raise RuntimeError('SECRET_KEY obrigatória em produção. Defina a variável de ambiente SECRET_KEY.')
+
     if not secret_key:
-        # Tenta carregar chave de um arquivo local (para persistir entre reinícios)
+        # Tenta carregar chave de um arquivo local (para persistir entre reinícios em dev)
         key_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), '.secret_key')
         if os.path.exists(key_file):
             with open(key_file, 'r') as f:
                 secret_key = f.read().strip()
         else:
-            # Gera nova chave aleatória
+            # Gera nova chave aleatória para desenvolvimento
             secret_key = secrets.token_hex(32)
             with open(key_file, 'w') as f:
                 f.write(secret_key)
-            logger.warning("⚠️ SECRET_KEY não configurada. Gerada chave aleatória local.")
+            logger.warning("⚠️ SECRET_KEY não configurada. Gerada chave aleatória local para desenvolvimento.")
             logger.warning("⚠️ Em produção, defina a variável de ambiente SECRET_KEY.")
-    
+
     app.config['SECRET_KEY'] = secret_key
-    
-    # Configuração de sessão
+
+    # Configuração de sessão (valores seguros por padrão)
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['REMEMBER_COOKIE_DURATION'] = 30 * 24 * 3600  # 30 dias
     app.config['REMEMBER_COOKIE_HTTPONLY'] = True
     app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
-    
-    # HTTPS/Segurança (ativa em produção quando tem RENDER ou URL definido)
-    is_production = bool(os.environ.get('RENDER') or os.environ.get('DATABASE_URL'))
+
+    # Em produção força cookies seguros e Talisman (HTTPS)
     if is_production:
         app.config['SESSION_COOKIE_SECURE'] = True
         app.config['SESSION_COOKIE_HTTPONLY'] = True
