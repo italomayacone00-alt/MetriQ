@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_required, current_user
 from ..models import Projeto, ProjetoFerramenta, CicloHistorico, PlantaBaixa, Empresa, db
 from groq import Groq
+from qualidade_flask.authz import get_owned_or_404, require_owner
 
 projects = Blueprint('projects', __name__)
 
@@ -502,13 +503,22 @@ def novo_projeto():
     if not nome or not objetivo:
         flash('Nome e objetivo são obrigatórios!', 'danger')
         return redirect(url_for('projects.lista_projetos'))
-    
+
+    # Validar empresa_id enviado pelo cliente (não confiar no browser)
+    empresa_obj = None
+    empresa_id_int = int(empresa_id) if empresa_id and empresa_id.isdigit() else None
+    if empresa_id_int:
+        empresa_obj = Empresa.query.filter_by(id=empresa_id_int, user_id=current_user.id).first()
+        if not empresa_obj:
+            flash('Empresa inválida ou sem acesso', 'danger')
+            return redirect(url_for('projects.lista_projetos'))
+
     novo = Projeto(
         nome=nome, 
         objetivo=objetivo, 
         user_id=current_user.id,
         tipo=tipo,
-        empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None
+        empresa_id=empresa_obj.id if empresa_obj else None
     )
     db.session.add(novo)
     db.session.commit()
@@ -523,10 +533,7 @@ def novo_projeto():
 @projects.route('/projeto/<int:id>')
 @login_required
 def detalhe_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # Redirecionar projetos PDCA para a tela unificada do ciclo
     if projeto.tipo == 'pdca':
@@ -544,10 +551,7 @@ def detalhe_projeto(id):
 @projects.route('/projeto/<int:id>/ferramenta/<tipo>')
 @login_required
 def abrir_ferramenta_projeto(id, tipo):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('projects.lista_projetos'))
+    projeto = get_owned_or_404(Projeto, id)
     
     # Verificar se já existe ferramenta deste tipo
     ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()
@@ -1112,9 +1116,7 @@ def extrair_pontos_chave(texto):
 @projects.route('/projeto/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir_projeto(id):
-    projeto = Projeto.query.get_or_404(id)
-    if projeto.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Acesso negado"}), 403
+    projeto = get_owned_or_404(Projeto, id)
     
     db.session.delete(projeto)
     db.session.commit()
@@ -1125,7 +1127,7 @@ def excluir_projeto(id):
 @login_required
 def excluir_ferramenta_projeto(id, ferramenta_id):
     ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)
-    projeto = Projeto.query.get_or_404(id)
+    projeto = get_owned_or_404(Projeto, id)
     
     if projeto.user_id != current_user.id or ferramenta.projeto_id != id:
         flash('Acesso negado.', 'danger')
