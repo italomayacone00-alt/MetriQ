@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from ..models import Empresa, PlantaBaixa, Projeto, ProjetoFerramenta, ChecklistNR, ChecklistISO, NormaRegulamentadora, NormaISO
 from .. import db
+from qualidade_flask.authz import get_owned_or_404
 from datetime import datetime
 
 empresa = Blueprint('empresa', __name__)
@@ -76,10 +77,7 @@ def cadastrar():
 @login_required
 def editar(id):
     """Edita uma empresa existente"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     if request.method == 'POST':
         empresa.razao_social = request.form.get('razao_social', '').strip()
@@ -111,10 +109,7 @@ def editar(id):
 @login_required
 def excluir(id):
     """Exclui uma empresa"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     nome = empresa.razao_social
     db.session.delete(empresa)
@@ -129,9 +124,7 @@ def excluir(id):
 @login_required
 def vincular_dados(id):
     """Vincula dados existentes (sem empresa_id) à empresa"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        return jsonify({'erro': 'Acesso negado'}), 403
+    empresa = get_owned_or_404(Empresa, id)
     
     data = request.get_json()
     tipo = data.get('tipo', '')
@@ -168,10 +161,7 @@ def vincular_dados(id):
 @login_required
 def dashboard(id):
     """Dashboard principal da empresa com métricas consolidadas"""
-    empresa = Empresa.query.get_or_404(id)
-    if empresa.user_id != current_user.id:
-        flash('Acesso negado.', 'danger')
-        return redirect(url_for('empresa.lista'))
+    empresa = get_owned_or_404(Empresa, id)
     
     # Métricas consolidadas (inclui dados vinculados e não vinculados)
     metricas = empresa.get_metricas_conformidade()
