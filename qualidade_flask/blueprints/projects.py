@@ -205,7 +205,6 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
             "dados_preenchidos": None
         }
     
-<<<<<<< HEAD
     # Extrair os principais problemas do Pareto (top 5, com valores)
     itens = pareto_data.get('itens', [])
     principais_problemas = []
@@ -271,7 +270,7 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
                     diagrama_validado[cat] = [str(c)[:60] for c in causas if c]
                 else:
                     diagrama_validado[cat] = []
-            
+                
             problema_ia = str(resultado.get('problema', '') or principais_problemas[0]['label'] if principais_problemas else 'Problema identificado')
             
             dados_ishikawa = {
@@ -298,15 +297,7 @@ def generate_ishikawa_from_pareto(pareto_data, projeto_objetivo):
     # Gera causas que referenciam os problemas reais
     def _causa(prefixo, sufixo):
         return f"{prefixo} - {problema_principal}" if problema_principal else sufixo
-=======
-    # Extrair os principais problemas do Pareto
-    itens = pareto_data.get('itens') or []
-    principais_problemas = [
-        str(item.get('label', 'Problema'))
-        for item in (itens[:3] if isinstance(itens, list) else [])
-        if isinstance(item, dict)
-    ]
->>>>>>> feature/authz-helper-and-tests
+
     
     dados_ishikawa = {
         "titulo": f"Análise de Causa Raiz - {projeto_objetivo}",
@@ -342,12 +333,8 @@ def generate_5w2h_from_ishikawa(ishikawa_data, projeto_objetivo):
         }
     
     # Extrair causas principais do Ishikawa
-<<<<<<< HEAD
-    diagrama = ishikawa_data['diagrama']
-    problema = ishikawa_data.get('problema', 'Problema identificado')
-=======
     diagrama = ishikawa_data.get('diagrama') or {}
->>>>>>> feature/authz-helper-and-tests
+    problema = ishikawa_data.get('problema', 'Problema identificado')
     causas_principais = []
     
     for categoria, causas in diagrama.items():
