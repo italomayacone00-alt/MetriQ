@@ -277,6 +277,30 @@ def carregar(id):
         'estatisticas': planta.contar_objetos()
     })
 
+
+@planta_baixa.route('/debug/planta/<int:id>/canvas')
+@login_required
+def debug_planta_canvas(id):
+    """Endpoint de debug: retorna o canvas_data limitado de uma planta.
+    Acesso restrito ao proprietário da planta (get_owned_or_404 garante ownership).
+    Use apenas para investigação; remova após diagnóstico em produção.
+    """
+    # Reutiliza o helper de ownership para garantir que somente o dono acesse
+    planta = get_owned_or_404(PlantaBaixa, id)
+
+    # Limitar o tamanho do payload retornado para evitar logs muito grandes
+    canvas = planta.canvas_data or {'version': '5.3.1', 'objects': []}
+
+    # Retornar campos úteis para diagnóstico
+    return jsonify({
+        'id': planta.id,
+        'nome': planta.nome,
+        'user_id': planta.user_id,
+        'area_total_m2': planta.area_total_m2,
+        'canvas_preview_trunc': str(canvas)[:2000],
+        'canvas': canvas
+    })
+
 @planta_baixa.route('/planta-baixa/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir(id):
