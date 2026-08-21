@@ -1,0 +1,1199 @@
+﻿[
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  131,
+        "param":  "empresa_id",
+        "code":  "\"\"\"Vincula dados existentes (sem empresa_id) à empresa\"\"\"",
+        "snippet":  "@empresa.route(\u0027/empresa/\u003cint:id\u003e/vincular-dados\u0027, methods=[\u0027POST\u0027])\n@login_required\ndef vincular_dados(id):\n    \"\"\"Vincula dados existentes (sem empresa_id) à empresa\"\"\"\n    empresa = Empresa.query.get_or_404(id)\n    if empresa.user_id != current_user.id:\n        return jsonify({\u0027erro\u0027: \u0027Acesso negado\u0027}), 403",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  144,
+        "param":  "empresa_id",
+        "code":  "item.empresa_id = id",
+        "snippet":  "        if tipo == \u0027planta\u0027:\n            item = PlantaBaixa.query.get(item_id)\n            if item and item.user_id == current_user.id:\n                item.empresa_id = id\n        elif tipo == \u0027checklist_nr\u0027:\n            item = ChecklistNR.query.get(item_id)\n            if item and item.user_id == current_user.id:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  148,
+        "param":  "empresa_id",
+        "code":  "item.empresa_id = id",
+        "snippet":  "        elif tipo == \u0027checklist_nr\u0027:\n            item = ChecklistNR.query.get(item_id)\n            if item and item.user_id == current_user.id:\n                item.empresa_id = id\n        elif tipo == \u0027checklist_iso\u0027:\n            item = ChecklistISO.query.get(item_id)\n            if item and item.user_id == current_user.id:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  152,
+        "param":  "empresa_id",
+        "code":  "item.empresa_id = id",
+        "snippet":  "        elif tipo == \u0027checklist_iso\u0027:\n            item = ChecklistISO.query.get(item_id)\n            if item and item.user_id == current_user.id:\n                item.empresa_id = id\n        elif tipo == \u0027projeto\u0027:\n            item = Projeto.query.get(item_id)\n            if item and item.user_id == current_user.id:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  156,
+        "param":  "empresa_id",
+        "code":  "item.empresa_id = id",
+        "snippet":  "        elif tipo == \u0027projeto\u0027:\n            item = Projeto.query.get(item_id)\n            if item and item.user_id == current_user.id:\n                item.empresa_id = id\n        \n        db.session.commit()\n        return jsonify({\u0027sucesso\u0027: True, \u0027mensagem\u0027: \u0027Vinculado com sucesso!\u0027})",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  190,
+        "param":  "empresa_id",
+        "code":  "empresa_id=id",
+        "snippet":  "        checklist = ChecklistNR.query.filter_by(\n            norma_id=nr.id,\n            user_id=current_user.id,\n            empresa_id=id\n        ).first()\n        vinculo = \u0027empresa\u0027 if checklist else \u0027usuario\u0027\n        ",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  199,
+        "param":  "empresa_id",
+        "code":  "ChecklistNR.empresa_id == None",
+        "snippet":  "            checklist = ChecklistNR.query.filter(\n                ChecklistNR.norma_id == nr.id,\n                ChecklistNR.user_id == current_user.id,\n                ChecklistNR.empresa_id == None\n            ).first()\n            vinculo = \u0027usuario\u0027 if checklist else \u0027usuario\u0027\n        ",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  222,
+        "param":  "empresa_id",
+        "code":  "empresa_id=id",
+        "snippet":  "        checklist = ChecklistISO.query.filter_by(\n            norma_id=iso.id,\n            user_id=current_user.id,\n            empresa_id=id\n        ).first()\n        vinculo = \u0027empresa\u0027 if checklist else \u0027usuario\u0027\n        ",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  231,
+        "param":  "empresa_id",
+        "code":  "ChecklistISO.empresa_id == None",
+        "snippet":  "            checklist = ChecklistISO.query.filter(\n                ChecklistISO.norma_id == iso.id,\n                ChecklistISO.user_id == current_user.id,\n                ChecklistISO.empresa_id == None\n            ).first()\n            vinculo = \u0027usuario\u0027 if checklist else \u0027usuario\u0027\n        ",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  248,
+        "param":  "empresa_id",
+        "code":  "empresa_id=id",
+        "snippet":  "    # Plantas baixas - apenas vinculadas à empresa\n    plantas = PlantaBaixa.query.filter_by(\n        user_id=current_user.id,\n        empresa_id=id\n    ).all()\n    \n    # Plantas sem vínculo para opção de vincular",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  254,
+        "param":  "empresa_id",
+        "code":  "(PlantaBaixa.empresa_id == None) | (PlantaBaixa.empresa_id == 0)",
+        "snippet":  "    # Plantas sem vínculo para opção de vincular\n    plantas_sem_vinculo = PlantaBaixa.query.filter(\n        PlantaBaixa.user_id == current_user.id,\n        (PlantaBaixa.empresa_id == None) | (PlantaBaixa.empresa_id == 0)\n    ).all()\n    \n    plantas_dados = []",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  271,
+        "param":  "empresa_id",
+        "code":  "empresa_id=id",
+        "snippet":  "    # Projetos - apenas vinculados à empresa\n    projetos = Projeto.query.filter_by(\n        user_id=current_user.id,\n        empresa_id=id\n    ).all()\n    \n    # Projetos sem vínculo para opção de vincular",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\empresa.py",
+        "line":  277,
+        "param":  "empresa_id",
+        "code":  "(Projeto.empresa_id == None) | (Projeto.empresa_id == 0)",
+        "snippet":  "    # Projetos sem vínculo para opção de vincular\n    projetos_sem_vinculo = Projeto.query.filter(\n        Projeto.user_id == current_user.id,\n        (Projeto.empresa_id == None) | (Projeto.empresa_id == 0)\n    ).all()\n    \n    return render_template(\u0027empresa/dashboard.html\u0027,",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  59,
+        "param":  "empresa_id",
+        "code":  "# Capturar empresa_id da query string (GET) ou formulário (POST)",
+        "snippet":  "    # Buscar empresas do usuário para seleção\n    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()\n    \n    # Capturar empresa_id da query string (GET) ou formulário (POST)\n    empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()\n    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None\n    ",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  60,
+        "param":  "empresa_id",
+        "code":  "empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()",
+        "snippet":  "    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()\n    \n    # Capturar empresa_id da query string (GET) ou formulário (POST)\n    empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()\n    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None\n    \n    if request.method == \u0027POST\u0027:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  84,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id",
+        "snippet":  "        if empresa_selecionada_id:\n            checklist = ChecklistISO.query.filter_by(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=empresa_selecionada_id\n            ).first()\n            \n            if not checklist:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  92,
+        "param":  "empresa_id",
+        "code":  "(ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)",
+        "snippet":  "                checklist = ChecklistISO.query.filter(\n                    ChecklistISO.norma_id == id,\n                    ChecklistISO.user_id == current_user.id,\n                    (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)\n                ).first()\n                if checklist:\n                    checklist.empresa_id = empresa_selecionada_id",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  95,
+        "param":  "empresa_id",
+        "code":  "checklist.empresa_id = empresa_selecionada_id",
+        "snippet":  "                    (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)\n                ).first()\n                if checklist:\n                    checklist.empresa_id = empresa_selecionada_id\n        else:\n            # Sem empresa: busca checklist geral\n            checklist = ChecklistISO.query.filter_by(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  100,
+        "param":  "empresa_id",
+        "code":  "empresa_id=None",
+        "snippet":  "            # Sem empresa: busca checklist geral\n            checklist = ChecklistISO.query.filter_by(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=None\n            ).first()\n        \n        if checklist:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  110,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id,",
+        "snippet":  "        else:\n            checklist = ChecklistISO(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=empresa_selecionada_id,\n                respostas=respostas, observacoes=observacoes\n            )\n            db.session.add(checklist)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  122,
+        "param":  "empresa_id",
+        "code":  "# Primeiro procura com empresa_id",
+        "snippet":  "    # Buscar checklist para exibir no formulário\n    checklist = None\n    if empresa_selecionada_id:\n        # Primeiro procura com empresa_id\n        checklist = ChecklistISO.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=empresa_selecionada_id",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  125,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id",
+        "snippet":  "        # Primeiro procura com empresa_id\n        checklist = ChecklistISO.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=empresa_selecionada_id\n        ).first()\n        # Se não achar, busca checklist geral (sem empresa)\n        if not checklist:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  132,
+        "param":  "empresa_id",
+        "code":  "(ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)",
+        "snippet":  "            checklist = ChecklistISO.query.filter(\n                ChecklistISO.norma_id == id,\n                ChecklistISO.user_id == current_user.id,\n                (ChecklistISO.empresa_id == None) | (ChecklistISO.empresa_id == 0)\n            ).first()\n    else:\n        checklist = ChecklistISO.query.filter_by(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\iso.py",
+        "line":  137,
+        "param":  "empresa_id",
+        "code":  "empresa_id=None",
+        "snippet":  "    else:\n        checklist = ChecklistISO.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=None\n        ).first()\n    \n    glossario = norma.glossario if norma.glossario else []",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1153,
+        "param":  "empresa_id",
+        "code":  "# Capturar empresa_id da query string (GET) ou formulário (POST)",
+        "snippet":  "    # Buscar empresas do usuário para seleção\n    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()\n    \n    # Capturar empresa_id da query string (GET) ou formulário (POST)\n    empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()\n    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None\n    ",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1154,
+        "param":  "empresa_id",
+        "code":  "empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()",
+        "snippet":  "    empresas = Empresa.query.filter_by(user_id=current_user.id).order_by(Empresa.razao_social).all()\n    \n    # Capturar empresa_id da query string (GET) ou formulário (POST)\n    empresa_selecionada = request.args.get(\u0027empresa_id\u0027, request.form.get(\u0027empresa_id\u0027, \u0027\u0027)).strip()\n    empresa_selecionada_id = int(empresa_selecionada) if empresa_selecionada and empresa_selecionada.isdigit() else None\n    \n    if request.method == \u0027POST\u0027:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1179,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id",
+        "snippet":  "        if empresa_selecionada_id:\n            checklist = ChecklistNR.query.filter_by(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=empresa_selecionada_id\n            ).first()\n            \n            if not checklist:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1187,
+        "param":  "empresa_id",
+        "code":  "(ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)",
+        "snippet":  "                checklist = ChecklistNR.query.filter(\n                    ChecklistNR.norma_id == id,\n                    ChecklistNR.user_id == current_user.id,\n                    (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)\n                ).first()\n                if checklist:\n                    checklist.empresa_id = empresa_selecionada_id",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1190,
+        "param":  "empresa_id",
+        "code":  "checklist.empresa_id = empresa_selecionada_id",
+        "snippet":  "                    (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)\n                ).first()\n                if checklist:\n                    checklist.empresa_id = empresa_selecionada_id\n        else:\n            # Sem empresa: busca checklist geral\n            checklist = ChecklistNR.query.filter_by(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1195,
+        "param":  "empresa_id",
+        "code":  "empresa_id=None",
+        "snippet":  "            # Sem empresa: busca checklist geral\n            checklist = ChecklistNR.query.filter_by(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=None\n            ).first()\n        \n        if checklist:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1205,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id,",
+        "snippet":  "        else:\n            checklist = ChecklistNR(\n                norma_id=id, user_id=current_user.id,\n                empresa_id=empresa_selecionada_id,\n                respostas=respostas, observacoes=observacoes\n            )\n            db.session.add(checklist)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1217,
+        "param":  "empresa_id",
+        "code":  "# Primeiro procura com empresa_id",
+        "snippet":  "    # Buscar checklist para exibir no formulário\n    checklist_existente = None\n    if empresa_selecionada_id:\n        # Primeiro procura com empresa_id\n        checklist_existente = ChecklistNR.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=empresa_selecionada_id",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1220,
+        "param":  "empresa_id",
+        "code":  "empresa_id=empresa_selecionada_id",
+        "snippet":  "        # Primeiro procura com empresa_id\n        checklist_existente = ChecklistNR.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=empresa_selecionada_id\n        ).first()\n        # Se não achar, busca checklist geral (sem empresa)\n        if not checklist_existente:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1227,
+        "param":  "empresa_id",
+        "code":  "(ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)",
+        "snippet":  "            checklist_existente = ChecklistNR.query.filter(\n                ChecklistNR.norma_id == id,\n                ChecklistNR.user_id == current_user.id,\n                (ChecklistNR.empresa_id == None) | (ChecklistNR.empresa_id == 0)\n            ).first()\n    else:\n        checklist_existente = ChecklistNR.query.filter_by(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\nr.py",
+        "line":  1232,
+        "param":  "empresa_id",
+        "code":  "empresa_id=None",
+        "snippet":  "    else:\n        checklist_existente = ChecklistNR.query.filter_by(\n            norma_id=id, user_id=current_user.id,\n            empresa_id=None\n        ).first()\n    \n    return render_template(\u0027nr/checklist.html\u0027, norma=norma, checklist=checklist_existente, glossario=glossario, empresas=empresas, empresa_selecionada_id=empresa_selecionada_id)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  197,
+        "param":  "empresa_id",
+        "code":  "empresa_id = request.form.get(\u0027empresa_id\u0027, \u0027\u0027).strip()",
+        "snippet":  "        descricao = request.form.get(\u0027descricao\u0027, \u0027\u0027).strip()\n        tipo_ambiente = request.form.get(\u0027tipo_ambiente\u0027, \u0027\u0027).strip()\n        setor = request.form.get(\u0027setor\u0027, \u0027\u0027).strip()\n        empresa_id = request.form.get(\u0027empresa_id\u0027, \u0027\u0027).strip()\n        \n        if not nome:\n            flash(\u0027Nome da planta é obrigatório.\u0027, \u0027danger\u0027)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\planta_baixa.py",
+        "line":  212,
+        "param":  "empresa_id",
+        "code":  "empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None",
+        "snippet":  "            checklist_conformidade={},\n            observacoes_conformidade={},\n            user_id=current_user.id,\n            empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None\n        )\n        db.session.add(planta)\n        db.session.commit()",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  500,
+        "param":  "empresa_id",
+        "code":  "empresa_id = request.form.get(\u0027empresa_id\u0027, \u0027\u0027).strip()",
+        "snippet":  "    nome = request.form.get(\u0027nome\u0027)\n    objetivo = request.form.get(\u0027objetivo\u0027)\n    tipo = request.form.get(\u0027tipo\u0027, \u0027normal\u0027)  # padrão normal\n    empresa_id = request.form.get(\u0027empresa_id\u0027, \u0027\u0027).strip()\n    \n    if not nome or not objetivo:\n        flash(\u0027Nome e objetivo são obrigatórios!\u0027, \u0027danger\u0027)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  511,
+        "param":  "empresa_id",
+        "code":  "empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None",
+        "snippet":  "        objetivo=objetivo, \n        user_id=current_user.id,\n        tipo=tipo,\n        empresa_id=int(empresa_id) if empresa_id and empresa_id.isdigit() else None\n    )\n    db.session.add(novo)\n    db.session.commit()",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  553,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n    \n    # Verificar se já existe ferramenta deste tipo\n    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    \n    # NOTA: NÃO criar automaticamente ferramentas com IA.\n    # O usuário deve clicar em \"Preencher com IA\" para autorizar o preenchimento.",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  614,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()",
+        "snippet":  "        }), 400\n    \n    # Criar ou atualizar a ferramenta com os dados da IA\n    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    if not ferramenta:\n        ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)\n        db.session.add(ferramenta)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  616,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)",
+        "snippet":  "    # Criar ou atualizar a ferramenta com os dados da IA\n    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    if not ferramenta:\n        ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)\n        db.session.add(ferramenta)\n    \n    ferramenta.dados = sugestao[\u0027dados_preenchidos\u0027]",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  636,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/fluxograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 1. FLUXOGRAMA\n@projects.route(\u0027/projeto/\u003cint:id\u003e/fluxograma\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/fluxograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_fluxograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  638,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_fluxograma(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/fluxograma\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/fluxograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_fluxograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  645,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  646,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  647,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  651,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027fluxograma\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027fluxograma\u0027).first()\n\n    return render_template(\u0027fluxograma.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  657,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/ishikawa/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 2. ISHIKAWA\n@projects.route(\u0027/projeto/\u003cint:id\u003e/ishikawa\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/ishikawa/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_ishikawa(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  659,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_ishikawa(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/ishikawa\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/ishikawa/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_ishikawa(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  666,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  667,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  668,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  672,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027ishikawa\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027ishikawa\u0027).first()\n\n    return render_template(\u0027ishikawa.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  678,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/pareto/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 3. PARETO\n@projects.route(\u0027/projeto/\u003cint:id\u003e/pareto\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/pareto/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_pareto(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  680,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_pareto(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/pareto\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/pareto/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_pareto(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  687,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  688,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  689,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  693,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027pareto\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027pareto\u0027).first()\n\n    return render_template(\u0027pareto.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  699,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/5w2h/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 4. 5W2H\n@projects.route(\u0027/projeto/\u003cint:id\u003e/5w2h\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/5w2h/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_5w2h(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  701,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_5w2h(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/5w2h\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/5w2h/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_5w2h(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  708,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  709,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  710,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  714,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u00275w2h\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u00275w2h\u0027).first()\n\n    return render_template(\u00275w2h.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  720,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/folha_verificacao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 5. FOLHA DE VERIFICAÇÃO\n@projects.route(\u0027/projeto/\u003cint:id\u003e/folha_verificacao\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/folha_verificacao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_folha_verificacao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  722,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_folha_verificacao(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/folha_verificacao\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/folha_verificacao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_folha_verificacao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  729,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  730,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  731,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  735,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027folha_verificacao\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027folha_verificacao\u0027).first()\n\n    return render_template(\u0027folha_verificacao.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  741,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/cep/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 6. CEP (CONTROLE ESTATÍSTICO)\n@projects.route(\u0027/projeto/\u003cint:id\u003e/cep\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/cep/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_cep(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  743,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_cep(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/cep\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/cep/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_cep(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  750,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  751,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  752,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  756,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027cep\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027cep\u0027).first()\n\n    return render_template(\u0027cep.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  762,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/histograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 7. HISTOGRAMA\n@projects.route(\u0027/projeto/\u003cint:id\u003e/histograma\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/histograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_histograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  764,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_histograma(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/histograma\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/histograma/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_histograma(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  771,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  772,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  773,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  777,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027histograma\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027histograma\u0027).first()\n\n    return render_template(\u0027histograma.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  783,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/dispersao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])",
+        "snippet":  "\n# 8. DISPERSÃO\n@projects.route(\u0027/projeto/\u003cint:id\u003e/dispersao\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/dispersao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_dispersao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  785,
+        "param":  "ferramenta_id",
+        "code":  "def nova_ferramenta_dispersao(id, ferramenta_id=None):",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/dispersao\u0027, methods=[\u0027GET\u0027])\n@projects.route(\u0027/projeto/\u003cint:id\u003e/dispersao/\u003cint:ferramenta_id\u003e\u0027, methods=[\u0027GET\u0027])\n@login_required\ndef nova_ferramenta_dispersao(id, ferramenta_id=None):\n    projeto = Projeto.query.get_or_404(id)\n    if projeto.user_id != current_user.id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  792,
+        "param":  "ferramenta_id",
+        "code":  "if ferramenta_id:",
+        "snippet":  "        return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  793,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "\n    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))",
+        "validated":  true,
+        "reason":  "found filter_by with projeto_id near ferramenta_id"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  794,
+        "param":  "projeto_id",
+        "code":  "if ferramenta.projeto_id != projeto.id:",
+        "snippet":  "    ferramenta = None\n    if ferramenta_id:\n        ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n        if ferramenta.projeto_id != projeto.id:\n            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  798,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027dispersao\u0027).first()",
+        "snippet":  "            flash(\u0027Ferramenta não pertence a este projeto.\u0027, \u0027danger\u0027)\n            return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    else:\n        ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=\u0027dispersao\u0027).first()\n\n    return render_template(\u0027dispersao.html\u0027, projeto=projeto, modo_projeto=True, ferramenta=ferramenta, dados_projeto=ferramenta.dados if ferramenta else None)\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  818,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()",
+        "snippet":  "    # NOTA: auto_generate removido - a IA só preenche ferramentas quando o usuário\n    # clica explicitamente em \"Preencher com IA\" no endpoint separado.\n    \n    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    \n    if not ferramenta:\n        ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  821,
+        "param":  "projeto_id",
+        "code":  "ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)",
+        "snippet":  "    ferramenta = ProjetoFerramenta.query.filter_by(projeto_id=id, tipo=tipo).first()\n    \n    if not ferramenta:\n        ferramenta = ProjetoFerramenta(projeto_id=id, tipo=tipo)\n        db.session.add(ferramenta)\n    \n    ferramenta.dados = conteudo",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1124,
+        "param":  "ferramenta_id",
+        "code":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/ferramenta/\u003cint:ferramenta_id\u003e/excluir\u0027, methods=[\u0027POST\u0027])",
+        "snippet":  "    flash(\u0027Projeto excluído com sucesso!\u0027, \u0027success\u0027)\n    return redirect(url_for(\u0027projects.lista_projetos\u0027))\n\n@projects.route(\u0027/projeto/\u003cint:id\u003e/ferramenta/\u003cint:ferramenta_id\u003e/excluir\u0027, methods=[\u0027POST\u0027])\n@login_required\ndef excluir_ferramenta_projeto(id, ferramenta_id):\n    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1126,
+        "param":  "ferramenta_id",
+        "code":  "def excluir_ferramenta_projeto(id, ferramenta_id):",
+        "snippet":  "\n@projects.route(\u0027/projeto/\u003cint:id\u003e/ferramenta/\u003cint:ferramenta_id\u003e/excluir\u0027, methods=[\u0027POST\u0027])\n@login_required\ndef excluir_ferramenta_projeto(id, ferramenta_id):\n    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n    projeto = Projeto.query.get_or_404(id)\n    ",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1127,
+        "param":  "ferramenta_id",
+        "code":  "ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)",
+        "snippet":  "@projects.route(\u0027/projeto/\u003cint:id\u003e/ferramenta/\u003cint:ferramenta_id\u003e/excluir\u0027, methods=[\u0027POST\u0027])\n@login_required\ndef excluir_ferramenta_projeto(id, ferramenta_id):\n    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n    projeto = Projeto.query.get_or_404(id)\n    \n    if projeto.user_id != current_user.id or ferramenta.projeto_id != id:",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1130,
+        "param":  "projeto_id",
+        "code":  "if projeto.user_id != current_user.id or ferramenta.projeto_id != id:",
+        "snippet":  "    ferramenta = ProjetoFerramenta.query.get_or_404(ferramenta_id)\n    projeto = Projeto.query.get_or_404(id)\n    \n    if projeto.user_id != current_user.id or ferramenta.projeto_id != id:\n        flash(\u0027Acesso negado.\u0027, \u0027danger\u0027)\n        return redirect(url_for(\u0027projects.detalhe_projeto\u0027, id=id))\n    ",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1209,
+        "param":  "projeto_id",
+        "code":  "ciclos_historicos = CicloHistorico.query.filter_by(projeto_id=projeto.id).order_by(CicloHistorico.ciclo).all()",
+        "snippet":  "    sugestao = get_ai_suggestion_with_data(projeto.nome, projeto.objetivo, projeto.ferramentas)\n    \n    # Histórico de ciclos para gráfico evolutivo\n    ciclos_historicos = CicloHistorico.query.filter_by(projeto_id=projeto.id).order_by(CicloHistorico.ciclo).all()\n    \n    return render_template(\u0027projetos/pdca.html\u0027, \n                          projeto=projeto,",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\blueprints\\projects.py",
+        "line":  1290,
+        "param":  "projeto_id",
+        "code":  "projeto_id=projeto.id,",
+        "snippet":  "        metricas[\u0027ferramentas_por_tipo\u0027][f.tipo] += 1\n    \n    historico = CicloHistorico(\n        projeto_id=projeto.id,\n        ciclo=projeto.ciclo_atual,\n        fase_concluida=\u0027act\u0027,\n        ferramentas_snapshot=ferramentas_dados,",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\empresa\\dashboard.html",
+        "line":  289,
+        "param":  "empresa_id",
+        "code":  "\u003ca href=\"{{ url_for(\u0027nr.checklist_nr\u0027, id=nr.id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-primary\"\u003e",
+        "snippet":  "                                    \u003c/td\u003e\n                                    \u003ctd class=\"text-end\"\u003e\n                                        {% if nr.tem_checklist %}\n                                        \u003ca href=\"{{ url_for(\u0027nr.checklist_nr\u0027, id=nr.id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-primary\"\u003e\n                                            \u003ci class=\"bi bi-pencil\"\u003e\u003c/i\u003e\n                                        \u003c/a\u003e\n                                        {% else %}",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\empresa\\dashboard.html",
+        "line":  293,
+        "param":  "empresa_id",
+        "code":  "\u003ca href=\"{{ url_for(\u0027nr.checklist_nr\u0027, id=nr.id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-success\"\u003e",
+        "snippet":  "                                            \u003ci class=\"bi bi-pencil\"\u003e\u003c/i\u003e\n                                        \u003c/a\u003e\n                                        {% else %}\n                                        \u003ca href=\"{{ url_for(\u0027nr.checklist_nr\u0027, id=nr.id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-success\"\u003e\n                                            \u003ci class=\"bi bi-plus\"\u003e\u003c/i\u003eResponder\n                                        \u003c/a\u003e\n                                        {% endif %}",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\empresa\\dashboard.html",
+        "line":  353,
+        "param":  "empresa_id",
+        "code":  "\u003ca href=\"{{ url_for(\u0027iso.checklist_iso\u0027, id=iso.checklist_id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-primary\"\u003e",
+        "snippet":  "                                    \u003c/td\u003e\n                                    \u003ctd class=\"text-end\"\u003e\n                                        {% if iso.tem_checklist %}\n                                        \u003ca href=\"{{ url_for(\u0027iso.checklist_iso\u0027, id=iso.checklist_id, empresa_id=empresa.id) }}\" class=\"btn btn-sm btn-outline-primary\"\u003e\n                                            \u003ci class=\"bi bi-pencil\"\u003e\u003c/i\u003e\n                                        \u003c/a\u003e\n                                        {% else %}",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\empresa\\dashboard.html",
+        "line":  357,
+        "param":  "empresa_id",
+        "code":  "\u003ca href=\"{{ url_for(\u0027iso.checklist_iso\u0027, id=iso.checklist_id, empresa_id=empresa.id) if iso.checklist_id else url_for(\u0027iso.lista_isos\u0027) }}\" class=\"btn btn-sm btn-outline-success\"\u003e",
+        "snippet":  "                                            \u003ci class=\"bi bi-pencil\"\u003e\u003c/i\u003e\n                                        \u003c/a\u003e\n                                        {% else %}\n                                        \u003ca href=\"{{ url_for(\u0027iso.checklist_iso\u0027, id=iso.checklist_id, empresa_id=empresa.id) if iso.checklist_id else url_for(\u0027iso.lista_isos\u0027) }}\" class=\"btn btn-sm btn-outline-success\"\u003e\n                                            \u003ci class=\"bi bi-plus\"\u003e\u003c/i\u003eAvaliar\n                                        \u003c/a\u003e\n                                        {% endif %}",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\iso\\checklist.html",
+        "line":  75,
+        "param":  "empresa_id",
+        "code":  "\u003cselect name=\"empresa_id\" class=\"form-select\"\u003e",
+        "snippet":  "                \u003cdiv class=\"row align-items-end\"\u003e\n                    \u003cdiv class=\"col-md-6\"\u003e\n                        \u003clabel class=\"form-label fw-bold mb-1\"\u003e\u003ci class=\"bi bi-building me-1\"\u003e\u003c/i\u003eVinculado à Empresa\u003c/label\u003e\n                        \u003cselect name=\"empresa_id\" class=\"form-select\"\u003e\n                            \u003coption value=\"\"\u003e— Autoavaliação Geral (sem empresa) —\u003c/option\u003e\n                            {% for e in empresas %}\n                            \u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\iso\\checklist.html",
+        "line":  78,
+        "param":  "empresa_id",
+        "code":  "\u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e",
+        "snippet":  "                        \u003cselect name=\"empresa_id\" class=\"form-select\"\u003e\n                            \u003coption value=\"\"\u003e— Autoavaliação Geral (sem empresa) —\u003c/option\u003e\n                            {% for e in empresas %}\n                            \u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e\n                            {% endfor %}\n                        \u003c/select\u003e\n                        \u003csmall class=\"text-muted\"\u003eSelecione a empresa para associar esta autoavaliação\u003c/small\u003e",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\nr\\checklist.html",
+        "line":  75,
+        "param":  "empresa_id",
+        "code":  "\u003cselect name=\"empresa_id\" class=\"form-select\"\u003e",
+        "snippet":  "                \u003cdiv class=\"row align-items-end\"\u003e\n                    \u003cdiv class=\"col-md-6\"\u003e\n                        \u003clabel class=\"form-label fw-bold mb-1\"\u003e\u003ci class=\"bi bi-building me-1\"\u003e\u003c/i\u003eVinculado à Empresa\u003c/label\u003e\n                        \u003cselect name=\"empresa_id\" class=\"form-select\"\u003e\n                            \u003coption value=\"\"\u003e— Checklist Geral (sem empresa) —\u003c/option\u003e\n                            {% for e in empresas %}\n                            \u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\nr\\checklist.html",
+        "line":  78,
+        "param":  "empresa_id",
+        "code":  "\u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e",
+        "snippet":  "                        \u003cselect name=\"empresa_id\" class=\"form-select\"\u003e\n                            \u003coption value=\"\"\u003e— Checklist Geral (sem empresa) —\u003c/option\u003e\n                            {% for e in empresas %}\n                            \u003coption value=\"{{ e.id }}\" {% if checklist and checklist.empresa_id == e.id %}selected{% endif %}\u003e{{ e.razao_social }}\u003c/option\u003e\n                            {% endfor %}\n                        \u003c/select\u003e\n                        \u003csmall class=\"text-muted\"\u003eSelecione a empresa para associar este checklist\u003c/small\u003e",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\projetos\\lista.html",
+        "line":  190,
+        "param":  "empresa_id",
+        "code":  "\u003cselect name=\"empresa_id\" class=\"form-select\"\u003e",
+        "snippet":  "                    \u003c/div\u003e\n                    \u003cdiv class=\"mb-3\"\u003e\n                        \u003clabel class=\"form-label fw-bold\"\u003eEmpresa (opcional)\u003c/label\u003e\n                        \u003cselect name=\"empresa_id\" class=\"form-select\"\u003e\n                            \u003coption value=\"\"\u003e— Selecione uma empresa —\u003c/option\u003e\n                            {% for e in empresas %}\n                            \u003coption value=\"{{ e.id }}\"\u003e{{ e.razao_social }}\u003c/option\u003e",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\5w2h.html",
+        "line":  49,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta? Todos os dados serão perdidos.\u0027)\"\u003e",
+        "snippet":  "                {% endif %}\n                {% if modo_projeto and ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta? Todos os dados serão perdidos.\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\cep.html",
+        "line":  49,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "                {% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\dispersao.html",
+        "line":  49,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "                {% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\fluxograma.html",
+        "line":  72,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "                {% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\folha_verificacao.html",
+        "line":  48,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "{% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\histograma.html",
+        "line":  49,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "                {% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\ishikawa.html",
+        "line":  71,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta? Todos os dados serão perdidos.\u0027)\"\u003e",
+        "snippet":  "                {% endif %}\n                {% if modo_projeto and ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta? Todos os dados serão perdidos.\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\templates\\pareto.html",
+        "line":  40,
+        "param":  "ferramenta_id",
+        "code":  "\u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e",
+        "snippet":  "                {% if modo_projeto %}\n                {% if ferramenta %}\n                \u003cdiv class=\"mt-2\"\u003e\n                    \u003cform action=\"{{ url_for(\u0027projects.excluir_ferramenta_projeto\u0027, id=projeto.id, ferramenta_id=ferramenta.id) }}\" method=\"POST\" onsubmit=\"return confirm(\u0027Tem certeza que deseja excluir esta ferramenta?\u0027)\"\u003e\n                        \u003cinput type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\"\u003e\n                        \u003cbutton type=\"submit\" class=\"btn btn-outline-danger btn-sm w-100\"\u003e\n                            \u003ci class=\"bi bi-trash me-1\"\u003e\u003c/i\u003e Excluir Ferramenta",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  6,
+        "param":  "empresa_id",
+        "code":  "- projeto:        empresa_id, tipo, fase_atual, ciclo_atual, documento_padronizacao, data_conclusao_ciclo",
+        "snippet":  "Funciona tanto para SQLite (local) quanto PostgreSQL (Render/produção).\n\nColunas cobertas:\n- projeto:        empresa_id, tipo, fase_atual, ciclo_atual, documento_padronizacao, data_conclusao_ciclo\n- planta_baixa:   empresa_id\n- checklist_nr:   empresa_id\n- checklist_iso:  empresa_id",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  7,
+        "param":  "empresa_id",
+        "code":  "- planta_baixa:   empresa_id",
+        "snippet":  "\nColunas cobertas:\n- projeto:        empresa_id, tipo, fase_atual, ciclo_atual, documento_padronizacao, data_conclusao_ciclo\n- planta_baixa:   empresa_id\n- checklist_nr:   empresa_id\n- checklist_iso:  empresa_id\n- user:           nome_completo, email, telefone, cargo, data_cadastro",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  8,
+        "param":  "empresa_id",
+        "code":  "- checklist_nr:   empresa_id",
+        "snippet":  "Colunas cobertas:\n- projeto:        empresa_id, tipo, fase_atual, ciclo_atual, documento_padronizacao, data_conclusao_ciclo\n- planta_baixa:   empresa_id\n- checklist_nr:   empresa_id\n- checklist_iso:  empresa_id\n- user:           nome_completo, email, telefone, cargo, data_cadastro\n",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  9,
+        "param":  "empresa_id",
+        "code":  "- checklist_iso:  empresa_id",
+        "snippet":  "- projeto:        empresa_id, tipo, fase_atual, ciclo_atual, documento_padronizacao, data_conclusao_ciclo\n- planta_baixa:   empresa_id\n- checklist_nr:   empresa_id\n- checklist_iso:  empresa_id\n- user:           nome_completo, email, telefone, cargo, data_cadastro\n\nUso: python -c \"from qualidade_flask.migrate_projeto_columns import run_migration; run_migration()\"",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  29,
+        "param":  "empresa_id",
+        "code":  "\u0027empresa_id\u0027: {",
+        "snippet":  "# Mapeamento de tabelas -\u003e colunas necessárias -\u003e tipos SQL por dialeto\nTABELAS_COLUNAS = {\n    \u0027projeto\u0027: {\n        \u0027empresa_id\u0027: {\n            \u0027sqlite\u0027: \"INTEGER\",\n            \u0027postgresql\u0027: \"INTEGER\"\n        },",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  55,
+        "param":  "empresa_id",
+        "code":  "\u0027empresa_id\u0027: {",
+        "snippet":  "        }\n    },\n    \u0027planta_baixa\u0027: {\n        \u0027empresa_id\u0027: {\n            \u0027sqlite\u0027: \"INTEGER\",\n            \u0027postgresql\u0027: \"INTEGER\"\n        }",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  61,
+        "param":  "empresa_id",
+        "code":  "\u0027empresa_id\u0027: {",
+        "snippet":  "        }\n    },\n    \u0027checklist_nr\u0027: {\n        \u0027empresa_id\u0027: {\n            \u0027sqlite\u0027: \"INTEGER\",\n            \u0027postgresql\u0027: \"INTEGER\"\n        }",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\migrate_projeto_columns.py",
+        "line":  67,
+        "param":  "empresa_id",
+        "code":  "\u0027empresa_id\u0027: {",
+        "snippet":  "        }\n    },\n    \u0027checklist_iso\u0027: {\n        \u0027empresa_id\u0027: {\n            \u0027sqlite\u0027: \"INTEGER\",\n            \u0027postgresql\u0027: \"INTEGER\"\n        }",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  135,
+        "param":  "empresa_id",
+        "code":  "or_(ChecklistNR.empresa_id == self.id, ChecklistNR.empresa_id == None, ChecklistNR.empresa_id == 0)",
+        "snippet":  "        # Incluir dados vinculados à empresa E dados gerais (sem empresa definida)\n        user_checklists_nr = ChecklistNR.query.filter(\n            ChecklistNR.user_id == self.user_id,\n            or_(ChecklistNR.empresa_id == self.id, ChecklistNR.empresa_id == None, ChecklistNR.empresa_id == 0)\n        ).all()\n        \n        user_checklists_iso = ChecklistISO.query.filter(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  140,
+        "param":  "empresa_id",
+        "code":  "or_(ChecklistISO.empresa_id == self.id, ChecklistISO.empresa_id == None, ChecklistISO.empresa_id == 0)",
+        "snippet":  "        \n        user_checklists_iso = ChecklistISO.query.filter(\n            ChecklistISO.user_id == self.user_id,\n            or_(ChecklistISO.empresa_id == self.id, ChecklistISO.empresa_id == None, ChecklistISO.empresa_id == 0)\n        ).all()\n        \n        user_plantas = PlantaBaixa.query.filter(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  145,
+        "param":  "empresa_id",
+        "code":  "or_(PlantaBaixa.empresa_id == self.id, PlantaBaixa.empresa_id == None, PlantaBaixa.empresa_id == 0)",
+        "snippet":  "        \n        user_plantas = PlantaBaixa.query.filter(\n            PlantaBaixa.user_id == self.user_id,\n            or_(PlantaBaixa.empresa_id == self.id, PlantaBaixa.empresa_id == None, PlantaBaixa.empresa_id == 0)\n        ).all()\n        \n        user_projetos = Projeto.query.filter(",
+        "validated":  true,
+        "reason":  "found user_id filter/check in window"
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  150,
+        "param":  "empresa_id",
+        "code":  "or_(Projeto.empresa_id == self.id, Projeto.empresa_id == None, Projeto.empresa_id == 0)",
+        "snippet":  "        \n        user_projetos = Projeto.query.filter(\n            Projeto.user_id == self.user_id,\n            or_(Projeto.empresa_id == self.id, Projeto.empresa_id == None, Projeto.empresa_id == 0)\n        ).all()\n        \n        metricas = {",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  224,
+        "param":  "empresa_id",
+        "code":  "empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)",
+        "snippet":  "    objetivo = db.Column(db.Text, nullable=False)\n    data_criacao = db.Column(db.DateTime, default=datetime.now)\n    user_id = db.Column(db.Integer, db.ForeignKey(\u0027user.id\u0027), nullable=False, index=True)\n    empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)\n    \n    # Tipo: \u0027normal\u0027 (ferramentas da qualidade) ou \u0027pdca\u0027 (ciclo de melhoria)\n    tipo = db.Column(db.String(20), default=\u0027normal\u0027)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  240,
+        "param":  "projeto_id",
+        "code":  "projeto_id = db.Column(db.Integer, db.ForeignKey(\u0027projeto.id\u0027), nullable=False)",
+        "snippet":  "\nclass CicloHistorico(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    projeto_id = db.Column(db.Integer, db.ForeignKey(\u0027projeto.id\u0027), nullable=False)\n    ciclo = db.Column(db.Integer, nullable=False)\n    fase_concluida = db.Column(db.String(20), default=\u0027act\u0027)\n    ferramentas_snapshot = db.Column(db.JSON, nullable=True)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  250,
+        "param":  "projeto_id",
+        "code":  "projeto_id = db.Column(db.Integer, db.ForeignKey(\u0027projeto.id\u0027), nullable=False)",
+        "snippet":  "\nclass ProjetoFerramenta(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    projeto_id = db.Column(db.Integer, db.ForeignKey(\u0027projeto.id\u0027), nullable=False)\n    tipo = db.Column(db.String(50), nullable=False)\n    dados = db.Column(db.JSON)\n    analise_ia = db.Column(db.Text)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  319,
+        "param":  "empresa_id",
+        "code":  "empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)",
+        "snippet":  "    id = db.Column(db.Integer, primary_key=True)\n    norma_id = db.Column(db.Integer, db.ForeignKey(\u0027norma_regulamentadora.id\u0027), nullable=False, index=True)\n    user_id = db.Column(db.Integer, db.ForeignKey(\u0027user.id\u0027), nullable=False, index=True)\n    empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)\n    respostas = db.Column(db.JSON)\n    observacoes = db.Column(db.JSON)\n    data_criacao = db.Column(db.DateTime, default=datetime.now)",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  349,
+        "param":  "empresa_id",
+        "code":  "empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)",
+        "snippet":  "    data_criacao = db.Column(db.DateTime, default=datetime.now)\n    data_atualizacao = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)\n    user_id = db.Column(db.Integer, db.ForeignKey(\u0027user.id\u0027), nullable=False, index=True)\n    empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)\n\n    def to_dict(self):\n        return {",
+        "validated":  false,
+        "reason":  ""
+    },
+    {
+        "file":  "C:\\Users\\italo\\OneDrive\\Área de Trabalho\\aaaaaaaaa\\qualidade_flask\\qualidade_flask\\models.py",
+        "line":  405,
+        "param":  "empresa_id",
+        "code":  "empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)",
+        "snippet":  "    id = db.Column(db.Integer, primary_key=True)\n    norma_id = db.Column(db.Integer, db.ForeignKey(\u0027norma_iso.id\u0027), nullable=False, index=True)\n    user_id = db.Column(db.Integer, db.ForeignKey(\u0027user.id\u0027), nullable=False, index=True)\n    empresa_id = db.Column(db.Integer, db.ForeignKey(\u0027empresa.id\u0027), nullable=True, index=True)\n    respostas = db.Column(db.JSON)\n    observacoes = db.Column(db.JSON)\n    data_criacao = db.Column(db.DateTime, default=datetime.now)",
+        "validated":  false,
+        "reason":  ""
+    }
+]
